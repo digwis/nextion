@@ -1,8 +1,9 @@
 import { NextResponse } from "next/server";
-import { publicMediaBlockForApi } from "@/lib/notion/media";
+import { gatedMediaBlockForApi } from "@/lib/notion/media";
 import { getPublicNotionMovieByRouteId } from "@/lib/notion/movies";
+import { publicJsonHeaders, publicOptionsHeaders } from "@/lib/public-api";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 60;
 
 type Props = {
   params: Promise<{ id: string }>;
@@ -33,25 +34,19 @@ export async function GET(request: Request, { params }: Props) {
       hasDownloadInfo: movie.hasDownloadInfo,
       coverImage: movie.coverImage,
       sourceUrl: movie.sourceUrl,
-      blocks: movie.blocks.map(publicMediaBlockForApi),
+      blocks: movie.blocks.map((block) =>
+        gatedMediaBlockForApi(block, { movieId: movie.routeId })
+      ),
       url: `${origin}/movies/${movie.routeId}`,
     },
     {
-      headers: {
-        "Access-Control-Allow-Origin": "*",
-        "Access-Control-Allow-Methods": "GET, OPTIONS",
-        "Cache-Control": "public, s-maxage=300, stale-while-revalidate=600",
-      },
+      headers: publicJsonHeaders(),
     }
   );
 }
 
 export async function OPTIONS() {
   return new NextResponse(null, {
-    headers: {
-      "Access-Control-Allow-Origin": "*",
-      "Access-Control-Allow-Methods": "GET, OPTIONS",
-      "Access-Control-Allow-Headers": "Content-Type",
-    },
+    headers: publicOptionsHeaders(),
   });
 }

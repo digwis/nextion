@@ -94,8 +94,11 @@ export function buildResponsiveImageAttrs(
   };
 }
 
-export function getCoverImageLoading(index: number) {
-  if (index < 3) {
+export function getCoverImageLoading(
+  index: number,
+  variant: PublicImageVariant = "detail"
+) {
+  if (index === 0) {
     return {
       loading: "eager" as const,
       fetchPriority: "high" as const,

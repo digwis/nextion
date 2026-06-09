@@ -20,9 +20,15 @@
       "head_sampling_rate": 1
     }
   },
+  "triggers": {
+    "crons": [
+      "10 18 * * *"
+    ]
+  },
   "main": "./worker/index.ts",
   "vars": {
-    "NOTION_MOVIES_DATA_SOURCE_ID": "371dc62d-0738-8015-a601-000bc3944fcb"
+    "NOTION_MOVIES_DATA_SOURCE_ID": "371dc62d-0738-8015-a601-000bc3944fcb",
+    "SITE_URL": "https://moviebluebook.uk"
   },
   "assets": {
     "directory": "dist/client",
@@ -38,6 +44,12 @@
       "database_name": "vinext-blog",
       "database_id": "4717fd6e-08a4-4715-863f-2a41387301a0",
       "migrations_dir": "migrations"
+    }
+  ],
+  "kv_namespaces": [
+    {
+      "binding": "CONTENT_CACHE",
+      "id": "d44f1bee9d494cc9b911a51cef289d6b"
     }
   ],
   "r2_buckets": [

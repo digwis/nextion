@@ -6,6 +6,10 @@
 interface VinextEnv extends Env {
   // D1 binding
   DB: D1Database;
+  ASSETS: Fetcher;
+  IMAGES: ImagesBinding;
+  ASSETS_BUCKET?: R2Bucket;
+  CONTENT_CACHE?: KVNamespace;
   // 管理员密码：dev 走 .dev.vars，prod 走 `wrangler secret put ADMIN_PASSWORD`
   ADMIN_PASSWORD?: string;
   TURNSTILE_SITE_KEY?: string;
@@ -13,9 +17,11 @@ interface VinextEnv extends Env {
   NOTION_TOKEN?: string;
   NOTION_DATA_SOURCE_ID?: string;
   NOTION_MOVIES_DATA_SOURCE_ID?: string;
+  NOTION_MOVIE_TRANSLATIONS_DATA_SOURCE_ID?: string;
   NOTION_API_BASE_URL?: string;
   NOTION_EDIT_BASE_URL?: string;
   NOTION_WEBHOOK_VERIFICATION_TOKEN?: string;
+  [key: `NOTION_${string}`]: string | undefined;
 }
 
 declare module "cloudflare:workers" {

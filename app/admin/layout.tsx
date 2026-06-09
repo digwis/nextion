@@ -6,7 +6,14 @@ import { logoutAction } from "@/lib/actions";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { ThemeToggle } from "@/components/theme-toggle";
-import { LogOut, Shield, Settings, UserCircle, Users } from "lucide-react";
+import {
+  Database,
+  LogOut,
+  Shield,
+  Settings,
+  UserCircle,
+  Users,
+} from "lucide-react";
 
 export default async function AdminLayout({
   children,
@@ -43,6 +50,14 @@ export default async function AdminLayout({
             </Link>
             {admin && (
               <>
+                <Separator orientation="vertical" className="h-4" />
+                <Link
+                  href="/admin/content-models"
+                  className="inline-flex items-center gap-1 text-sm font-medium text-foreground hover:underline"
+                >
+                  <Database className="h-3.5 w-3.5" />
+                  内容模型
+                </Link>
                 <Separator orientation="vertical" className="h-4" />
                 <Link
                   href="/admin/settings"

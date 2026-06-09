@@ -1,11 +1,14 @@
-// GET /api/cdn/[...key] - 从 R2 取原图，调用 Cloudflare Images 转 WebP/AVIF 后返回
+// GET /api/cdn/[...key] - 从对象存储取原图，调用运行时图片转换转 WebP/AVIF 后返回
 //
 // 用 catch-all 参数兼容两种 URL：
 // 1. /api/cdn/uploads/2026-06-06/file.jpg
 // 2. /api/cdn/uploads%2F2026-06-06%2Ffile.jpg
 
 import { NextResponse } from "next/server";
-import { workerEnv } from "@/lib/env";
+import {
+  type StoredObject,
+} from "@/lib/platform/runtime";
+import { getRuntimePlatform } from "@/lib/platform/current";
 
 export const dynamic = "force-dynamic";
 
@@ -46,22 +49,22 @@ export async function GET(request: Request, { params }: Props) {
     return NextResponse.json({ error: "Invalid key" }, { status: 400 });
   }
 
-  const env = workerEnv;
-  if (!env.ASSETS_BUCKET) {
+  const platform = getRuntimePlatform();
+  const storage = platform.objectStorage;
+  if (!storage) {
     return NextResponse.json(
-      { error: "R2 not configured" },
+      { error: "Object storage not configured" },
       { status: 503 }
     );
   }
 
-  const object = await env.ASSETS_BUCKET.get(decoded);
+  const object = await storage.get(decoded);
   if (!object) {
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }
 
   const accept = request.headers.get("accept") ?? "";
-  const isImage =
-    object.httpMetadata?.contentType?.startsWith("image/") ?? false;
+  const isImage = object.contentType?.startsWith("image/") ?? false;
 
   if (!isImage) {
     return streamObject(object, {
@@ -81,10 +84,14 @@ export async function GET(request: Request, { params }: Props) {
     outputQuality = 75;
   }
 
-  const isSvg = object.httpMetadata?.contentType === "image/svg+xml";
-  if (!outputFormat || isSvg) {
+  const isSvg = object.contentType === "image/svg+xml";
+  if (!outputFormat || isSvg || !platform.imageTransformer) {
     return streamObject(object, {
-      "X-Debug-Cdn-Branch": isSvg ? "svg-bypass" : "format-bypass",
+      "X-Debug-Cdn-Branch": isSvg
+        ? "svg-bypass"
+        : !platform.imageTransformer
+          ? "transformer-bypass"
+          : "format-bypass",
       "X-Debug-Cdn-Accept": accept.includes("image/avif")
         ? "avif"
         : accept.includes("image/webp")
@@ -104,23 +111,22 @@ export async function GET(request: Request, { params }: Props) {
       outputQuality ?? DEFAULT_QUALITY
     );
 
-    const imageTransform = env.IMAGES.input(object.body).transform({ width });
-
-    const result = await imageTransform.output({
+    const result = await platform.imageTransformer.transform(object.body, {
+      width,
       format: outputFormat,
       quality,
     });
 
-    return new Response(result.image(), {
+    return new Response(result.body, {
       headers: {
-        "Content-Type": outputFormat,
+        "Content-Type": result.contentType,
         "Cache-Control": "public, max-age=31536000, immutable",
         Vary: "Accept",
         "X-Debug-Cdn-Branch": "transformed",
         "X-Debug-Cdn-Key": decoded,
         "X-Optimized-Width": String(width),
         "X-Optimized-Quality": String(quality),
-        "X-Original-Format": object.httpMetadata?.contentType ?? "unknown",
+        "X-Original-Format": object.contentType ?? "unknown",
         "X-Optimized-Format": outputFormat,
       },
     });
@@ -135,12 +141,12 @@ export async function GET(request: Request, { params }: Props) {
 }
 
 function streamObject(
-  object: R2ObjectBody,
+  object: StoredObject,
   extraHeaders?: Record<string, string>
 ): Response {
   const headers = new Headers();
-  if (object.httpMetadata?.contentType) {
-    headers.set("Content-Type", object.httpMetadata.contentType);
+  if (object.contentType) {
+    headers.set("Content-Type", object.contentType);
   }
   headers.set("Cache-Control", "public, max-age=31536000, immutable");
   headers.set("Content-Length", String(object.size));

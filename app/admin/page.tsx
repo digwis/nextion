@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { ExternalLink, Plus } from "lucide-react";
+import { blogContentModel } from "@/lib/content/models";
 import { getNotionEditBaseUrl } from "@/lib/notion/config";
 import { getNotionPostsMeta } from "@/lib/notion/posts";
 import { Button } from "@/components/ui/button";
@@ -31,7 +32,7 @@ export default async function AdminDashboard({ searchParams }: Props) {
         <div>
           <h1 className="text-3xl font-bold tracking-tight">文章管理</h1>
           <p className="text-sm text-muted-foreground">
-            内容现由 Notion 管理，这里展示公开文章索引。
+            {blogContentModel.ui.listTitle} 内容现由 Notion 管理，这里展示公开索引。
           </p>
         </div>
         <Button asChild>

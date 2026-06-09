@@ -1,3 +1,5 @@
+import type { ContentModelDefinition, NotionFieldMap } from "../content/model.ts";
+
 type NotionEnv = {
   NOTION_TOKEN?: string;
   NOTION_DATA_SOURCE_ID?: string;
@@ -5,6 +7,7 @@ type NotionEnv = {
   NOTION_API_BASE_URL?: string;
   NOTION_EDIT_BASE_URL?: string;
   NOTION_WEBHOOK_VERIFICATION_TOKEN?: string;
+  [key: string]: string | undefined;
 };
 
 export const DEFAULT_NOTION_MOVIES_DATA_SOURCE_ID =
@@ -24,7 +27,7 @@ export type NotionConfig = {
 };
 
 function readProcessEnv(): NotionEnv {
-  return {
+  const env: NotionEnv = {
     NOTION_TOKEN: process.env.NOTION_TOKEN,
     NOTION_DATA_SOURCE_ID: process.env.NOTION_DATA_SOURCE_ID,
     NOTION_MOVIES_DATA_SOURCE_ID: process.env.NOTION_MOVIES_DATA_SOURCE_ID,
@@ -33,6 +36,14 @@ function readProcessEnv(): NotionEnv {
     NOTION_WEBHOOK_VERIFICATION_TOKEN:
       process.env.NOTION_WEBHOOK_VERIFICATION_TOKEN,
   };
+
+  for (const [key, value] of Object.entries(process.env)) {
+    if (key.startsWith("NOTION_") && typeof value === "string") {
+      env[key] = value;
+    }
+  }
+
+  return env;
 }
 
 async function readWorkerEnv(): Promise<NotionEnv> {
@@ -46,24 +57,17 @@ async function readWorkerEnv(): Promise<NotionEnv> {
   }
 }
 
-function readString(source: NotionEnv, name: keyof NotionEnv): string | undefined {
+function readString(source: NotionEnv, name: string): string | undefined {
   const value = String(source[name] ?? "").trim();
   return value || undefined;
 }
 
 function mergeEnv(...sources: NotionEnv[]): NotionEnv {
   const merged: NotionEnv = {};
-  const names: (keyof NotionEnv)[] = [
-    "NOTION_TOKEN",
-    "NOTION_DATA_SOURCE_ID",
-    "NOTION_MOVIES_DATA_SOURCE_ID",
-    "NOTION_API_BASE_URL",
-    "NOTION_EDIT_BASE_URL",
-    "NOTION_WEBHOOK_VERIFICATION_TOKEN",
-  ];
 
   for (const source of sources) {
-    for (const name of names) {
+    for (const name of Object.keys(source)) {
+      if (!name.startsWith("NOTION_")) continue;
       const value = readString(source, name);
       if (value) merged[name] = value;
     }
@@ -79,7 +83,7 @@ async function readEnv(): Promise<NotionEnv> {
 
 function readRequired(
   source: NotionEnv,
-  name: "NOTION_TOKEN" | "NOTION_DATA_SOURCE_ID"
+  name: string
 ): string {
   const value = readString(source, name);
   if (!value) {
@@ -104,6 +108,17 @@ export async function hasNotionMovieConfig(): Promise<boolean> {
   return Boolean(readString(env, "NOTION_TOKEN"));
 }
 
+export async function hasNotionModelConfig<
+  TFields extends NotionFieldMap,
+>(model: ContentModelDefinition<TFields>): Promise<boolean> {
+  const env = await readEnv();
+  return Boolean(
+    readString(env, "NOTION_TOKEN") &&
+      (readString(env, model.source.dataSourceEnv) ||
+        model.source.defaultDataSourceId)
+  );
+}
+
 export async function getNotionClientConfig(): Promise<NotionClientConfig> {
   const env = await readEnv();
   return {
@@ -126,6 +141,13 @@ export async function getNotionConfig(): Promise<NotionConfig> {
   };
 }
 
+export async function getNotionWebhookVerificationToken(): Promise<
+  string | undefined
+> {
+  const env = await readEnv();
+  return readString(env, "NOTION_WEBHOOK_VERIFICATION_TOKEN");
+}
+
 export async function getNotionMovieConfig(): Promise<NotionConfig> {
   const env = await readEnv();
   return {
@@ -133,6 +155,29 @@ export async function getNotionMovieConfig(): Promise<NotionConfig> {
     dataSourceId:
       readString(env, "NOTION_MOVIES_DATA_SOURCE_ID") ??
       DEFAULT_NOTION_MOVIES_DATA_SOURCE_ID,
+    apiBaseUrl: readString(env, "NOTION_API_BASE_URL"),
+    editBaseUrl: readString(env, "NOTION_EDIT_BASE_URL"),
+    webhookVerificationToken: readString(
+      env,
+      "NOTION_WEBHOOK_VERIFICATION_TOKEN"
+    ),
+  };
+}
+
+export async function getNotionConfigForModel<
+  TFields extends NotionFieldMap,
+>(model: ContentModelDefinition<TFields>): Promise<NotionConfig> {
+  const env = await readEnv();
+  const dataSourceId =
+    readString(env, model.source.dataSourceEnv) ??
+    model.source.defaultDataSourceId;
+  if (!dataSourceId) {
+    throw new Error(`Missing required Notion env: ${model.source.dataSourceEnv}`);
+  }
+
+  return {
+    token: readRequired(env, model.source.tokenEnv),
+    dataSourceId,
     apiBaseUrl: readString(env, "NOTION_API_BASE_URL"),
     editBaseUrl: readString(env, "NOTION_EDIT_BASE_URL"),
     webhookVerificationToken: readString(

@@ -17,7 +17,7 @@ INSERT OR REPLACE INTO posts (slug, title, description, date, author, tags, cont
   '2026-05-20',
   'zhao',
   '["rsc","edge","cloudflare-workers"]',
-  '["RSC 的设计目标之一就是把渲染推到离用户最近的地方。Cloudflare Workers 的 V8 isolate 启动延迟 < 5ms，刚好契合 RSC 的流式模型。","实测一个 33 路由的 App Router 项目，vinext 在 Workers 上的 TTFB 比 Vercel 区域函数快 30–60%。","唯一要注意的是 Workers 没有 Node.js API，只能用 Web 标准 + Workers 提供的 bindings（KV、Durable Objects、R2、AI）。"]'
+  '["RSC 的设计目标之一就是把渲染推到离用户最近的地方。Cloudflare Workers 的 V8 isolate 启动延迟 < 5ms，刚好契合 RSC 的流式模型。","实测一个 33 路由的 App Router 项目，vinext 在 Workers 上可以获得稳定的边缘 TTFB，并减少传统区域函数的冷启动波动。","唯一要注意的是 Workers 没有 Node.js API，只能用 Web 标准 + Workers 提供的 bindings（KV、Durable Objects、R2、AI）。"]'
 ),
 (
   'deploy-with-one-command',

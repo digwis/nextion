@@ -1,8 +1,8 @@
-// GET /api/files/[...key] - 从 R2 取文件并代理返回
-// 不公开 bucket，避免任何人都能列文件
+// GET /api/files/[...key] - 从对象存储取文件并代理返回
+// 不公开 bucket/container，避免任何人都能列文件
 
 import { NextResponse } from "next/server";
-import { workerEnv } from "@/lib/env";
+import { getRuntimePlatform } from "@/lib/platform/current";
 
 export const dynamic = "force-dynamic";
 
@@ -22,22 +22,22 @@ export async function GET(_request: Request, { params }: Props) {
     return NextResponse.json({ error: "Invalid key" }, { status: 400 });
   }
 
-  const env = workerEnv;
-  if (!env.ASSETS_BUCKET) {
+  const storage = getRuntimePlatform().objectStorage;
+  if (!storage) {
     return NextResponse.json(
-      { error: "R2 not configured" },
+      { error: "Object storage not configured" },
       { status: 503 }
     );
   }
 
-  const object = await env.ASSETS_BUCKET.get(decoded);
+  const object = await storage.get(decoded);
   if (!object) {
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }
 
   const headers = new Headers();
-  if (object.httpMetadata?.contentType) {
-    headers.set("Content-Type", object.httpMetadata.contentType);
+  if (object.contentType) {
+    headers.set("Content-Type", object.contentType);
   }
   headers.set("Cache-Control", "public, max-age=31536000, immutable");
   if (object.etag) headers.set("ETag", object.etag);

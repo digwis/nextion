@@ -1,9 +1,11 @@
+import GatedVideo from "@/components/GatedVideo";
 import NotionRichText from "@/components/NotionRichText";
 import {
   isDirectVideoUrl,
   mediaUrlForBlock,
   videoEmbedUrl,
 } from "@/lib/notion/media";
+import { buildResponsiveImageAttrs } from "@/lib/public-image";
 import type { NotionBlock, NotionRichTextPart } from "@/lib/notion/types";
 
 type TypedBlockValue = {
@@ -12,6 +14,8 @@ type TypedBlockValue = {
   language?: string;
   checked?: boolean;
   url?: string;
+  access_url?: string;
+  gated?: boolean;
   cells?: NotionRichTextPart[][];
 };
 
@@ -37,16 +41,24 @@ function renderChildren(block: NotionBlock) {
 function renderImage(block: NotionBlock) {
   const src = mediaUrlForBlock(block);
   if (!src) return null;
+  const image = buildResponsiveImageAttrs(
+    src,
+    "(max-width: 768px) 100vw, 768px",
+    { variant: "detail" }
+  );
 
   return (
     <figure className="my-8">
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
-        src={src}
+        src={image.src}
+        srcSet={image.srcSet}
+        sizes={image.sizes}
         alt=""
         className="mx-auto max-h-[720px] w-full rounded-lg border object-contain"
         loading="lazy"
         decoding="async"
+        referrerPolicy="no-referrer"
       />
       {caption(block)}
     </figure>
@@ -55,6 +67,15 @@ function renderImage(block: NotionBlock) {
 
 function renderVideo(block: NotionBlock) {
   const typed = typedValue(block);
+  if (typed.gated) {
+    return (
+      <GatedVideo
+        accessUrl={typed.access_url ?? null}
+        caption={typed.caption}
+      />
+    );
+  }
+
   const src = mediaUrlForBlock(block) ?? typed.url;
   if (!src) return null;
 
@@ -83,6 +104,7 @@ function renderVideo(block: NotionBlock) {
           src={src}
           className="w-full rounded-lg border bg-black"
           controls
+          controlsList="nodownload"
           preload="metadata"
         />
         {caption(block)}

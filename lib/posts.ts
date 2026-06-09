@@ -1,22 +1,12 @@
-// 博客数据源（D1 版）。
+// 博客数据源（SQL adapter 版）。
 // 在 Server Component / Route Handler 里直接调用即可。
-// vinext + @cloudflare/vite-plugin 让 RSC/SSR 环境运行在 workerd 中，
-// `env.DB` 是 Cloudflare D1 binding（生产指向 Cloudflare，本地指向 SQLite）。
+// 当前 Cloudflare 部署下由 D1 backing，后续可由平台 adapter 切换为其他 SQL 后端。
 //
-// tags 和 content 字段在 D1 中以 JSON 字符串存储，这里解析成数组。
+// tags 和 content 字段以 JSON 字符串存储，这里解析成数组。
 
-// `cloudflare:workers` 是 workerd 的内置模块，等价于 worker fetch 回调里的 env
-// 在 RSC/SSR 环境（workerd 运行时）中可直接 import。
-// eslint-disable-next-line @typescript-eslint/triple-slash-reference
-/// <reference types="@cloudflare/workers-types" />
-import { env } from "cloudflare:workers";
 import { cache } from "react";
 import { getAdminListSelectClause } from "./admin-post-list";
-
-// 强制类型：因为我们的 env.d.ts 用 `interface VinextEnv extends Env` 增加 DB，
-// 但部分 IDE/TS server 把 `Env` 解析成 @cloudflare/workers-types 的空 interface。
-// 在运行时一定有 DB，类型断言保证 TS 编译通过。
-const workerEnv = env as unknown as { DB: D1Database };
+import { getDatabase } from "./platform/current";
 
 export type PostStatus = "draft" | "pending_review" | "published" | "rejected";
 
@@ -75,7 +65,7 @@ function rowToPost(row: PostRow): Post {
  * 无论 owner 是谁。这是“管理员审核通过即公开”的核心语义。
  */
 export async function getAllPosts(): Promise<Post[]> {
-  const { results } = await workerEnv.DB.prepare(
+  const { results } = await getDatabase().prepare(
     `SELECT p.slug, p.title, p.description, p.date, p.author, p.tags, p.content, p.cover_image,
             p.owner_email, p.status, p.reject_reason, p.reviewed_by, p.reviewed_at
        FROM posts p
@@ -95,7 +85,7 @@ export async function getAllPostsMeta(): Promise<
 const getAllPostsMetaCached = cache(async (): Promise<
   Omit<Post, "content">[]
 > => {
-  const { results } = await workerEnv.DB.prepare(
+  const { results } = await getDatabase().prepare(
     `SELECT slug, title, description, date, author, tags, cover_image,
             owner_email, status, reject_reason, reviewed_by, reviewed_at
        FROM posts
@@ -135,7 +125,7 @@ export async function getPostsForAdmin(viewerEmail: string, isAdmin: boolean): P
          FROM posts
          WHERE owner_email = ?
          ORDER BY date DESC`;
-  const stmt = workerEnv.DB.prepare(sql);
+  const stmt = getDatabase().prepare(sql);
   const bound = isAdmin ? stmt : stmt.bind(viewerEmail);
   const { results } = await bound.all<Omit<PostRow, "content">>();
   return results.map((row) => ({
@@ -157,7 +147,7 @@ export async function getPostsForAdmin(viewerEmail: string, isAdmin: boolean): P
 
 /** 管理员审核列表：只显示 status = pending_review */
 export async function getPendingReviewPosts(): Promise<Post[]> {
-  const { results } = await workerEnv.DB.prepare(
+  const { results } = await getDatabase().prepare(
     `SELECT slug, title, description, date, author, tags, content, cover_image,
             owner_email, status, reject_reason, reviewed_by, reviewed_at
        FROM posts
@@ -168,7 +158,7 @@ export async function getPendingReviewPosts(): Promise<Post[]> {
 }
 
 export async function getPendingReviewCount(): Promise<number> {
-  const row = await workerEnv.DB.prepare(
+  const row = await getDatabase().prepare(
     `SELECT COUNT(*) as count
        FROM posts
       WHERE status = 'pending_review'`
@@ -182,7 +172,7 @@ export async function getPostSlugs(): Promise<string[]> {
 }
 
 const getPostSlugsCached = cache(async (): Promise<string[]> => {
-  const { results } = await workerEnv.DB.prepare(
+  const { results } = await getDatabase().prepare(
     `SELECT slug
        FROM posts
       WHERE status = 'published'
@@ -196,7 +186,7 @@ export async function getPostBySlug(slug: string): Promise<Post | null> {
 }
 
 const getPostBySlugCached = cache(async (slug: string): Promise<Post | null> => {
-  const row = await workerEnv.DB.prepare(
+  const row = await getDatabase().prepare(
     `SELECT slug, title, description, date, author, tags, content, cover_image,
             owner_email, status, reject_reason, reviewed_by, reviewed_at
        FROM posts
@@ -213,7 +203,7 @@ export async function getPostBySlugRaw(slug: string): Promise<Post | null> {
 }
 
 const getPostBySlugRawCached = cache(async (slug: string): Promise<Post | null> => {
-  const row = await workerEnv.DB.prepare(
+  const row = await getDatabase().prepare(
     `SELECT slug, title, description, date, author, tags, content, cover_image,
             owner_email, status, reject_reason, reviewed_by, reviewed_at
        FROM posts WHERE slug = ?`
@@ -241,7 +231,7 @@ export type NewPost = {
 export type PostInput = Omit<NewPost, "slug" | "owner_email" | "status">;
 
 export async function createPost(input: NewPost): Promise<void> {
-  await workerEnv.DB.prepare(
+  await getDatabase().prepare(
     "INSERT INTO posts (slug, title, description, date, author, tags, content, cover_image, owner_email, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
   )
     .bind(
@@ -260,7 +250,7 @@ export async function createPost(input: NewPost): Promise<void> {
 }
 
 export async function updatePost(slug: string, input: PostInput): Promise<void> {
-  await workerEnv.DB.prepare(
+  await getDatabase().prepare(
     "UPDATE posts SET title = ?, description = ?, date = ?, author = ?, tags = ?, content = ?, cover_image = ? WHERE slug = ?"
   )
     .bind(
@@ -277,7 +267,7 @@ export async function updatePost(slug: string, input: PostInput): Promise<void> 
 }
 
 export async function deletePost(slug: string): Promise<void> {
-  await workerEnv.DB.prepare("DELETE FROM posts WHERE slug = ?").bind(slug).run();
+  await getDatabase().prepare("DELETE FROM posts WHERE slug = ?").bind(slug).run();
 }
 
 // —— 审核状态操作 ——
@@ -289,7 +279,7 @@ export async function setPostStatus(
 ): Promise<void> {
   const reviewedBy = options?.reviewedBy ?? null;
   const rejectReason = options?.rejectReason ?? null;
-  await workerEnv.DB.prepare(
+  await getDatabase().prepare(
     `UPDATE posts
         SET status = ?,
             reject_reason = ?,
@@ -302,7 +292,7 @@ export async function setPostStatus(
 }
 
 export async function slugExists(slug: string): Promise<boolean> {
-  const row = await workerEnv.DB.prepare(
+  const row = await getDatabase().prepare(
     "SELECT 1 AS x FROM posts WHERE slug = ?"
   )
     .bind(slug)

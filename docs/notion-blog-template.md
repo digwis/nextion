@@ -42,6 +42,20 @@ NOTION_EDIT_BASE_URL=
 NOTION_WEBHOOK_VERIFICATION_TOKEN=
 ```
 
+Use `POST /api/notion/webhook` as the Notion webhook URL. The endpoint responds
+to Notion's verification handshake and stores Notion's `verification_token` in
+the `CONTENT_CACHE` KV namespace. Later events are validated with
+`X-Notion-Signature` using that stored token, or with
+`NOTION_WEBHOOK_VERIFICATION_TOKEN` when you choose to pin it as a Worker
+secret. After validation, the endpoint clears public HTML/API cache, Notion KV
+content cache, and affected search-index rows. Page events are treated as
+change signals: when Notion sends only a page id, the endpoint retrieves the
+latest page properties before deriving the public slug to revalidate.
+
+Notion may aggregate frequent page content edits before sending
+`page.content_updated`; the site invalidates immediately after the event is
+delivered.
+
 `NOTION_EDIT_BASE_URL` is optional. It can point to a Notion data source view or
 use `{pageId}` as a placeholder for direct page links.
 

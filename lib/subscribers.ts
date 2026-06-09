@@ -1,6 +1,6 @@
 // lib/subscribers.ts - 订阅者数据库操作
 
-import { workerEnv } from "./env";
+import { getDatabase } from "./platform/current";
 
 export type Subscriber = {
   id: number;
@@ -23,7 +23,6 @@ export async function addSubscriber(email: string): Promise<{
   reason?: "duplicate" | "invalid";
   token?: string;
 }> {
-  const env = workerEnv;
   // 简单 email 校验
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
     return { ok: false, reason: "invalid" };
@@ -32,7 +31,7 @@ export async function addSubscriber(email: string): Promise<{
   const token = genToken();
 
   try {
-    await env.DB.prepare(
+    await getDatabase().prepare(
       `INSERT INTO subscribers (email, unsubscribe_token) VALUES (?, ?)`
     )
       .bind(email, token)
@@ -48,8 +47,7 @@ export async function addSubscriber(email: string): Promise<{
 }
 
 export async function getConfirmedSubscribers(): Promise<Subscriber[]> {
-  const env = workerEnv;
-  const { results } = await env.DB.prepare(
+  const { results } = await getDatabase().prepare(
     `SELECT id, email, created_at, confirmed, unsubscribe_token
      FROM subscribers WHERE confirmed = 1 ORDER BY created_at DESC`
   ).all<Subscriber>();
@@ -57,16 +55,14 @@ export async function getConfirmedSubscribers(): Promise<Subscriber[]> {
 }
 
 export async function countSubscribers(): Promise<number> {
-  const env = workerEnv;
-  const row = await env.DB.prepare(
+  const row = await getDatabase().prepare(
     `SELECT COUNT(*) AS n FROM subscribers WHERE confirmed = 1`
   ).first<{ n: number }>();
   return row?.n ?? 0;
 }
 
 export async function unsubscribeByToken(token: string): Promise<boolean> {
-  const env = workerEnv;
-  const res = await env.DB.prepare(
+  const res = await getDatabase().prepare(
     `DELETE FROM subscribers WHERE unsubscribe_token = ?`
   )
     .bind(token)

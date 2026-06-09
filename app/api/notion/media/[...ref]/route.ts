@@ -7,8 +7,11 @@ import {
   type PublicMediaVariant,
 } from "@/lib/cache-keys";
 import { createNotionClient } from "@/lib/notion/client";
-import { workerEnv } from "@/lib/env";
 import { getNotionClientConfig } from "@/lib/notion/config";
+import {
+  getPublicCache,
+  getRuntimePlatform,
+} from "@/lib/platform/current";
 import {
   fileObjectForMediaBlock,
   normalizeNotionFileSource,
@@ -73,14 +76,14 @@ async function responseFromR2Cache(
 ) {
   const url = new URL(request.url);
   const r2Key = notionMediaR2KeyForUrl(url, variant);
-  if (!r2Key || !workerEnv.ASSETS_BUCKET) return null;
+  const storage = getRuntimePlatform().objectStorage;
+  if (!r2Key || !storage) return null;
 
-  const object = await workerEnv.ASSETS_BUCKET.get(r2Key);
+  const object = await storage.get(r2Key);
   if (!object?.body) return null;
 
   const contentType =
-    object.httpMetadata?.contentType ??
-    (variant === "avif" ? "image/avif" : "image/webp");
+    object.contentType ?? (variant === "avif" ? "image/avif" : "image/webp");
   const headers = new Headers();
   headers.set("Content-Type", contentType);
   headers.set("Cache-Control", cacheControl(request));
@@ -105,11 +108,9 @@ async function withEdgeMediaCache(
     });
   }
 
-  const cache = (caches as CacheStorage & { default: Cache }).default;
   const url = new URL(request.url);
-  const cacheKey = new Request(publicMediaCacheKeyForUrl(url, variant), {
-    method: "GET",
-  });
+  const cache = getPublicCache();
+  const cacheKey = publicMediaCacheKeyForUrl(url, variant);
   const cached = await cache.match(cacheKey);
   if (cached) {
     return new Response(cached.body, {
@@ -151,6 +152,10 @@ function badRequest() {
   return NextResponse.json({ error: "Invalid media ref" }, { status: 400 });
 }
 
+function forbidden() {
+  return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+}
+
 async function serveFileObject(
   input: unknown,
   request: Request,
@@ -158,7 +163,6 @@ async function serveFileObject(
 ) {
   const source = normalizeNotionFileSource(input);
   if (!source) return notFound();
-  if (source.type === "external") return mediaRedirect(source.url);
   if (options?.redirectNotionHosted) return mediaRedirect(source.url);
   return proxyNotionHostedFile(source.url, request);
 }
@@ -207,16 +211,20 @@ async function proxyNotionHostedFile(url: string, request: Request) {
     outputFormat = "image/webp";
   }
 
-  if (isImage && !range && outputFormat && workerEnv.IMAGES) {
+  const platform = getRuntimePlatform();
+  const imageTransformer = platform.imageTransformer;
+  if (isImage && !range && outputFormat && imageTransformer) {
     const r2Key = notionMediaR2KeyForUrl(urlObj, variant);
 
     try {
-      const result = await workerEnv.IMAGES.input(upstream.body)
-        .transform({ width })
-        .output({ format: outputFormat, quality });
+      const result = await imageTransformer.transform(upstream.body, {
+        width,
+        format: outputFormat,
+        quality,
+      });
       const transformed = result.response();
       const headers = new Headers(transformed.headers);
-      headers.set("Content-Type", result.contentType());
+      headers.set("Content-Type", result.contentType);
       headers.set("Cache-Control", cacheControl(request));
       headers.set("Vary", "Accept");
       headers.set("X-Notion-Media-Branch", "transformed");
@@ -224,15 +232,13 @@ async function proxyNotionHostedFile(url: string, request: Request) {
       headers.set("X-Optimized-Width", String(width));
       headers.set("X-Optimized-Quality", String(quality));
 
-      if (transformed.body && r2Key && workerEnv.ASSETS_BUCKET) {
+      if (transformed.body && r2Key && platform.objectStorage) {
         const [clientBody, r2Body] = transformed.body.tee();
         getRequestExecutionContext()?.waitUntil(
-          workerEnv.ASSETS_BUCKET.put(r2Key, r2Body, {
-            httpMetadata: {
-              contentType: result.contentType(),
-              cacheControl: "public, max-age=31536000, immutable",
-            },
-            customMetadata: {
+          platform.objectStorage.put(r2Key, r2Body, {
+            contentType: result.contentType,
+            cacheControl: "public, max-age=31536000, immutable",
+            metadata: {
               source: "notion",
               cachedAt: new Date().toISOString(),
               width: String(width),
@@ -297,9 +303,11 @@ async function loadMedia(_request: Request, ref: string[]) {
     const block = (await client.blocks.retrieve({
       block_id: ref[1],
     })) as NotionBlock;
+    if (block.type === "video") {
+      return forbidden();
+    }
     return serveFileObject(fileObjectForMediaBlock(block), _request, {
       redirectNotionHosted:
-        block.type === "video" ||
         block.type === "audio" ||
         block.type === "pdf" ||
         block.type === "file",

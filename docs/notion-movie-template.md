@@ -51,6 +51,48 @@ Legacy fallback:
 
 - `下载地址` - rich text URL
 
+## Multilingual Translation Data Source
+
+For production multilingual content, keep the current movie data source as the
+canonical movie entity and create a second `电影翻译` data source for localized
+text. Each translation row points back to one movie through a Notion relation.
+
+Current translation data source:
+
+- `电影翻译` database ID: `c9127234-ad6d-487a-a7d5-2d8f57b9ccb4`
+- `电影翻译` data source ID: `0a98baad-7d0b-451a-ac83-34f7b7c4b53b`
+
+Run a dry run first:
+
+```bash
+node scripts/notion-create-movie-translations.mjs
+```
+
+Then create the data source:
+
+```bash
+node scripts/notion-create-movie-translations.mjs --apply
+```
+
+The script reads `NOTION_TOKEN`, `NOTION_MOVIES_DATA_SOURCE_ID`, and optional
+`NOTION_API_BASE_URL` from the shell or `.dev.vars`. It creates these fields:
+
+- `标题` - title
+- `电影` - relation to the movie data source
+- `语言` - select, such as `zh-CN` or `en-US`
+- `Slug` - rich text
+- `导演显示` - rich text
+- `演员显示` - rich text
+- `剧情简介` - rich text
+- `类型显示` - multi-select
+- `SEO Title` - rich text
+- `SEO Description` - rich text
+- `翻译状态` - select
+- `已发布` - checkbox
+
+The relation is configured as a dual-property relation, so the movie data source
+gets a synced `翻译版本` relation property.
+
 Page body media:
 
 - Add Notion video, image, file, PDF, audio, embed, and rich text blocks inside

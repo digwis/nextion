@@ -22,7 +22,7 @@ export function PublicCoverImage({
   variant = "detail",
 }: Props) {
   const image = buildResponsiveImageAttrs(src, sizes, { variant });
-  const loading = getCoverImageLoading(index);
+  const loading = getCoverImageLoading(index, variant);
 
   return (
     // eslint-disable-next-line @next/next/no-img-element
@@ -35,6 +35,7 @@ export function PublicCoverImage({
       loading={loading.loading}
       fetchPriority={loading.fetchPriority}
       decoding="async"
+      referrerPolicy="no-referrer"
     />
   );
 }

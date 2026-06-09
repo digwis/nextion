@@ -13,7 +13,7 @@ const nextConfig: NextConfig = {
           {
             key: "Cache-Control",
             value:
-              "public, s-maxage=120, stale-while-revalidate=600",
+              "public, s-maxage=60, stale-while-revalidate=300",
           },
         ],
       },
@@ -23,27 +23,67 @@ const nextConfig: NextConfig = {
           {
             key: "Cache-Control",
             value:
-              "public, s-maxage=120, stale-while-revalidate=600",
+              "public, s-maxage=60, stale-while-revalidate=300",
           },
         ],
       },
       {
-        source: "/movies",
+        source: "/:locale/movies",
         headers: [
           {
             key: "Cache-Control",
             value:
-              "public, s-maxage=120, stale-while-revalidate=600",
+              "public, s-maxage=60, stale-while-revalidate=300",
           },
         ],
       },
       {
-        source: "/movies/:id",
+        source: "/:locale/movies/:slug",
         headers: [
           {
             key: "Cache-Control",
             value:
-              "public, s-maxage=120, stale-while-revalidate=600",
+              "public, s-maxage=60, stale-while-revalidate=300",
+          },
+        ],
+      },
+      {
+        source: "/api/posts",
+        headers: [
+          {
+            key: "Cache-Control",
+            value:
+              "public, s-maxage=60, stale-while-revalidate=300",
+          },
+        ],
+      },
+      {
+        source: "/api/posts/:slug",
+        headers: [
+          {
+            key: "Cache-Control",
+            value:
+              "public, s-maxage=60, stale-while-revalidate=300",
+          },
+        ],
+      },
+      {
+        source: "/api/movies",
+        headers: [
+          {
+            key: "Cache-Control",
+            value:
+              "public, s-maxage=60, stale-while-revalidate=300",
+          },
+        ],
+      },
+      {
+        source: "/api/movies/:id",
+        headers: [
+          {
+            key: "Cache-Control",
+            value:
+              "public, s-maxage=60, stale-while-revalidate=300",
           },
         ],
       },

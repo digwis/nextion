@@ -1,10 +1,10 @@
 // GET /api/health - 健康检查端点
 // 用于监控、容器编排、load balancer 健康探测
-// 顺便验证 D1 连接是否正常
+// 顺便验证 SQL database adapter 连接是否正常
 
 import { NextResponse } from "next/server";
 import { getAllPosts } from "@/lib/posts";
-import { workerEnv } from "@/lib/env";
+import { getDatabase } from "@/lib/platform/current";
 import { runSchemaHealthChecks } from "@/lib/schema-guard.js";
 
 export const dynamic = "force-dynamic";
@@ -26,7 +26,7 @@ export async function GET() {
   }
 
   try {
-    const schema = await runSchemaHealthChecks(workerEnv.DB);
+    const schema = await runSchemaHealthChecks(getDatabase());
     schemaOk = schema.ok;
     schemaMissing = schema.missing;
     if (schema.errors.length > 0) {

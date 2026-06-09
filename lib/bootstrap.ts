@@ -10,6 +10,7 @@ import { workerEnv } from "./env";
 import { getAppSettings } from "./settings";
 import { hashPassword } from "./passwords";
 import { getUserByEmail } from "./users";
+import { getDatabase } from "./platform/current";
 
 function normalizeEmail(email: string): string {
   return email.trim().toLowerCase();
@@ -26,7 +27,7 @@ export async function ensureAdminBootstrap(): Promise<void> {
     // 首次启动：用管理员密码（ADMIN_PASSWORD）作为初始密码
     const adminPwd = env.ADMIN_PASSWORD || "vinext-admin-2026";
     const passwordHash = await hashPassword(adminPwd);
-    await env.DB.prepare(
+    await getDatabase().prepare(
       `INSERT INTO users (
         email, password_hash, email_verified, role, last_seen_at
       ) VALUES (?, ?, 1, 'admin', datetime('now'))`
@@ -37,7 +38,7 @@ export async function ensureAdminBootstrap(): Promise<void> {
   }
 
   if (existing.role !== "admin" || existing.email_verified !== 1) {
-    await env.DB.prepare(
+    await getDatabase().prepare(
       `UPDATE users
           SET role = 'admin', email_verified = 1
         WHERE email = ?`

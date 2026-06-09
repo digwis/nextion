@@ -1,11 +1,11 @@
-// lib/storage.ts - R2 文件上传 / 列出 / 删除 helpers
-// 用法：env.ASSETS_BUCKET 是 wrangler.jsonc 里 r2_buckets.binding 的名字
+// lib/storage.ts - 对象存储文件上传 / 列出 / 删除 helpers
+// Cloudflare 运行时使用 R2。
 //
 // 文件命名：<随机UUID>.<ext>（防止覆盖 + 防盗链）
 // 公网访问：暂时用 worker 自己的 /api/files/[key] 代理（避免公开 bucket 的复杂性）
 // 如果想用公开 R2 bucket（更快）：把 bucket 设成 public，加 custom domain
 
-import { workerEnv } from "./env";
+import { getRuntimePlatform } from "./platform/current";
 
 export type UploadResult = {
   key: string;
@@ -47,9 +47,9 @@ export async function uploadFile(
   file: File,
   prefix = "uploads"
 ): Promise<UploadResult> {
-  const env = workerEnv;
-  if (!env.ASSETS_BUCKET) {
-    throw new Error("R2 bucket binding not configured");
+  const storage = getRuntimePlatform().objectStorage;
+  if (!storage) {
+    throw new Error("Object storage binding not configured");
   }
   if (file.size > MAX_SIZE) {
     throw new Error(`File too large: ${file.size} bytes (max ${MAX_SIZE})`);
@@ -65,13 +65,11 @@ export async function uploadFile(
   const date = new Date().toISOString().slice(0, 10);
   const key = `${prefix}/${date}/${rand}.${ext}`;
 
-  // 写入 R2（自带 content-type + immutable cache）
-  await env.ASSETS_BUCKET.put(key, file, {
-    httpMetadata: {
-      contentType: file.type,
-      cacheControl: "public, max-age=31536000, immutable",
-    },
-    customMetadata: {
+  // 写入对象存储（自带 content-type + immutable cache）。
+  await storage.put(key, file, {
+    contentType: file.type,
+    cacheControl: "public, max-age=31536000, immutable",
+    metadata: {
       originalName: file.name.slice(0, 100),
       uploadedAt: new Date().toISOString(),
     },
@@ -89,19 +87,19 @@ export async function uploadFile(
 }
 
 export async function deleteFile(key: string): Promise<void> {
-  const env = workerEnv;
-  if (!env.ASSETS_BUCKET) return;
-  await env.ASSETS_BUCKET.delete(key);
+  const storage = getRuntimePlatform().objectStorage;
+  if (!storage) return;
+  await storage.delete(key);
 }
 
 export async function listFiles(prefix = "uploads", limit = 50) {
-  const env = workerEnv;
-  if (!env.ASSETS_BUCKET) return [];
-  const listed = await env.ASSETS_BUCKET.list({ prefix, limit });
-  return listed.objects.map((o: R2Object) => ({
-    key: o.key,
-    size: o.size,
-    uploaded: o.uploaded.toISOString(),
-    url: buildAssetUrl("files", o.key),
+  const storage = getRuntimePlatform().objectStorage;
+  if (!storage) return [];
+  const listed = await storage.list({ prefix, limit });
+  return listed.map((object) => ({
+    key: object.key,
+    size: object.size,
+    uploaded: object.uploaded.toISOString(),
+    url: buildAssetUrl("files", object.key),
   }));
 }

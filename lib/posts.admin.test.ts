@@ -4,8 +4,8 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const projectRoot = path.resolve(__dirname, "..");
+const currentDir = path.dirname(fileURLToPath(import.meta.url));
+const projectRoot = path.resolve(currentDir, "..");
 const adminNewPagePath = path.join(projectRoot, "app/admin/new/page.tsx");
 const adminEditPagePath = path.join(projectRoot, "app/admin/[slug]/edit/page.tsx");
 

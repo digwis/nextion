@@ -61,19 +61,19 @@ test("buildResponsiveImageAttrs returns the original src for non-optimizable ima
   assert.equal(attrs.srcSet, undefined);
 });
 
-test("getCoverImageLoading marks above-the-fold cards as eager and high priority", () => {
+test("getCoverImageLoading marks the first cover as eager and high priority", () => {
   assert.deepEqual(getCoverImageLoading(0), {
-    loading: "eager",
-    fetchPriority: "high",
-  });
-  assert.deepEqual(getCoverImageLoading(2), {
     loading: "eager",
     fetchPriority: "high",
   });
 });
 
-test("getCoverImageLoading keeps later cards lazy", () => {
-  assert.deepEqual(getCoverImageLoading(3), {
+test("getCoverImageLoading keeps later covers lazy", () => {
+  assert.deepEqual(getCoverImageLoading(1), {
+    loading: "lazy",
+    fetchPriority: "auto",
+  });
+  assert.deepEqual(getCoverImageLoading(3, "list"), {
     loading: "lazy",
     fetchPriority: "auto",
   });

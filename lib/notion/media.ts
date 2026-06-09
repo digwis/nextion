@@ -92,8 +92,7 @@ export function coverImageUrlForPage(
     page.properties?.[coverPropertyName]
   );
   const propertySource = normalizeNotionFileSource(propertyFile);
-  if (propertySource?.type === "external") return propertySource.url;
-  if (propertySource?.type === "file") {
+  if (propertySource) {
     return appendVersion(
       notionPagePropertyMediaPath(page.id, coverPropertyName),
       page.last_edited_time
@@ -101,8 +100,7 @@ export function coverImageUrlForPage(
   }
 
   const coverSource = normalizeNotionFileSource(pickPageCoverFile(page));
-  if (coverSource?.type === "external") return coverSource.url;
-  if (coverSource?.type === "file") {
+  if (coverSource) {
     return appendVersion(notionPageCoverMediaPath(page.id), page.last_edited_time);
   }
 
@@ -129,9 +127,26 @@ export function fileObjectForMediaBlock(block: NotionBlock): unknown | null {
 export function mediaUrlForBlock(block: NotionBlock): string | null {
   const source = normalizeNotionFileSource(fileObjectForMediaBlock(block));
   if (!source) return null;
-  return source.type === "external"
-    ? source.url
-    : appendVersion(notionBlockMediaPath(block.id), blockVersion(block));
+  if (source.type === "external" && block.type !== "image") {
+    return source.url;
+  }
+  return appendVersion(notionBlockMediaPath(block.id), blockVersion(block));
+}
+
+export function firstImageUrlFromBlocks(blocks: NotionBlock[]): string | null {
+  for (const block of blocks) {
+    if (block.type === "image") {
+      const imageUrl = mediaUrlForBlock(block);
+      if (imageUrl) return imageUrl;
+    }
+
+    const nested = block.children?.length
+      ? firstImageUrlFromBlocks(block.children)
+      : null;
+    if (nested) return nested;
+  }
+
+  return null;
 }
 
 export function publicMediaBlockForApi(block: NotionBlock): NotionBlock {
@@ -143,13 +158,19 @@ export function publicMediaBlockForApi(block: NotionBlock): NotionBlock {
     return children ? { ...block, children } : { ...block };
   }
 
+  const path = appendVersion(notionBlockMediaPath(block.id), blockVersion(block));
   const publicValue =
     source.type === "external"
-      ? value
+      ? block.type === "image"
+        ? {
+            ...(value as Record<string, unknown>),
+            external: { url: path },
+          }
+        : value
       : {
           ...(value as Record<string, unknown>),
           file: {
-            url: appendVersion(notionBlockMediaPath(block.id), blockVersion(block)),
+            url: path,
             expiry_time: null,
           },
         };
@@ -157,6 +178,45 @@ export function publicMediaBlockForApi(block: NotionBlock): NotionBlock {
   return {
     ...block,
     [block.type]: publicValue,
+    ...(children ? { children } : {}),
+  };
+}
+
+export function gatedMediaBlockForApi(
+  block: NotionBlock,
+  options?: { movieId?: string }
+): NotionBlock {
+  const value = block[block.type];
+  const source = normalizeNotionFileSource(value);
+  const children = block.children?.map((child) =>
+    gatedMediaBlockForApi(child, options)
+  );
+
+  if (block.type !== "video" || !source) {
+    const publicBlock = publicMediaBlockForApi(block);
+    return children ? { ...publicBlock, children } : publicBlock;
+  }
+
+  const gatedValue: Record<string, unknown> = {
+    ...(value as Record<string, unknown>),
+    gated: true,
+    access_url: options?.movieId
+      ? `/api/movies/${encodePathPart(options.movieId)}/video/${encodePathPart(block.id)}`
+      : null,
+  };
+
+  if (source.type === "external") {
+    gatedValue.external = { url: null };
+  } else {
+    gatedValue.file = {
+      url: null,
+      expiry_time: null,
+    };
+  }
+
+  return {
+    ...block,
+    video: gatedValue,
     ...(children ? { children } : {}),
   };
 }

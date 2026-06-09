@@ -58,14 +58,14 @@ export async function saveGoogleSettingsAction(formData: FormData): Promise<void
     clientSecret,
   });
 
-  revalidatePath("/admin/settings");
+  await revalidatePath("/admin/settings");
   redirect("/admin/settings?saved=google");
 }
 
 export async function disableGoogleSettingsAction(): Promise<void> {
   await requireAdminOrRedirect();
   await clearGoogleOAuthConfig();
-  revalidatePath("/admin/settings");
+  await revalidatePath("/admin/settings");
   redirect("/admin/settings?saved=disabled");
 }
 
@@ -74,7 +74,7 @@ export async function saveSiteTitleAction(formData: FormData): Promise<void> {
   const title = readText(formData, "site_title").slice(0, 80);
   if (!title) redirect("/admin/settings?error=站点名称不能为空");
   await updateSiteTitle(title);
-  revalidatePath("/admin/settings");
+  await revalidatePath("/admin/settings");
   redirect("/admin/settings?saved=title");
 }
 
@@ -107,19 +107,23 @@ export async function saveTurnstileSettingsAction(
   }
 
   await updateTurnstileConfig({ enabled, siteKey });
-  revalidatePath("/admin/settings");
-  revalidatePath("/login");
-  revalidatePath("/register");
-  revalidatePath("/forgot-password");
+  await Promise.all([
+    revalidatePath("/admin/settings"),
+    revalidatePath("/login"),
+    revalidatePath("/register"),
+    revalidatePath("/forgot-password"),
+  ]);
   redirect("/admin/settings?saved=turnstile");
 }
 
 export async function disableTurnstileSettingsAction(): Promise<void> {
   await requireAdminOrRedirect();
   await disableTurnstileConfig();
-  revalidatePath("/admin/settings");
-  revalidatePath("/login");
-  revalidatePath("/register");
-  revalidatePath("/forgot-password");
+  await Promise.all([
+    revalidatePath("/admin/settings"),
+    revalidatePath("/login"),
+    revalidatePath("/register"),
+    revalidatePath("/forgot-password"),
+  ]);
   redirect("/admin/settings?saved=turnstile_disabled");
 }

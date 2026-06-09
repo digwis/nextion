@@ -2,7 +2,16 @@
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { ArrowRight, BookOpen, Code, Film, Shield } from "lucide-react";
+import { contentModels } from "@/lib/content/models";
+import { siteConfig } from "@/lib/site/config";
+import {
+  ArrowRight,
+  BookOpen,
+  Code,
+  Database,
+  Film,
+  Shield,
+} from "lucide-react";
 import { ThemeToggle } from "@/components/theme-toggle";
 
 export default function Home() {
@@ -15,35 +24,33 @@ export default function Home() {
       <main className="container mx-auto flex max-w-3xl flex-col items-center px-4 py-16 text-center">
         <div className="mb-6 inline-flex items-center rounded-full border bg-muted/50 px-3 py-1 text-xs text-muted-foreground">
           <span className="mr-2 h-1.5 w-1.5 rounded-full bg-emerald-500" />
-          RSC + Cloudflare Workers + D1
+          RSC + Cloudflare Workers + D1 + Notion
         </div>
 
         <h1 className="text-5xl font-bold tracking-tight md:text-6xl">
-          vinext Blog
+          {siteConfig.name}
         </h1>
         <p className="mt-6 max-w-xl text-lg text-muted-foreground">
-          A minimal blog running on{" "}
-          <span className="font-semibold text-foreground">vinext</span> · Vite
-          + React 19 + Cloudflare edge, with blog content backed by Notion.
+          {siteConfig.description}
         </p>
 
         <div className="mt-10 flex flex-wrap items-center justify-center gap-3">
-          <Button asChild size="lg">
-            <Link href="/blog">
-              <BookOpen className="mr-2 h-4 w-4" />
-              Read the blog
-              <ArrowRight className="ml-2 h-4 w-4" />
-            </Link>
-          </Button>
-          <Button asChild variant="secondary" size="lg">
-            <Link href="/movies">
-              <Film className="mr-2 h-4 w-4" />
-              电影数据库
-              <ArrowRight className="ml-2 h-4 w-4" />
-            </Link>
-          </Button>
+          {siteConfig.navigation.main.map((item, index) => (
+            <Button
+              key={item.href}
+              asChild
+              size="lg"
+              variant={index === 0 ? "default" : "secondary"}
+            >
+              <Link href={item.href}>
+                <ContentNavIcon modelId={item.modelId} />
+                {item.label}
+                <ArrowRight className="ml-2 h-4 w-4" />
+              </Link>
+            </Button>
+          ))}
           <Button asChild variant="outline" size="lg">
-            <Link href="/login">
+            <Link href={siteConfig.navigation.adminHref}>
               <Shield className="mr-2 h-4 w-4" />
               Admin
             </Link>
@@ -58,11 +65,11 @@ export default function Home() {
             />
             <Feature
               title="Notion Content"
-              desc="Public posts come from a Notion data source and render rich article blocks."
+              desc="Content models register Notion fields, routes, and capabilities in one place."
             />
             <Feature
-              title="Movie Catalog"
-              desc="Film metadata is read from Notion and shown as a public catalog with detail pages."
+              title="AI-Customized UI"
+              desc={`${contentModels.length} content sources are registered. New domains can be shaped directly with Notion CLI, React, Tailwind, and shadcn/ui.`}
             />
             <Feature
               title="Admin Panel"
@@ -83,6 +90,12 @@ export default function Home() {
       </main>
     </div>
   );
+}
+
+function ContentNavIcon({ modelId }: { modelId?: string }) {
+  if (modelId === "blog") return <BookOpen className="mr-2 h-4 w-4" />;
+  if (modelId === "movies") return <Film className="mr-2 h-4 w-4" />;
+  return <Database className="mr-2 h-4 w-4" />;
 }
 
 function Feature({ title, desc }: { title: string; desc: string }) {

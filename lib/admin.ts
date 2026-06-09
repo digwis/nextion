@@ -2,9 +2,9 @@
 // 设计：固定 admin_email = app_settings.admin_email（默认 zhaofilms@gmail.com）
 // 任何登录方式下，邮箱匹配即视为管理员。
 
-import { workerEnv } from "./env";
 import { getAppSettings } from "./settings";
 import { getUserByEmail } from "./users";
+import { getDatabase } from "./platform/current";
 
 export const DEFAULT_ADMIN_EMAIL = "zhaofilms@gmail.com";
 
@@ -23,10 +23,9 @@ export async function isAdminEmail(email: string): Promise<boolean> {
  * 实际上是把 users.role 置为 'admin'，并清空其它冲突状态。
  */
 export async function ensureAdminUser(email: string): Promise<void> {
-  const env = workerEnv;
   const normalized = normalizeEmail(email);
   if (!(await isAdminEmail(normalized))) return;
-  await env.DB.prepare(
+  await getDatabase().prepare(
     `UPDATE users SET role = 'admin' WHERE email = ?`
   ).bind(normalized).run();
 }

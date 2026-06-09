@@ -1,16 +1,26 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import Link from "next/link";
+import { LocaleSwitcher } from "@/components/LocaleSwitcher";
 import { MovieBlocksPanel } from "@/components/MovieBlocksPanel";
 import { MovieDownloadPanel } from "@/components/MovieDownloadPanel";
 import { PublicCoverImage } from "@/components/PublicCoverImage";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { blogContentModel, movieContentModel } from "@/lib/content/models";
 import {
-  getNotionMovieRouteIds,
-  getPublicNotionMovieMetaByRouteId,
-} from "@/lib/notion/movies";
+  isAppLocale,
+  localizedMovieDetailPath,
+  localizedMovieListPath,
+  type AppLocale,
+} from "@/lib/i18n/config";
+import { getMovieUiMessages } from "@/lib/i18n/messages";
+import {
+  getAlternateLocalizedMovieSlugs,
+  getLocalizedPublicMovieMetaBySlug,
+} from "@/lib/notion/movie-localized";
+import { getLocalizedMovieSlugParams } from "@/lib/notion/movie-translations";
 import {
   ArrowLeft,
   BookOpen,
@@ -23,28 +33,40 @@ import {
 } from "lucide-react";
 
 type Props = {
-  params: Promise<{ id: string }>;
+  params: Promise<{ locale: string; slug: string }>;
 };
 
-export const revalidate = 300;
+export const revalidate = 60;
 export const dynamicParams = true;
 
 export async function generateStaticParams() {
-  const ids = await getNotionMovieRouteIds();
-  return ids.map((id) => ({ id }));
+  return getLocalizedMovieSlugParams();
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const { id } = await params;
-  const movie = await getPublicNotionMovieMetaByRouteId(id);
+  const { locale, slug } = await params;
+  if (!isAppLocale(locale)) return { title: "Not found" };
+
+  const movie = await getLocalizedPublicMovieMetaBySlug(locale as AppLocale, slug);
   if (!movie) return { title: "Not found" };
 
+  const alternates = await getAlternateLocalizedMovieSlugs(
+    movie.pageId,
+    locale as AppLocale
+  );
+
   return {
-    title: movie.title,
-    description: movie.summary,
+    title: movie.seoTitle || movie.title,
+    description: movie.seoDescription || movie.summary,
+    alternates: {
+      languages: Object.fromEntries([
+        [locale, localizedMovieDetailPath(locale as AppLocale, movie.slug)],
+        ...alternates.map((alternate) => [alternate.locale, alternate.href]),
+      ]),
+    },
     openGraph: {
-      title: movie.title,
-      description: movie.summary,
+      title: movie.seoTitle || movie.title,
+      description: movie.seoDescription || movie.summary,
       type: "article",
       publishedTime: movie.releaseDate,
       images: movie.coverImage ? [{ url: movie.coverImage }] : undefined,
@@ -73,33 +95,41 @@ function Fact({
   );
 }
 
-export default async function MovieDetailPage({ params }: Props) {
-  const { id } = await params;
-  const movie = await getPublicNotionMovieMetaByRouteId(id);
+export default async function LocalizedMovieDetailPage({ params }: Props) {
+  const { locale, slug } = await params;
+  if (!isAppLocale(locale)) notFound();
+
+  const appLocale = locale as AppLocale;
+  const messages = getMovieUiMessages(appLocale);
+  const movie = await getLocalizedPublicMovieMetaBySlug(appLocale, slug);
   if (!movie) notFound();
+
+  const alternates = await getAlternateLocalizedMovieSlugs(movie.pageId, appLocale);
+  const listPath = localizedMovieListPath(appLocale);
 
   return (
     <div className="min-h-screen bg-background">
       <header className="border-b">
         <div className="container mx-auto flex items-center justify-between p-4">
           <Link
-            href="/movies"
+            href={listPath}
             className="inline-flex items-center text-sm font-medium hover:underline"
           >
             <Film className="mr-2 h-4 w-4" />
-            电影数据库
+            {movieContentModel.ui.listTitle}
           </Link>
           <div className="flex items-center gap-2">
+            <LocaleSwitcher locale={appLocale} detailAlternates={alternates} />
             <Button asChild variant="ghost" size="sm">
-              <Link href="/blog">
+              <Link href={blogContentModel.routes.listPath}>
                 <BookOpen className="mr-1 h-3 w-3" />
-                Blog
+                {blogContentModel.ui.navLabel}
               </Link>
             </Button>
             <Button asChild variant="ghost" size="sm">
               <Link href="/login">
                 <Shield className="mr-1 h-3 w-3" />
-                Admin
+                {messages.admin}
               </Link>
             </Button>
             <ThemeToggle />
@@ -109,9 +139,9 @@ export default async function MovieDetailPage({ params }: Props) {
 
       <main className="container mx-auto max-w-5xl px-4 py-10">
         <Button asChild variant="ghost" size="sm" className="mb-6">
-          <Link href="/movies">
+          <Link href={listPath}>
             <ArrowLeft className="mr-1 h-3 w-3" />
-            返回电影列表
+            {messages.backToList}
           </Link>
         </Button>
 
@@ -148,7 +178,7 @@ export default async function MovieDetailPage({ params }: Props) {
               </h1>
 
               <p className="mt-5 text-lg leading-8 text-muted-foreground">
-                {movie.summary || "暂无剧情简介。"}
+                {movie.summary || messages.noSummary}
               </p>
 
               <div className="mt-6 flex flex-wrap gap-2">
@@ -156,7 +186,7 @@ export default async function MovieDetailPage({ params }: Props) {
                   <Button asChild variant="outline">
                     <a href={movie.sourceUrl} target="_blank" rel="noreferrer">
                       <ExternalLink className="h-4 w-4" />
-                      Notion
+                      {messages.notionLink}
                     </a>
                   </Button>
                 )}
@@ -167,17 +197,17 @@ export default async function MovieDetailPage({ params }: Props) {
           <div className="mt-8 grid gap-4 md:grid-cols-3">
             <Fact
               icon={<CalendarDays className="h-3.5 w-3.5" />}
-              label="上映时间"
+              label={messages.releaseDate}
               value={movie.releaseDate}
             />
             <Fact
               icon={<UserRound className="h-3.5 w-3.5" />}
-              label="导演"
+              label={messages.director}
               value={movie.director}
             />
             <Fact
               icon={<UsersRound className="h-3.5 w-3.5" />}
-              label="演员"
+              label={messages.actors}
               value={movie.actors}
             />
           </div>

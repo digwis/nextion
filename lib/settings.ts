@@ -1,8 +1,9 @@
 // lib/settings.ts - 读取和更新后台系统设置（单管理员模型）
-// 数据保存在 D1 表 app_settings，目前固定为 1 行。
+// 数据保存在 SQL 表 app_settings，目前固定为 1 行。
 
 import { cache } from "react";
 import { workerEnv } from "./env";
+import { getDatabase } from "./platform/current";
 import {
   buildTurnstilePublicConfig,
   DEFAULT_TURNSTILE_PUBLIC_CONFIG,
@@ -53,8 +54,7 @@ function rowToSettings(r: Row): AppSettings {
 }
 
 const getAppSettingsCached = cache(async (): Promise<AppSettings> => {
-  const env = workerEnv;
-  const row = await env.DB.prepare(
+  const row = await getDatabase().prepare(
     `SELECT site_title, google_enabled, google_client_id, google_client_secret,
             google_updated_at, turnstile_enabled, turnstile_site_key,
             turnstile_updated_at, admin_email, updated_at
@@ -107,9 +107,8 @@ export async function updateTurnstileConfig(input: {
   enabled: boolean;
   siteKey: string;
 }): Promise<void> {
-  const env = workerEnv;
   const enabled = input.enabled ? 1 : 0;
-  await env.DB.prepare(
+  await getDatabase().prepare(
     `UPDATE app_settings
         SET turnstile_enabled = ?,
             turnstile_site_key = ?,
@@ -122,8 +121,7 @@ export async function updateTurnstileConfig(input: {
 }
 
 export async function disableTurnstileConfig(): Promise<void> {
-  const env = workerEnv;
-  await env.DB.prepare(
+  await getDatabase().prepare(
     `UPDATE app_settings
         SET turnstile_enabled = 0,
             turnstile_updated_at = datetime('now'),
@@ -153,9 +151,8 @@ export async function updateGoogleOAuthConfig(input: {
   clientId: string;
   clientSecret: string;
 }): Promise<void> {
-  const env = workerEnv;
   const enabled = input.enabled ? 1 : 0;
-  await env.DB.prepare(
+  await getDatabase().prepare(
     `UPDATE app_settings
         SET google_enabled = ?,
             google_client_id = ?,
@@ -169,8 +166,7 @@ export async function updateGoogleOAuthConfig(input: {
 }
 
 export async function clearGoogleOAuthConfig(): Promise<void> {
-  const env = workerEnv;
-  await env.DB.prepare(
+  await getDatabase().prepare(
     `UPDATE app_settings
         SET google_enabled = 0,
             google_client_id = NULL,
@@ -182,8 +178,7 @@ export async function clearGoogleOAuthConfig(): Promise<void> {
 }
 
 export async function updateSiteTitle(title: string): Promise<void> {
-  const env = workerEnv;
-  await env.DB.prepare(
+  await getDatabase().prepare(
     `UPDATE app_settings SET site_title = ?, updated_at = datetime('now') WHERE id = 1`
   )
     .bind(title)

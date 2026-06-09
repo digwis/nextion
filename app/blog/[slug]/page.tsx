@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import NotionBlockRenderer from "@/components/NotionBlockRenderer";
 import { getNotionPostBySlug, getNotionPostSlugs } from "@/lib/notion/posts";
+import { blogContentModel, movieContentModel } from "@/lib/content/models";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
@@ -14,9 +15,8 @@ type Props = {
   params: Promise<{ slug: string }>;
 };
 
-// 边缘节点 ISR：所有 published 文章每 300s 重新生成一次。
-// 配合管理员审核后 revalidatePath('/blog') / revalidatePath(`/blog/${slug}`) 立即失效。
-export const revalidate = 300;
+// 边缘 ISR：每 60s 重新生成。配合 revalidatePath('/blog') / revalidatePath(`/blog/${slug}`) 立即失效。
+export const revalidate = 60;
 // 允许运行时新发现的 slug 自动进入 ISR 缓存（不再 fallback 到动态渲染）
 export const dynamicParams = true;
 
@@ -59,13 +59,13 @@ export default async function BlogPostPage({ params }: Props) {
             className="inline-flex items-center text-sm font-medium hover:underline"
           >
             <BookOpen className="mr-2 h-4 w-4" />
-            vinext Blog
+            {blogContentModel.ui.listTitle}
           </Link>
           <div className="flex items-center gap-2">
             <Button asChild variant="ghost" size="sm">
-              <Link href="/movies">
+              <Link href={movieContentModel.routes.listPath}>
                 <Film className="mr-1 h-3 w-3" />
-                Movies
+                {movieContentModel.ui.navLabel}
               </Link>
             </Button>
             <Button asChild variant="ghost" size="sm">
@@ -81,9 +81,9 @@ export default async function BlogPostPage({ params }: Props) {
 
       <main className="container mx-auto max-w-2xl px-4 py-12">
         <Button asChild variant="ghost" size="sm" className="mb-6">
-          <Link href="/blog">
+          <Link href={blogContentModel.routes.listPath}>
             <ArrowLeft className="mr-1 h-3 w-3" />
-            Back to all posts
+            Back to {blogContentModel.ui.listTitle}
           </Link>
         </Button>
 

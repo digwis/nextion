@@ -1,16 +1,27 @@
-# vinext Notion Movie CMS
+# vinext Notion Content Foundation
 
-This project is a low-cost content site built with vinext, Next.js App Router,
-Cloudflare Workers, D1, R2, Cloudflare Images, and Notion.
+This project is a low-cost, Notion-powered copy starter built primarily for
+vinext on Cloudflare Workers, D1, R2, Cloudflare Images, and shadcn/ui. It keeps
+the app layer familiar to Next/App Router developers where practical, but the
+product direction is one vinext-first Cloudflare foundation, not a multi-runtime
+starter.
 
 ## Architecture
 
-- Notion is the editor-friendly CMS for posts and movies.
-- Cloudflare Workers serve the app and cache public HTML/JSON at the edge.
+- Notion is the editor-friendly CMS and content modeling surface.
+- `lib/content` registers the current Notion-backed content sources, fields,
+  routes, and runtime capabilities.
+- Cloudflare Workers serve the app; vinext CDN/data cache adapters handle public
+  page and route caching at the edge.
 - Cloudflare Images transforms Notion-hosted posters through `/api/notion/media`.
 - D1 stores users, sessions, app settings, and VIP roles.
 - R2 is available for uploaded app assets.
+- Public content mutations call `revalidatePath(...)` so vinext can purge CDN
+  cache entries for registered routes.
 - VIP download links stay behind `/api/movies/:id/download` and are never cached.
+- The runtime facade is Cloudflare-only: Workers for compute, D1 for SQL, R2
+  for object storage, Cloudflare Images for media transforms, and
+  `caches.default` for transformed Notion media caching.
 
 ## Notion Fields
 
@@ -35,6 +46,9 @@ Blog data source:
 
 See `docs/notion-movie-template.md` and `docs/notion-blog-template.md` for the
 full setup notes.
+
+See `docs/architecture/content-foundation.md` for the reusable foundation
+direction and adapter boundaries.
 
 ## Environment
 
@@ -69,6 +83,53 @@ Common public vars:
 npm install
 npm run dev:vinext
 ```
+
+## Custom Content And UI
+
+The intended workflow is to copy this starter, then let AI add, replace, or
+remove domain modules as code. Notion owns the content model and editing surface;
+the app owns presentation, public/private field mapping, search/filter UX, and
+domain-specific UI.
+
+The project intentionally does not include a JSON blueprint or UI preset layer.
+For a new domain, use Notion or a Notion CLI to inspect/create the data source,
+then let AI add the matching model, routes, API, tests, and
+React/Tailwind/shadcn UI as normal source code.
+
+The reusable foundation is the platform underneath that custom work:
+
+- Cloudflare Workers deployment through vinext.
+- D1-backed auth, sessions, settings, roles, and app data.
+- R2 uploads and stable Notion media proxy routes.
+- Notion token/config helpers, block rendering, media handling, and webhook
+  parsing.
+- Public cache invalidation utilities for registered content routes.
+- Reusable search/sort/filter helpers that can be adapted to each Notion domain.
+- Shared shadcn/ui primitives that can be edited per project.
+
+The currently registered content sources are visible in the admin UI at:
+
+```text
+/admin/content-models
+```
+
+That page is read-only. It displays model routes, Notion env names, field counts,
+and capabilities. It is a status view, not a low-code content builder.
+
+## Foundation Doctor
+
+Run the foundation doctor after changing runtime settings, Notion models, or
+deployment targets:
+
+```bash
+npm run foundation:doctor
+npm run foundation:doctor -- --json
+```
+
+The doctor checks Cloudflare bindings, required Notion environment variables,
+registered content models, and known setup gaps. It reads `wrangler.jsonc`,
+`.dev.vars`, `.env.local`, and the current process environment, but only prints
+variable names and status, never secret values.
 
 ## Test And Build
 

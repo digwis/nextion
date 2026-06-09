@@ -1,5 +1,5 @@
 // lib/env.ts - 集中获取 Cloudflare bindings
-// 用 cloudflare:workers 模块（workerd 内置），与 lib/posts.ts 风格一致
+// 用 cloudflare:workers 模块（workerd 内置），作为平台 adapter 的绑定入口
 
 /// <reference types="@cloudflare/workers-types" />
 import { env } from "cloudflare:workers";
@@ -9,6 +9,7 @@ export type AppEnv = {
   ASSETS: Fetcher;
   IMAGES: ImagesBinding;
   ASSETS_BUCKET?: R2Bucket;
+  CONTENT_CACHE?: KVNamespace;
   ADMIN_PASSWORD: string;
   ADMIN_EMAIL?: string;
   SITE_URL?: string;
@@ -28,6 +29,8 @@ export type AppEnv = {
   NOTION_DATA_SOURCE_ID?: string;
   /** Notion data source ID for the public movie catalog */
   NOTION_MOVIES_DATA_SOURCE_ID?: string;
+  /** Notion data source ID for localized movie copy */
+  NOTION_MOVIE_TRANSLATIONS_DATA_SOURCE_ID?: string;
   /** Optional Notion API base URL for tests or proxies */
   NOTION_API_BASE_URL?: string;
   /** Optional Notion edit URL for admin handoff screens */

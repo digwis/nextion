@@ -1,9 +1,9 @@
 // lib/users.ts - user persistence for Google OAuth and email/password auth
 
-import { workerEnv } from "./env";
 import { hashPassword, verifyPassword } from "./passwords";
 import { isAdminEmail } from "./admin";
 import { getAppSettings } from "./settings";
+import { getDatabase } from "./platform/current";
 import type { SessionUser } from "./session";
 
 export type UserRole = "user" | "vip" | "admin";
@@ -62,17 +62,17 @@ export async function upsertGoogleUser(input: {
   picture: string;
   googleSub: string;
 }): Promise<User> {
-  const env = workerEnv;
+  const db = getDatabase();
   const email = normalizeEmail(input.email);
 
-  const existing = await env.DB.prepare(
+  const existing = await db.prepare(
     `SELECT * FROM users WHERE google_sub = ? OR email = ? LIMIT 1`
   )
     .bind(input.googleSub, email)
     .first<User>();
 
   if (existing) {
-    await env.DB.prepare(
+    await db.prepare(
       `UPDATE users
        SET email = ?, name = ?, picture = ?, google_sub = ?, email_verified = 1,
            email_verify_token = NULL, email_verify_expires_at = NULL,
@@ -83,7 +83,7 @@ export async function upsertGoogleUser(input: {
       .run();
   } else {
     const role = await defaultRoleFor(email);
-    await env.DB.prepare(
+    await db.prepare(
       `INSERT INTO users (
         email, name, picture, google_sub, email_verified, role, last_seen_at
       ) VALUES (?, ?, ?, ?, 1, ?, datetime('now'))`
@@ -93,7 +93,7 @@ export async function upsertGoogleUser(input: {
   }
 
   if (await isAdminEmail(email)) {
-    await env.DB.prepare(
+    await db.prepare(
       `UPDATE users SET role = 'admin' WHERE email = ?`
     ).bind(email).run();
   }
@@ -110,7 +110,6 @@ export async function createEmailUser(input: {
   | { ok: true; user: User; verifyToken: string }
   | { ok: false; reason: "exists" }
 > {
-  const env = workerEnv;
   const email = normalizeEmail(input.email);
   const existing = await getUserByEmail(email);
   if (existing) {
@@ -122,7 +121,8 @@ export async function createEmailUser(input: {
   const verifyExpiresAt = new Date(Date.now() + 1000 * 60 * 60 * 24).toISOString();
 
   const role = await defaultRoleFor(email);
-  await env.DB.prepare(
+  const db = getDatabase();
+  await db.prepare(
     `INSERT INTO users (
       email, password_hash, email_verified, email_verify_token,
       email_verify_expires_at, role, last_seen_at
@@ -132,7 +132,7 @@ export async function createEmailUser(input: {
     .run();
 
   if (role === "admin") {
-    await env.DB.prepare(
+    await db.prepare(
       `UPDATE users SET role = 'admin' WHERE email = ?`
     ).bind(email).run();
   }
@@ -143,8 +143,7 @@ export async function createEmailUser(input: {
 }
 
 export async function verifyEmailUser(token: string): Promise<User | null> {
-  const env = workerEnv;
-  const user = await env.DB.prepare(
+  const user = await getDatabase().prepare(
     `SELECT * FROM users WHERE email_verify_token = ?`
   )
     .bind(token)
@@ -155,7 +154,7 @@ export async function verifyEmailUser(token: string): Promise<User | null> {
     return null;
   }
 
-  await env.DB.prepare(
+  await getDatabase().prepare(
     `UPDATE users
      SET email_verified = 1,
          email_verify_token = NULL,
@@ -175,7 +174,6 @@ export async function issueVerificationToken(
   | { ok: true; token: string; user: User }
   | { ok: false; reason: "not_found" | "already_verified" | "no_password" }
 > {
-  const env = workerEnv;
   const user = await getUserByEmail(email);
   if (!user) return { ok: false, reason: "not_found" };
   if (!user.password_hash) return { ok: false, reason: "no_password" };
@@ -184,7 +182,7 @@ export async function issueVerificationToken(
   const verifyToken = createRandomToken();
   const verifyExpiresAt = new Date(Date.now() + 1000 * 60 * 60 * 24).toISOString();
 
-  await env.DB.prepare(
+  await getDatabase().prepare(
     `UPDATE users
      SET email_verify_token = ?, email_verify_expires_at = ?
      WHERE id = ?`
@@ -203,7 +201,6 @@ export async function issuePasswordResetToken(
   | { ok: true; token: string; user: User }
   | { ok: false; reason: "not_found" | "no_password" | "unverified" }
 > {
-  const env = workerEnv;
   const user = await getUserByEmail(email);
   if (!user || !user.password_hash) {
     return { ok: false, reason: "not_found" };
@@ -215,7 +212,7 @@ export async function issuePasswordResetToken(
   const resetToken = createRandomToken();
   const resetExpiresAt = new Date(Date.now() + 1000 * 60 * 60).toISOString();
 
-  await env.DB.prepare(
+  await getDatabase().prepare(
     `UPDATE users
      SET password_reset_token = ?, password_reset_expires_at = ?
      WHERE id = ?`
@@ -235,8 +232,7 @@ export async function resetPasswordWithToken(input: {
   | { ok: true; user: User }
   | { ok: false; reason: "invalid" }
 > {
-  const env = workerEnv;
-  const user = await env.DB.prepare(
+  const user = await getDatabase().prepare(
     `SELECT * FROM users WHERE password_reset_token = ?`
   )
     .bind(input.token)
@@ -250,7 +246,7 @@ export async function resetPasswordWithToken(input: {
   }
 
   const passwordHash = await hashPassword(input.password);
-  await env.DB.prepare(
+  await getDatabase().prepare(
     `UPDATE users
      SET password_hash = ?,
          password_reset_token = NULL,
@@ -275,7 +271,6 @@ export async function changeUserPassword(input: {
   | { ok: true; user: User }
   | { ok: false; reason: "invalid" | "no_password" }
 > {
-  const env = workerEnv;
   const user = await getUserById(input.userId);
   if (!user || !user.password_hash) {
     return { ok: false, reason: "no_password" };
@@ -290,7 +285,7 @@ export async function changeUserPassword(input: {
   }
 
   const passwordHash = await hashPassword(input.newPassword);
-  await env.DB.prepare(
+  await getDatabase().prepare(
     `UPDATE users
      SET password_hash = ?,
          session_rev = session_rev + 1,
@@ -312,7 +307,6 @@ export async function authenticateEmailUser(input: {
   | { ok: true; user: User }
   | { ok: false; reason: "invalid" | "unverified" }
 > {
-  const env = workerEnv;
   const email = normalizeEmail(input.email);
   const user = await getUserByEmail(email);
   if (!user || !user.password_hash) {
@@ -327,7 +321,7 @@ export async function authenticateEmailUser(input: {
     return { ok: false, reason: "unverified" };
   }
 
-  await env.DB.prepare(
+  await getDatabase().prepare(
     `UPDATE users SET last_seen_at = datetime('now') WHERE id = ?`
   )
     .bind(user.id)
@@ -337,22 +331,19 @@ export async function authenticateEmailUser(input: {
 }
 
 export async function getUserByEmail(email: string): Promise<User | null> {
-  const env = workerEnv;
-  return await env.DB.prepare(`SELECT * FROM users WHERE email = ?`)
+  return await getDatabase().prepare(`SELECT * FROM users WHERE email = ?`)
     .bind(normalizeEmail(email))
     .first<User>();
 }
 
 export async function getUserById(id: number): Promise<User | null> {
-  const env = workerEnv;
-  return await env.DB.prepare(`SELECT * FROM users WHERE id = ?`)
+  return await getDatabase().prepare(`SELECT * FROM users WHERE id = ?`)
     .bind(id)
     .first<User>();
 }
 
 export async function listUsers(limit = 100): Promise<User[]> {
-  const env = workerEnv;
-  const { results } = await env.DB.prepare(
+  const { results } = await getDatabase().prepare(
     `SELECT * FROM users ORDER BY created_at DESC LIMIT ?`
   )
     .bind(limit)
@@ -363,8 +354,7 @@ export async function listUsers(limit = 100): Promise<User[]> {
 export async function listUsersWithPostCounts(
   limit = 100
 ): Promise<UserListItem[]> {
-  const env = workerEnv;
-  const { results } = await env.DB.prepare(
+  const { results } = await getDatabase().prepare(
     `SELECT u.*,
             (SELECT COUNT(*) FROM posts p WHERE p.owner_email = u.email) AS post_count
        FROM users u
@@ -378,10 +368,9 @@ export async function listUsersWithPostCounts(
 
 /** 递增 session_rev，使该用户所有已签发 cookie 立即失效。 */
 export async function revokeUserSessions(userId: number): Promise<boolean> {
-  const env = workerEnv;
   const user = await getUserById(userId);
   if (!user) return false;
-  await env.DB.prepare(
+  await getDatabase().prepare(
     `UPDATE users SET session_rev = session_rev + 1 WHERE id = ?`
   )
     .bind(userId)
@@ -396,14 +385,13 @@ export async function setUserRole(
   | { ok: true; user: User }
   | { ok: false; reason: "not_found" | "is_admin" }
 > {
-  const env = workerEnv;
   const user = await getUserById(userId);
   if (!user) return { ok: false, reason: "not_found" };
   if (await isAdminEmail(user.email)) {
     return { ok: false, reason: "is_admin" };
   }
 
-  await env.DB.prepare(
+  await getDatabase().prepare(
     `UPDATE users
         SET role = ?,
             last_seen_at = datetime('now')
@@ -421,7 +409,6 @@ export async function deleteUserAccount(userId: number): Promise<
   | { ok: true; email: string }
   | { ok: false; reason: "not_found" | "is_admin" }
 > {
-  const env = workerEnv;
   const user = await getUserById(userId);
   if (!user) return { ok: false, reason: "not_found" };
   if (await isAdminEmail(user.email)) {
@@ -431,11 +418,12 @@ export async function deleteUserAccount(userId: number): Promise<
   const settings = await getAppSettings();
   const adminEmail = settings.admin_email;
 
-  await env.DB.batch([
-    env.DB.prepare(
+  const db = getDatabase();
+  await db.batch([
+    db.prepare(
       `UPDATE posts SET owner_email = ? WHERE owner_email = ?`
     ).bind(adminEmail, user.email),
-    env.DB.prepare(`DELETE FROM users WHERE id = ?`).bind(userId),
+    db.prepare(`DELETE FROM users WHERE id = ?`).bind(userId),
   ]);
 
   return { ok: true, email: user.email };

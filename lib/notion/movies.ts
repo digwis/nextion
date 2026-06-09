@@ -1,5 +1,23 @@
 import { cache } from "react";
+import {
+  getMissingSearchIndexRouteIds,
+  upsertSearchIndexDocument,
+} from "../content/search-index.ts";
+import { movieContentModel } from "../content/models.ts";
+import type {
+  KeyValueCacheAdapter,
+  SqlDatabaseAdapter,
+} from "../platform/runtime.ts";
+import { flattenNotionBlockText } from "./block-text.ts";
 import { listBlockChildrenDeep, type NotionBlockClient } from "./blocks.ts";
+import {
+  getCachedNotionBlocks,
+  getCachedNotionValue,
+  NOTION_LIST_CACHE_TTL_SECONDS,
+  notionModelListCacheKey,
+  putCachedNotionBlocks,
+  putCachedNotionValue,
+} from "./content-cache.ts";
 import { getNotionMovieConfig, hasNotionMovieConfig } from "./config.ts";
 import { coverImageUrlForPage } from "./media.ts";
 import {
@@ -31,8 +49,19 @@ export type NotionMovieSourceDeps = {
   queryDataSource: (
     input?: QueryDataSourceInput
   ) => Promise<DataSourceQueryResponse>;
-  getPageBlocks: (pageId: string) => Promise<NotionMovieDetail["blocks"]>;
+  getPageBlocks: (
+    pageId: string,
+    cacheVersion?: string
+  ) => Promise<NotionMovieDetail["blocks"]>;
+  getSearchIndexDatabase?: () => Promise<SqlDatabaseAdapter | null>;
+  getContentCache?: () => Promise<KeyValueCacheAdapter | null>;
   editBaseUrl?: string;
+};
+
+export type NotionSearchIndexEnsureResult = {
+  total: number;
+  indexed: number;
+  skipped: boolean;
 };
 
 function logNotionMovieError(operation: string, error: unknown) {
@@ -78,23 +107,27 @@ function isSafeExternalUrl(value: string): boolean {
 }
 
 function movieCoverImageUrl(page: NotionPageLike): string | null {
-  return (
-    coverImageUrlForPage(page, "海报") ??
-    coverImageUrlForPage(page, "封面") ??
-    coverImageUrlForPage(page, "Cover")
-  );
+  for (const field of movieContentModel.source.fields.cover) {
+    const imageUrl = coverImageUrlForPage(page, field);
+    if (imageUrl) return imageUrl;
+  }
+  return null;
 }
 
 export function mapNotionPageToMovieItem(
   page: NotionPageLike,
   options?: { editBaseUrl?: string }
 ): NotionMovieListItem {
+  const fields = movieContentModel.source.fields;
   const properties = isRecord(page.properties) ? page.properties : {};
-  const downloadLink = getRichTextProperty(properties, "下载链接");
-  const legacyDownloadText = getRichTextProperty(properties, "下载地址");
+  const downloadLink = getRichTextProperty(properties, fields.downloadUrl);
+  const legacyDownloadText = getRichTextProperty(
+    properties,
+    fields.legacyDownloadUrl
+  );
   const downloadText = downloadLink || legacyDownloadText;
   const downloadUrl = isSafeExternalUrl(downloadText) ? downloadText : null;
-  const extractionCode = getRichTextProperty(properties, "提取码");
+  const extractionCode = getRichTextProperty(properties, fields.extractionCode);
   const sourceUrl =
     typeof page.public_url === "string" && page.public_url
       ? page.public_url
@@ -104,13 +137,14 @@ export function mapNotionPageToMovieItem(
 
   return {
     pageId: page.id,
+    ...(page.last_edited_time ? { updatedAt: page.last_edited_time } : {}),
     routeId: compactNotionId(page.id),
-    title: getRichTextProperty(properties, "电影名称"),
-    releaseDate: getDateProperty(properties, "上映时间"),
-    director: getRichTextProperty(properties, "导演"),
-    actors: getRichTextProperty(properties, "演员"),
-    summary: getRichTextProperty(properties, "剧情简介"),
-    genres: getTagsProperty(properties, "类型"),
+    title: getRichTextProperty(properties, fields.title),
+    releaseDate: getDateProperty(properties, fields.releaseDate),
+    director: getRichTextProperty(properties, fields.director),
+    actors: getRichTextProperty(properties, fields.actors),
+    summary: getRichTextProperty(properties, fields.summary),
+    genres: getTagsProperty(properties, fields.genres),
     downloadText,
     downloadUrl,
     extractionCode,
@@ -160,8 +194,41 @@ function toMovieDownloadInfo(
 }
 
 export function createNotionMovieSource(deps: NotionMovieSourceDeps) {
+  async function indexMovie(movie: NotionMovieListItem) {
+    if (!deps.getSearchIndexDatabase) return;
+    const db = await deps.getSearchIndexDatabase();
+    if (!db) return;
+    const blocks = await deps.getPageBlocks(movie.pageId, movie.updatedAt);
+    await upsertSearchIndexDocument(db, {
+      modelId: movieContentModel.id,
+      pageId: movie.pageId,
+      routeId: movie.routeId,
+      title: movie.title,
+      summary: movie.summary,
+      bodyText: flattenNotionBlockText(blocks),
+      facets: [
+        movie.releaseDate,
+        movie.director,
+        movie.actors,
+        ...movie.genres,
+      ],
+    });
+  }
+
   return {
     async listMovies(): Promise<NotionMovieListItem[]> {
+      const contentCache = deps.getContentCache
+        ? await deps.getContentCache()
+        : null;
+      const listCacheKey = notionModelListCacheKey(movieContentModel.id);
+      const cachedPages = await getCachedNotionValue<NotionPageLike[]>(
+        contentCache,
+        listCacheKey
+      );
+      if (cachedPages) {
+        return this.listMoviesFromPages(cachedPages);
+      }
+
       const pages: NotionPageLike[] = [];
       let cursor: string | undefined;
 
@@ -176,6 +243,13 @@ export function createNotionMovieSource(deps: NotionMovieSourceDeps) {
         if (!response.has_more) break;
       } while (cursor);
 
+      await putCachedNotionValue(contentCache, listCacheKey, pages, {
+        expirationTtl: NOTION_LIST_CACHE_TTL_SECONDS,
+      });
+      return this.listMoviesFromPages(pages);
+    },
+
+    listMoviesFromPages(pages: readonly NotionPageLike[]) {
       return pages
         .map((page) =>
           mapNotionPageToMovieItem(page, { editBaseUrl: deps.editBaseUrl })
@@ -196,10 +270,30 @@ export function createNotionMovieSource(deps: NotionMovieSourceDeps) {
       const movie = await this.getMovieMetaByRouteId(routeId);
       if (!movie) return null;
 
-      return {
+      const detail = {
         ...movie,
-        blocks: await deps.getPageBlocks(movie.pageId),
+        blocks: await deps.getPageBlocks(movie.pageId, movie.updatedAt),
       };
+      if (deps.getSearchIndexDatabase) {
+        const db = await deps.getSearchIndexDatabase();
+        if (db) {
+          await upsertSearchIndexDocument(db, {
+            modelId: movieContentModel.id,
+            pageId: detail.pageId,
+            routeId: detail.routeId,
+            title: detail.title,
+            summary: detail.summary,
+            bodyText: flattenNotionBlockText(detail.blocks),
+            facets: [
+              detail.releaseDate,
+              detail.director,
+              detail.actors,
+              ...detail.genres,
+            ],
+          });
+        }
+      }
+      return detail;
     },
 
     async getDownloadInfoByRouteId(
@@ -207,6 +301,35 @@ export function createNotionMovieSource(deps: NotionMovieSourceDeps) {
     ): Promise<NotionMovieDownloadInfo | null> {
       const movie = await this.getMovieMetaByRouteId(routeId);
       return movie ? toMovieDownloadInfo(movie) : null;
+    },
+
+    async ensureSearchIndexForMovies(
+      movies: readonly NotionMovieListItem[]
+    ): Promise<NotionSearchIndexEnsureResult> {
+      if (!deps.getSearchIndexDatabase || movies.length === 0) {
+        return { total: movies.length, indexed: 0, skipped: true };
+      }
+      const db = await deps.getSearchIndexDatabase();
+      if (!db) {
+        return { total: movies.length, indexed: 0, skipped: true };
+      }
+      const missing = await getMissingSearchIndexRouteIds(db, {
+        modelId: movieContentModel.id,
+        routeIds: movies.map((movie) => movie.routeId),
+      });
+      if (missing.length === 0) {
+        return { total: movies.length, indexed: 0, skipped: false };
+      }
+
+      const missingSet = new Set(missing);
+      let indexed = 0;
+      for (const movie of movies) {
+        if (missingSet.has(movie.routeId)) {
+          await indexMovie(movie);
+          indexed += 1;
+        }
+      }
+      return { total: movies.length, indexed, skipped: false };
     },
   };
 }
@@ -223,12 +346,42 @@ async function createDefaultMovieSource() {
     queryDataSource: async ({ startCursor } = {}) =>
       client.dataSources.query({
         data_source_id: config.dataSourceId,
-        page_size: 100,
-        sorts: [{ property: "上映时间", direction: "descending" }],
+        page_size: movieContentModel.source.query.pageSize,
+        sorts: movieContentModel.source.query.sorts
+          ? [...movieContentModel.source.query.sorts]
+          : undefined,
         ...(startCursor ? { start_cursor: startCursor } : {}),
       }),
-    getPageBlocks: (pageId) =>
-      listBlockChildrenDeep(client as NotionBlockClient, pageId),
+    getPageBlocks: async (pageId, cacheVersion) => {
+      const { getRuntimePlatform } = await import("../platform/current.ts");
+      const contentCache = getRuntimePlatform().keyValueCache;
+      const cachedBlocks = await getCachedNotionBlocks(contentCache, {
+        modelId: movieContentModel.id,
+        pageId,
+        cacheVersion,
+      });
+      if (cachedBlocks) return cachedBlocks;
+
+      const blocks = await listBlockChildrenDeep(
+        client as NotionBlockClient,
+        pageId
+      );
+      await putCachedNotionBlocks(contentCache, {
+        modelId: movieContentModel.id,
+        pageId,
+        cacheVersion,
+        blocks,
+      });
+      return blocks;
+    },
+    getSearchIndexDatabase: async () => {
+      const { getRuntimePlatform } = await import("../platform/current.ts");
+      return getRuntimePlatform().database;
+    },
+    getContentCache: async () => {
+      const { getRuntimePlatform } = await import("../platform/current.ts");
+      return getRuntimePlatform().keyValueCache;
+    },
   });
 }
 
@@ -297,3 +450,18 @@ export const getNotionMovieDownloadInfo = cache(
     }
   }
 );
+
+export async function prewarmNotionMoviesSearchIndex() {
+  try {
+    const source = await getDefaultMovieSource();
+    if (!source) return { total: 0, indexed: 0, skipped: true };
+    return await source.ensureSearchIndexForMovies(await source.listMovies());
+  } catch (error) {
+    logNotionMovieError("search_index", error);
+    throw error;
+  }
+}
+
+export const ensureNotionMoviesSearchIndex = cache(async () => {
+  await prewarmNotionMoviesSearchIndex();
+});

@@ -1,10 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { Download, ExternalLink, LockKeyhole, RefreshCw, Shield } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { useAuthViewer, type ClientAuthViewerState } from "@/components/useAuthViewer";
 
 type DownloadState =
   | { status: "idle" | "loading" }
@@ -38,9 +39,9 @@ export function MovieDownloadPanel({
   movieId: string;
   hasDownloadInfo: boolean;
 }) {
+  const viewer = useAuthViewer();
   const [state, setState] = useState<DownloadState>({ status: "idle" });
-
-  if (!hasDownloadInfo) return null;
+  const autoLoadedRef = useRef(false);
 
   async function loadDownloadInfo() {
     setState({ status: "loading" });
@@ -71,7 +72,25 @@ export function MovieDownloadPanel({
     }
   }
 
+  useEffect(() => {
+    if (
+      !hasDownloadInfo ||
+      autoLoadedRef.current ||
+      state.status !== "idle" ||
+      viewer.status !== "authenticated" ||
+      !viewer.canViewVipContent
+    ) {
+      return;
+    }
+
+    autoLoadedRef.current = true;
+    void loadDownloadInfo();
+  }, [hasDownloadInfo, state.status, viewer]);
+
+  if (!hasDownloadInfo) return null;
+
   const ready = state.status === "ready";
+  const canView = viewer.status === "authenticated" && viewer.canViewVipContent;
 
   return (
     <section className="mt-8 rounded-md border p-5">
@@ -88,7 +107,7 @@ export function MovieDownloadPanel({
           <p className="mt-1 text-sm text-muted-foreground">
             {ready
               ? "当前账号可查看下载链接和提取码。"
-              : "下载链接和提取码仅 VIP 用户可查看。"}
+              : descriptionForViewer(viewer)}
           </p>
         </div>
         {ready && <Badge variant="secondary">VIP</Badge>}
@@ -132,27 +151,35 @@ export function MovieDownloadPanel({
         </div>
       ) : (
         <div className="flex flex-col gap-3 rounded-md bg-muted p-4 text-sm text-muted-foreground sm:flex-row sm:items-center sm:justify-between">
-          <span>{messageForState(state)}</span>
-          {state.status === "locked" && state.reason === "unauthenticated" ? (
+          <span>{messageForState(state, viewer)}</span>
+          {(state.status === "locked" && state.reason === "unauthenticated") ||
+          (state.status === "idle" && viewer.status === "guest") ? (
             <Button asChild size="sm">
               <Link href="/login">
                 <Shield className="h-4 w-4" />
                 登录
               </Link>
             </Button>
+          ) : state.status === "idle" &&
+            viewer.status === "authenticated" &&
+            !viewer.canViewVipContent ? (
+            <Button type="button" size="sm" disabled>
+              <Shield className="h-4 w-4" />
+              VIP 专享
+            </Button>
           ) : (
             <Button
               type="button"
               size="sm"
               onClick={loadDownloadInfo}
-              disabled={state.status === "loading"}
+              disabled={state.status === "loading" || (state.status === "idle" && viewer.status === "loading")}
             >
               {state.status === "loading" ? (
                 <RefreshCw className="h-4 w-4 animate-spin" />
               ) : (
                 <Shield className="h-4 w-4" />
               )}
-              查看资源
+              {canView && state.status === "loading" ? "读取中" : "查看资源"}
             </Button>
           )}
         </div>
@@ -161,7 +188,19 @@ export function MovieDownloadPanel({
   );
 }
 
-function messageForState(state: DownloadState): string {
+function descriptionForViewer(viewer: ClientAuthViewerState): string {
+  if (viewer.status === "authenticated" && viewer.canViewVipContent) {
+    return viewer.isAdmin
+      ? "当前为管理员账号，可查看下载链接和提取码。"
+      : "当前为 VIP 账号，可查看下载链接和提取码。";
+  }
+  return "下载链接和提取码仅 VIP 用户可查看。";
+}
+
+function messageForState(
+  state: DownloadState,
+  viewer: ClientAuthViewerState
+): string {
   if (state.status === "loading") return "正在验证权限并读取下载资源。";
   if (state.status === "locked" && state.reason === "unauthenticated") {
     return "请先登录 VIP 账号查看下载链接和提取码。";
@@ -171,5 +210,15 @@ function messageForState(state: DownloadState): string {
   }
   if (state.status === "missing") return "这部电影暂时没有可用下载资源。";
   if (state.status === "error") return "下载资源读取失败，请稍后重试。";
-  return "当前页面已由 Cloudflare 缓存；点击后才会单独验证 VIP 权限。";
+  if (viewer.status === "loading") return "正在确认当前账号权限。";
+  if (viewer.status === "authenticated" && viewer.canViewVipContent) {
+    return viewer.isAdmin
+      ? "当前为管理员账号，正在自动读取下载资源。"
+      : "当前为 VIP 账号，正在自动读取下载资源。";
+  }
+  if (viewer.status === "authenticated") {
+    return "当前账号暂无 VIP 权限，无法查看下载资源。";
+  }
+  if (viewer.status === "guest") return "请先登录 VIP 账号查看下载链接和提取码。";
+  return "账号权限状态暂时无法读取，点击后会重新验证。";
 }

@@ -1,30 +1,49 @@
 import type { MetadataRoute } from "next";
-import { getNotionMoviesMeta } from "@/lib/notion/movies";
+import {
+  localizedMovieDetailPath,
+  localizedMovieListPath,
+  supportedLocales,
+  type AppLocale,
+} from "@/lib/i18n/config";
+import { getPublishedMovieTranslations } from "@/lib/notion/movie-translations";
 import { getNotionPostsMeta } from "@/lib/notion/posts";
-
-// 部署后 vinext 会注入真实 host 到环境变量。先给一个 fallback。
-const SITE_URL =
-  process.env.NEXT_PUBLIC_SITE_URL ?? "https://vinext-blog.workers.dev";
+import { getSiteUrl } from "@/lib/site-url";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const [posts, movies] = await Promise.all([
+  const siteUrl = getSiteUrl();
+  const [posts, translations] = await Promise.all([
     getNotionPostsMeta(),
-    getNotionMoviesMeta(),
+    getPublishedMovieTranslations(),
   ]);
+
   const staticRoutes: MetadataRoute.Sitemap = [
-    { url: SITE_URL, lastModified: new Date(), changeFrequency: "weekly" },
-    { url: `${SITE_URL}/blog`, lastModified: new Date(), changeFrequency: "weekly" },
-    { url: `${SITE_URL}/movies`, lastModified: new Date(), changeFrequency: "weekly" },
+    { url: siteUrl, lastModified: new Date(), changeFrequency: "weekly" },
+    {
+      url: `${siteUrl}/blog`,
+      lastModified: new Date(),
+      changeFrequency: "weekly",
+    },
+    ...supportedLocales.map((locale) => ({
+      url: `${siteUrl}${localizedMovieListPath(locale)}`,
+      lastModified: new Date(),
+      changeFrequency: "weekly" as const,
+    })),
   ];
-  const postRoutes: MetadataRoute.Sitemap = posts.map((p) => ({
-    url: `${SITE_URL}/blog/${p.slug}`,
-    lastModified: new Date(p.date),
+
+  const postRoutes: MetadataRoute.Sitemap = posts.map((post) => ({
+    url: `${siteUrl}/blog/${post.slug}`,
+    lastModified: new Date(post.date),
     changeFrequency: "monthly",
   }));
-  const movieRoutes: MetadataRoute.Sitemap = movies.map((movie) => ({
-    url: `${SITE_URL}/movies/${movie.routeId}`,
-    lastModified: movie.releaseDate ? new Date(movie.releaseDate) : new Date(),
+
+  const movieRoutes: MetadataRoute.Sitemap = translations.map((translation) => ({
+    url: `${siteUrl}${localizedMovieDetailPath(
+      translation.locale as AppLocale,
+      translation.slug
+    )}`,
+    lastModified: new Date(),
     changeFrequency: "monthly",
   }));
+
   return [...staticRoutes, ...postRoutes, ...movieRoutes];
 }

@@ -1,141 +1,93 @@
 import { coverImageUrlForPage } from "./media.ts";
+import { blogContentModel } from "../content/models.ts";
 import type { NotionPageLike, NotionPostListItem } from "./types.ts";
+import {
+  getAuthorProperty,
+  getDateProperty,
+  getFirstDateProperty,
+  getFirstPeopleProperty,
+  getFirstTagsProperty,
+  getFirstTitleProperty,
+  getRichTextProperty,
+  getTagsProperty,
+  isRecord,
+  isValidPublicSlug,
+  notionPageEditUrl,
+  pickDescriptionFallback,
+  pickPublishedFlag,
+} from "./property-mappers.ts";
 
-type PropertyMap = Record<string, unknown>;
+export {
+  getAuthorProperty,
+  getCheckboxProperty,
+  getDateProperty,
+  getFirstDateProperty,
+  getFirstPeopleProperty,
+  getFirstTagsProperty,
+  getFirstTitleProperty,
+  getRelationPageIds,
+  getRichTextProperty,
+  getSelectProperty,
+  getTagsProperty,
+  isValidPublicSlug,
+  notionPageEditUrl,
+  pickDescriptionFallback,
+  pickPublishedFlag,
+} from "./property-mappers.ts";
 
-type TextPart = {
-  plain_text?: string;
-};
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return Boolean(value && typeof value === "object");
+function compactNotionId(id: string) {
+  return id.replaceAll("-", "").toLowerCase();
 }
 
-function getPlainText(parts: unknown): string {
-  if (!Array.isArray(parts)) return "";
-  return parts
-    .map((part: TextPart) => part.plain_text ?? "")
-    .join("")
-    .trim();
+function fallbackDateForPage(page: NotionPageLike) {
+  const timestamp = page.last_edited_time ?? page.created_time;
+  return timestamp ? timestamp.slice(0, 10) : "";
 }
 
-function getProperty(properties: PropertyMap, key: string) {
-  return properties[key] as Record<string, unknown> | undefined;
-}
-
-export function getRichTextProperty(properties: PropertyMap, key: string): string {
-  const property = getProperty(properties, key);
-  if (!property) return "";
-
-  if (property.type === "title") return getPlainText(property.title);
-  if (property.type === "rich_text") return getPlainText(property.rich_text);
-  if (property.type === "url") return String(property.url ?? "").trim();
-  if (property.type === "email") return String(property.email ?? "").trim();
-  if (property.type === "phone_number") {
-    return String(property.phone_number ?? "").trim();
-  }
-
-  return "";
-}
-
-export function getDateProperty(properties: PropertyMap, key: string): string {
-  const property = getProperty(properties, key);
-  if (property?.type !== "date") return "";
-  const date = property.date as { start?: string } | null | undefined;
-  return String(date?.start ?? "").trim();
-}
-
-export function getTagsProperty(properties: PropertyMap, key: string): string[] {
-  const property = getProperty(properties, key);
-  if (property?.type === "multi_select" && Array.isArray(property.multi_select)) {
-    return property.multi_select
-      .map((item: { name?: string }) => String(item.name ?? "").trim())
-      .filter(Boolean);
-  }
-
-  if (property?.type === "select") {
-    const select = property.select as { name?: string } | null | undefined;
-    const name = String(select?.name ?? "").trim();
-    return name ? [name] : [];
-  }
-
-  return [];
-}
-
-export function getAuthorProperty(properties: PropertyMap, key: string): string {
-  const property = getProperty(properties, key);
-  if (!property) return "";
-
-  if (property.type === "people" && Array.isArray(property.people)) {
-    return property.people
-      .map((person: { name?: string; person?: { email?: string } }) =>
-        String(person.name ?? person.person?.email ?? "").trim()
-      )
-      .filter(Boolean)
-      .join(", ");
-  }
-
-  return getRichTextProperty(properties, key);
-}
-
-export function pickPublishedFlag(properties: PropertyMap): boolean {
-  const published = getProperty(properties, "Published");
-  if (published?.type === "checkbox") {
-    return Boolean(published.checkbox);
-  }
-
-  const status = getProperty(properties, "Status");
-  if (status?.type === "status") {
-    const statusValue = status.status as { name?: string } | null | undefined;
-    return String(statusValue?.name ?? "").trim().toLowerCase() === "published";
-  }
-
-  if (status?.type === "select") {
-    const statusValue = status.select as { name?: string } | null | undefined;
-    return String(statusValue?.name ?? "").trim().toLowerCase() === "published";
-  }
-
-  return false;
-}
-
-export function pickDescriptionFallback(description: string, title: string): string {
-  return description.trim() || title.trim();
-}
-
-export function isValidPublicSlug(slug: string): boolean {
-  return /^[a-z0-9][a-z0-9-]{0,79}$/.test(slug);
-}
-
-export function notionPageEditUrl(pageId: string, editBaseUrl?: string): string {
-  const compactPageId = pageId.replaceAll("-", "");
-  if (editBaseUrl?.includes("{pageId}")) {
-    return editBaseUrl.replaceAll("{pageId}", compactPageId);
-  }
-  return `https://www.notion.so/${compactPageId}`;
+function hasPublishControl(properties: Record<string, unknown>) {
+  const fields = blogContentModel.source.fields;
+  return Boolean(properties[fields.published] || properties[fields.status]);
 }
 
 export function mapNotionPageToListItem(
   page: NotionPageLike,
   options?: { editBaseUrl?: string }
 ): NotionPostListItem {
+  const fields = blogContentModel.source.fields;
   const properties = isRecord(page.properties) ? page.properties : {};
-  const title = getRichTextProperty(properties, "Title");
-  const slug = getRichTextProperty(properties, "Slug").toLowerCase();
+  const title =
+    getRichTextProperty(properties, fields.title) ||
+    getFirstTitleProperty(properties);
+  const configuredSlug = getRichTextProperty(properties, fields.slug).toLowerCase();
+  const slug = isValidPublicSlug(configuredSlug)
+    ? configuredSlug
+    : compactNotionId(page.id);
   const description = pickDescriptionFallback(
-    getRichTextProperty(properties, "Description"),
+    getRichTextProperty(properties, fields.description),
     title
   );
+  const published = hasPublishControl(properties)
+    ? pickPublishedFlag(properties)
+    : true;
+  const configuredTags = getTagsProperty(properties, fields.tags);
 
   return {
     pageId: page.id,
+    ...(page.last_edited_time ? { updatedAt: page.last_edited_time } : {}),
     slug,
     title,
     description,
-    date: getDateProperty(properties, "Date"),
-    author: getAuthorProperty(properties, "Author") || "Unknown",
-    tags: getTagsProperty(properties, "Tags"),
+    date:
+      getDateProperty(properties, fields.date) ||
+      getFirstDateProperty(properties) ||
+      fallbackDateForPage(page),
+    author:
+      getAuthorProperty(properties, fields.author) ||
+      getFirstPeopleProperty(properties) ||
+      "Unknown",
+    tags: configuredTags.length ? configuredTags : getFirstTagsProperty(properties),
     coverImage: coverImageUrlForPage(page),
-    published: pickPublishedFlag(properties),
+    published,
     editUrl: notionPageEditUrl(page.id, options?.editBaseUrl),
   };
 }

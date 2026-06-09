@@ -11,6 +11,7 @@ export type NotionFileSource =
 
 export type NotionPostListItem = {
   pageId: string;
+  updatedAt?: string;
   slug: string;
   title: string;
   description: string;
@@ -28,6 +29,7 @@ export type NotionPostDetail = NotionPostListItem & {
 
 export type NotionMovieListItem = {
   pageId: string;
+  updatedAt?: string;
   routeId: string;
   title: string;
   releaseDate: string;
@@ -66,6 +68,35 @@ export type PublicNotionMovieDetail = PublicNotionMovieListItem & {
   blocks: NotionBlock[];
 };
 
+export type NotionMovieTranslation = {
+  pageId: string;
+  updatedAt?: string;
+  moviePageId: string;
+  locale: string;
+  slug: string;
+  title: string;
+  director: string;
+  actors: string;
+  summary: string;
+  genres: string[];
+  seoTitle: string;
+  seoDescription: string;
+  published: boolean;
+  editUrl: string | null;
+  sourceUrl: string | null;
+};
+
+export type LocalizedPublicMovieListItem = PublicNotionMovieListItem & {
+  locale: string;
+  slug: string;
+  seoTitle: string;
+  seoDescription: string;
+};
+
+export type LocalizedPublicMovieDetail = LocalizedPublicMovieListItem & {
+  blocks: NotionBlock[];
+};
+
 export type NotionRichTextPart = {
   plain_text?: string;
   href?: string | null;
@@ -97,6 +128,7 @@ export type NotionBlock = {
 
 export type NotionPageLike = {
   id: string;
+  created_time?: string;
   last_edited_time?: string;
   cover?: unknown;
   properties?: Record<string, unknown>;

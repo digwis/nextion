@@ -1,6 +1,6 @@
-// D1-backed rate limiting for auth endpoints (per email + per IP).
+// SQL-backed rate limiting for auth endpoints (per email + per IP).
 
-import { workerEnv } from "./env";
+import { getDatabase } from "./platform/current";
 
 const WINDOW_MS = 15 * 60 * 1000;
 const MAX_EMAIL_ATTEMPTS = 5;
@@ -30,8 +30,7 @@ async function readScope(scope: string): Promise<{
   attempts: number;
   window_start: number;
 } | null> {
-  const env = workerEnv;
-  return env.DB.prepare(
+  return getDatabase().prepare(
     `SELECT attempts, window_start FROM auth_rate_limits WHERE scope = ?`
   )
     .bind(scope)
@@ -98,13 +97,12 @@ async function recordScoped(
   bucket: RateLimitBucket,
   identifier: string
 ): Promise<void> {
-  const env = workerEnv;
   const scope = scopeKey(kind, bucket, identifier);
   const now = Date.now();
   const row = await readScope(scope);
 
   if (!row || now - row.window_start >= WINDOW_MS) {
-    await env.DB.prepare(
+    await getDatabase().prepare(
       `INSERT INTO auth_rate_limits (scope, attempts, window_start)
        VALUES (?, 1, ?)
        ON CONFLICT(scope) DO UPDATE SET attempts = 1, window_start = excluded.window_start`
@@ -114,7 +112,7 @@ async function recordScoped(
     return;
   }
 
-  await env.DB.prepare(
+  await getDatabase().prepare(
     `UPDATE auth_rate_limits SET attempts = attempts + 1 WHERE scope = ?`
   )
     .bind(scope)
@@ -142,8 +140,7 @@ async function clearScoped(
   bucket: RateLimitBucket,
   identifier: string
 ): Promise<void> {
-  const env = workerEnv;
-  await env.DB.prepare(`DELETE FROM auth_rate_limits WHERE scope = ?`)
+  await getDatabase().prepare(`DELETE FROM auth_rate_limits WHERE scope = ?`)
     .bind(scopeKey(kind, bucket, identifier))
     .run();
 }

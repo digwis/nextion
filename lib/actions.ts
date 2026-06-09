@@ -28,7 +28,6 @@ import { verifyTurnstileFromForm } from "./turnstile";
 import { getSiteUrl } from "./site-url";
 import { validatePasswordStrength, verifyPassword } from "./passwords";
 import { isAdminEmail } from "./admin";
-import { buildInvalidationPlan } from "./public-cache-invalidate";
 import {
   checkPassword,
   clearSessionCookie,
@@ -64,19 +63,6 @@ function slugify(input: string): string {
     .replace(/[^a-z0-9一-龥]+/g, "-")
     .replace(/^-+|-+$/g, "")
     .slice(0, 80);
-}
-
-// 把“应该失效的公开页缓存键”记录到日志。
-// 实际的 cache.delete(...) 在 Worker 端发生；这里仅作观测和契约。
-function logPublicInvalidation(
-  kind: "publish" | "update" | "delete",
-  slug: string,
-  previousSlug?: string
-) {
-  const plan = buildInvalidationPlan({ kind, slug, previousSlug });
-  console.log(
-    `[public-cache] invalidate plan: kind=${plan.kind} slug=${plan.slug} keys=${plan.keys.join(",")}`
-  );
 }
 
 function parseTags(raw: unknown): string[] {
@@ -474,7 +460,7 @@ export async function adminSetUserRoleAction(
     redirect("/admin/users?error=用户不存在");
   }
 
-  revalidatePath("/admin/users");
+  await revalidatePath("/admin/users");
   redirect(
     `/admin/users?roleUpdated=${encodeURIComponent(result.user.email)}`
   );
@@ -521,14 +507,25 @@ export async function deletePostAction(formData: FormData): Promise<void> {
   const existing = await getPostBySlugRaw(slug);
   await requirePostOwnerOrAdmin(slug);
   await deletePost(slug);
-  revalidatePath("/blog");
-  revalidatePath("/admin");
-  revalidatePath("/admin/review");
-  revalidatePath(`/blog/${slug}`, "page");
-  if (existing && existing.status === "published") {
-    logPublicInvalidation("delete", slug);
-  }
+  await revalidateBlogPostPublicPaths(slug);
   redirect(`/admin?deleted=${slug}`);
+}
+
+async function revalidateBlogPostPublicPaths(
+  slug: string,
+  options: { includeListApi?: boolean } = {}
+) {
+  const tasks = [
+    revalidatePath("/blog"),
+    revalidatePath("/admin"),
+    revalidatePath("/admin/review"),
+    revalidatePath(`/blog/${slug}`, "page"),
+    revalidatePath(`/api/posts/${slug}`),
+  ];
+  if (options.includeListApi !== false) {
+    tasks.push(revalidatePath("/api/posts"));
+  }
+  await Promise.all(tasks);
 }
 
 // —— 审核相关 actions ——
@@ -554,13 +551,9 @@ export async function submitForReviewAction(formData: FormData): Promise<void> {
     reviewedBy: admin ? email : null,
     rejectReason: null,
   });
-  revalidatePath("/blog");
-  revalidatePath("/admin");
-  revalidatePath("/admin/review");
-  revalidatePath(`/blog/${slug}`, "page");
-  if (nextStatus === "published") {
-    logPublicInvalidation("publish", slug);
-  }
+  await revalidateBlogPostPublicPaths(slug, {
+    includeListApi: nextStatus === "published",
+  });
   redirect(`/admin/${slug}?review=${nextStatus}`);
 }
 
@@ -579,11 +572,7 @@ export async function approvePostAction(formData: FormData): Promise<void> {
     reviewedBy: email,
     rejectReason: null,
   });
-  revalidatePath("/blog");
-  revalidatePath("/admin");
-  revalidatePath("/admin/review");
-  revalidatePath(`/blog/${slug}`, "page");
-  logPublicInvalidation("publish", slug);
+  await revalidateBlogPostPublicPaths(slug);
   redirect(`/admin/review?approved=${slug}`);
 }
 
@@ -600,14 +589,12 @@ export async function rejectPostAction(formData: FormData): Promise<void> {
   if (!reason) redirect(`/admin/review/${slug}?error=请填写拒绝原因`);
   const post = await getPostBySlugRaw(slug);
   if (!post) redirect("/admin/review?error=文章不存在");
+  const wasPublished = post.status === "published";
   await setPostStatus(slug, "rejected", {
     reviewedBy: email,
     rejectReason: reason,
   });
-  revalidatePath("/blog");
-  revalidatePath("/admin");
-  revalidatePath("/admin/review");
-  revalidatePath(`/blog/${slug}`, "page");
+  await revalidateBlogPostPublicPaths(slug, { includeListApi: wasPublished });
   redirect(`/admin/review?rejected=${slug}`);
 }
 
@@ -620,12 +607,13 @@ export async function returnToDraftAction(formData: FormData): Promise<void> {
   if (!(await isAdminEmail(email))) {
     redirect("/admin?error=需要管理员权限");
   }
+  const post = await getPostBySlugRaw(slug);
+  if (!post) redirect("/admin/review?error=文章不存在");
+  const wasPublished = post.status === "published";
   await setPostStatus(slug, "draft", {
     reviewedBy: email,
     rejectReason: null,
   });
-  revalidatePath("/blog");
-  revalidatePath("/admin");
-  revalidatePath("/admin/review");
+  await revalidateBlogPostPublicPaths(slug, { includeListApi: wasPublished });
   redirect(`/admin/review?returned=${slug}`);
 }
