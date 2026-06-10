@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import { siteConfig } from "@/lib/site/config";
 import { contentSources } from "@/lib/content/models";
 import {
@@ -19,10 +20,10 @@ export default function Home() {
       </header>
 
       <main className="container mx-auto flex max-w-3xl flex-col items-center px-4 py-16 text-center">
-        <div className="mb-6 inline-flex items-center rounded-full border bg-muted/50 px-3 py-1 text-xs text-muted-foreground">
-          <span className="mr-2 h-1.5 w-1.5 rounded-full bg-emerald-500" />
+        <Badge variant="outline" className="mb-6 gap-2 px-3 py-1 text-xs font-normal">
+          <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
           RSC + Cloudflare Workers + D1 + Notion
-        </div>
+        </Badge>
 
         <h1 className="text-5xl font-bold tracking-tight md:text-6xl">
           {siteConfig.name}

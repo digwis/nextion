@@ -26,7 +26,7 @@ pnpm exec wrangler d1 migrations apply {{projectNameLower}}-db --local
 - `app/page.tsx` — landing page wired to `siteConfig`
 - `app/api/health/route.ts` — `GET /api/health` from nextion
 - `app/api/auth/*` — Google OAuth, email verify, viewer endpoints from nextion
-- `app/login/page.tsx` — minimal email/password login form
+- `app/login/page.tsx` — email/password login wired to `authConfig`
 - `lib/auth.config.ts` — `AuthConfig` consumed by `createAuth`
 - `lib/admin/nav.ts` — sidebar items for `/admin/*`
 - `lib/site/config.ts` — site-level config rendered on the landing page
@@ -70,3 +70,39 @@ packages:
 ```
 
 Then re-run `pnpm install` so pnpm picks up the local link.
+
+## UI components (shadcn/ui)
+
+The starter ships with these primitives in `components/ui/`, ready to
+import anywhere in the project:
+
+- `Button` — variants: default, secondary, outline, ghost, link, destructive
+- `Card` (+ `CardHeader`, `CardTitle`, `CardDescription`, `CardContent`, `CardFooter`)
+- `Badge` — variants: default, secondary, destructive, outline
+- `Input`, `Label`, `Separator`, `Skeleton`
+- `ThemeToggle` + `ThemeProvider` (light / dark / system)
+
+All components are themeable via the design tokens defined in
+`app/globals.css` (`--background`, `--foreground`, `--primary`,
+`--radius`, …). To re-skin the entire UI, edit those CSS variables —
+no component code needs to change.
+
+### Add more components
+
+The standard `shadcn` CLI works out of the box. `components.json` is
+already configured for this project.
+
+```bash
+# Add any shadcn/ui component
+pnpm dlx shadcn@latest add dialog dropdown-menu select textarea \
+  sonner tooltip tabs
+
+# Or pull a block from a registry
+pnpm dlx shadcn@latest add https://ui.shadcn.com/r/login-01.json
+
+# Add from any third-party registry (e.g. 21st.dev)
+pnpm dlx shadcn@latest add https://21st.dev/r/sonner.json
+```
+
+New files land in `components/ui/` and pick up the existing token
+variables automatically. After adding, import and use as usual.
