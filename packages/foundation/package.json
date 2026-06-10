@@ -53,6 +53,7 @@
     "./internal-admin": "./dist/internal/admin/index.js",
     "./doctor": "./dist/doctor/index.js",
     "./worker": "./dist/worker/index.js",
+    "./middleware": "./dist/middleware.js",
     "./worker/routes": "./dist/worker/routes/index.js",
     "./worker/routes/health": "./dist/worker/routes/health.js",
     "./worker/routes/content-revalidate": "./dist/worker/routes/content-revalidate.js",

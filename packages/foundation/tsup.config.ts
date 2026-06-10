@@ -59,6 +59,7 @@ export default defineConfig({
     "doctor/index": "src/doctor/index.ts",
     "doctor/cli": "src/doctor/cli.ts",
     "worker/index": "src/worker/index.ts",
+    "middleware": "src/middleware.ts",
     "worker/routes/index": "src/worker/routes/index.ts",
     "worker/routes/health": "src/worker/routes/health.ts",
     "worker/routes/content-revalidate": "src/worker/routes/content-revalidate.ts",

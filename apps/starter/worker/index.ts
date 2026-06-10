@@ -5,6 +5,12 @@
  * Public HTML/ISR caching is handled by vinext's CDN cache adapter
  * (configured in vite.config.ts). This worker keeps project-specific
  * concerns: image optimization, trailing-slash canonicalization, and cron.
+ *
+ * Foundation-routed requests (health, storage, notion media) are
+ * handled by `createFoundationWorker` before falling through to the
+ * vinext handler. Foundation returns `null` for unhandled paths so
+ * the rest of the logic (image opt, perf logging, canonicalization,
+ * the cron handler) is preserved exactly as before.
  */
 import {
   handleImageOptimization,
@@ -13,7 +19,13 @@ import {
   isImageOptimizationPath,
 } from "vinext/server/image-optimization";
 import handler from "vinext/server/app-router-entry";
+import { createFoundationWorker } from "@vinext/foundation/worker";
+import { authConfig } from "../lib/auth.config";
+import { adminNav } from "../lib/admin/nav";
+import { siteConfig } from "../lib/site/config";
+import { blogSource, moviesSource } from "../lib/content/models";
 import { prewarmPublicContentSearchIndex } from "../lib/content/prewarm";
+import { defaultLocale, supportedLocales } from "../lib/i18n/config";
 
 interface Env {
   ASSETS: Fetcher;
@@ -38,6 +50,19 @@ interface ScheduledController {
 }
 
 const PUBLIC_CONTENT_RE = /^\/(?:blog|movies)(?:\/[^/]+)?\/?$/;
+
+const foundation = createFoundationWorker({
+  sources: [blogSource, moviesSource],
+  adminNav,
+  authConfig,
+  siteConfig: {
+    name: siteConfig.name,
+    description: siteConfig.description,
+    defaultLocale,
+    locales: [...supportedLocales],
+    navigation: siteConfig.navigation.main as unknown as unknown[],
+  },
+});
 
 type PageClass =
   | "home"
@@ -149,6 +174,25 @@ export default {
         });
       }
       return response;
+    }
+
+    // Ask foundation first. It returns `null` when no foundation route
+    // matches, in which case we fall through to the vinext handler.
+    const foundationResponse = await foundation.fetch(request, env, ctx);
+    if (foundationResponse) {
+      branch = "foundation";
+      if (willTrace) {
+        perfLog({
+          kind: "page",
+          page_class: "api",
+          method: request.method,
+          path: url.pathname,
+          status: foundationResponse.status,
+          branch,
+          duration_ms: round(performance.now() - t0),
+        });
+      }
+      return foundationResponse;
     }
 
     const tDelegate = performance.now();
