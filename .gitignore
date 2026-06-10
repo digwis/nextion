@@ -55,6 +55,12 @@ next-env.d.ts
 # monorepo
 .pnpm-store
 node_modules/
+**/node_modules/
 dist/
+**/dist/
 .turbo/
 *.tsbuildinfo
+**/.next/
+**/out/
+**/.wrangler/
+.playwright-cli/
