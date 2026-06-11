@@ -62,14 +62,30 @@ export async function isNtnAvailable(): Promise<boolean> {
 }
 
 /**
- * Verify the NOTION_API_TOKEN is valid by listing users (lightweight
- * authenticated read). Returns true on success.
+ * Verify the Notion API token is valid by fetching the bot user.
+ *
+ * We deliberately use `/v1/users/me` (the authenticated self-fetch),
+ * not `/v1/users` (the full user list), because:
+ *
+ *   - The former works for *all* Notion token types — internal
+ *     integrations (`secret_…`), OAuth public integrations, and
+ *     personal access tokens (`ntn_…`) issued by the `ntn` CLI.
+ *   - The latter requires the `user.read` capability on internal
+ *     integrations, and is **forbidden for personal access tokens**
+ *     with the message "Personal access tokens cannot list users".
+ *     That breaks the auto-detect path for users who have run
+ *     `ntn login`.
  */
 export async function verifyNotionToken(apiToken: string): Promise<boolean> {
-  const r = await run("ntn", ["api", "v1/users", "page_size==1"], {
+  const r = await run("ntn", ["api", "v1/users/me"], {
     env: { NOTION_API_TOKEN: apiToken },
   });
-  return r.code === 0;
+  if (r.code === 0) return true;
+  // Surface the actual API error in the caller's exception so users
+  // see *why* their token was rejected (e.g. "403 restricted_resource").
+  const detail =
+    r.stderr.trim() || r.stdout.trim() || `exit code ${r.code ?? "null"}`;
+  throw new Error(`Notion token verification failed: ${detail}`);
 }
 
 /**
