@@ -8,6 +8,7 @@
 import { promises as fs } from "node:fs";
 import path from "node:path";
 import type { Answers } from "./prompt.js";
+import { hashPasswordForScaffold } from "./provision/password-hash.js";
 
 interface TokenMap {
   projectName: string;
@@ -29,9 +30,14 @@ interface TokenMap {
   contentSourceListTitle: string;
   contentSourceListDescription: string;
   contentSourceEmptyState: string;
+  contentSourceRichBlocks: string;
+  contentSourceCoverImages: string;
   contentSourceVarName: string;
   contentSourceConstName: string;
   fieldList: string;
+  adminEmail: string;
+  adminName: string;
+  adminPasswordHash: string;
 }
 
 function toKebab(input: string): string {
@@ -53,8 +59,15 @@ function toPascal(input: string): string {
   return camel.charAt(0).toUpperCase() + camel.slice(1);
 }
 
-function buildTokenMap(answers: Answers): TokenMap {
+/** Local-part of an email, used as the default display name. */
+function localPart(email: string): string {
+  const at = email.indexOf("@");
+  return at > 0 ? email.slice(0, at) : email;
+}
+
+async function buildTokenMap(answers: Answers): Promise<TokenMap> {
   const id = answers.contentSource.id;
+  const isBlog = id === "blog";
   // Build the field map block that the generated `defineContentSource`
   // call interpolates. Indent every key/value so the call stays
   // readable inside the `fields: { ... }` object literal.
@@ -64,6 +77,16 @@ function buildTokenMap(answers: Answers): TokenMap {
     return `      ${key}: ${notionName},`;
   });
   const fieldMapBlock = fieldMapLines.join("\n");
+
+  // Hash the admin password with the same algorithm that
+  // `@notionx/core`'s `hashPassword` uses, so the generated
+  // `0002_admin_seed.sql` produces a row that `verifyPassword` can
+  // check on first login. 100k PBKDF2 iterations takes ~200ms on
+  // modern hardware — visible in the spinner, worth the wait.
+  const adminPasswordHash = await hashPasswordForScaffold(
+    answers.adminPassword
+  );
+
   return {
     projectName: answers.projectName,
     projectNameLower: answers.projectName.toLowerCase(),
@@ -84,9 +107,18 @@ function buildTokenMap(answers: Answers): TokenMap {
     contentSourceNavLabel: answers.contentSource.title,
     contentSourcePluralName: `${answers.contentSource.title}s`,
     contentSourceListTitle: answers.contentSource.title,
-    contentSourceListDescription: `${answers.contentSource.title} entries backed by Notion.`,
-    contentSourceEmptyState: `No ${answers.contentSource.title.toLowerCase()} entries yet.`,
+    contentSourceListDescription: isBlog
+      ? "Blog posts backed by Notion metadata and page body content."
+      : `${answers.contentSource.title} entries backed by Notion.`,
+    contentSourceEmptyState: isBlog
+      ? "No blog posts published yet."
+      : `No ${answers.contentSource.title.toLowerCase()} entries yet.`,
+    contentSourceRichBlocks: isBlog ? "true" : "false",
+    contentSourceCoverImages: isBlog ? "true" : "false",
     fieldList: answers.contentSource.fields.map((f) => f.key).join(", "),
+    adminEmail: answers.adminEmail,
+    adminName: localPart(answers.adminEmail),
+    adminPasswordHash,
   };
 }
 
@@ -138,7 +170,7 @@ export async function render(
   templatesDir: string,
   outDir: string
 ): Promise<void> {
-  const tokens = buildTokenMap(answers);
+  const tokens = await buildTokenMap(answers);
   const absoluteOut = path.resolve(process.cwd(), outDir);
 
   if (await exists(absoluteOut)) {

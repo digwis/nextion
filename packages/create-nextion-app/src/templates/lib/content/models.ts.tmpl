@@ -41,8 +41,8 @@ export const {{contentSourceVarName}}: ContentSource = defineContentSource({
     emptyState: "{{contentSourceEmptyState}}",
   },
   capabilities: {
-    richBlocks: false,
-    coverImages: false,
+    richBlocks: {{contentSourceRichBlocks}},
+    coverImages: {{contentSourceCoverImages}},
     gatedAssets: false,
   },
 });

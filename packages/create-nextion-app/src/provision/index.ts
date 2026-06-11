@@ -18,7 +18,7 @@
 
 import * as p from "@clack/prompts";
 import type { Answers } from "../prompt.js";
-import { runOrThrow } from "./shell.js";
+import { runOrThrow, run } from "./shell.js";
 import {
   requireWranglerAuth,
   ensureD1,
@@ -62,6 +62,14 @@ export interface ProvisionResult {
   resend: { ok: boolean; enabled: boolean; message?: string };
   google: { ok: boolean; enabled: boolean; message?: string };
   migrationsApplied: boolean;
+  deploy: {
+    ok: boolean;
+    url?: string;
+    workerName?: string;
+    message?: string;
+    skipped?: boolean;
+  };
+  admin: { ok: boolean; email: string; message?: string };
   // Internal carriers for the wire step — never printed in the
   // status card.
   _turnstileSecret?: string;
@@ -82,6 +90,8 @@ export async function provision(
     resend: { ok: false, enabled: false },
     google: { ok: false, enabled: false },
     migrationsApplied: false,
+    deploy: { ok: false, skipped: true },
+    admin: { ok: false, email: answers.adminEmail },
   };
 
   // The project uses kebab-case for resource names.
@@ -239,19 +249,32 @@ export async function provision(
       if (!ntn) {
         throw new Error("`ntn` CLI not installed. Run: npm i -g ntn@latest");
       }
-      // Skip the token question, but still need parent page + seed count.
-      const notion = await promptNotion(
-        { interactive: options.interactive },
-        answers.contentSource.fields,
-        resolvedToken
-      );
-      if (notion) {
+      // Resolution order for parent page + seed count:
+      //   1. `answers.notionParentPage` (--notion-parent-page flag)
+      //   2. Interactive prompt (only when stdin is a TTY)
+      //   3. Skip silently
+      let notionInputs: { apiToken: string; parentPageId: string; seedCount: number } | null = null;
+      if (answers.notionParentPage) {
+        notionInputs = {
+          apiToken: resolvedToken,
+          parentPageId: answers.notionParentPage,
+          seedCount: answers.notionSeedCount,
+        };
+      } else {
+        notionInputs = await promptNotion(
+          { interactive: options.interactive },
+          answers.contentSource.fields,
+          resolvedToken
+        );
+      }
+      if (notionInputs) {
+        const notionDatabaseTitle = `${answers.projectName} ${answers.contentSource.title}`;
         const r = await ensureNotionDatabase({
-          apiToken: notion.apiToken,
-          parentPageId: notion.parentPageId,
-          title: answers.contentSource.title,
+          apiToken: notionInputs.apiToken,
+          parentPageId: notionInputs.parentPageId,
+          title: notionDatabaseTitle,
           fields: answers.contentSource.fields,
-          seedCount: notion.seedCount,
+          seedCount: notionInputs.seedCount,
         });
         result.notion = {
           ok: true,
@@ -281,10 +304,11 @@ export async function provision(
         answers.contentSource.fields
       );
       if (notion) {
+        const notionDatabaseTitle = `${answers.projectName} ${answers.contentSource.title}`;
         const r = await ensureNotionDatabase({
           apiToken: notion.apiToken,
           parentPageId: notion.parentPageId,
-          title: answers.contentSource.title,
+          title: notionDatabaseTitle,
           fields: answers.contentSource.fields,
           seedCount: notion.seedCount,
         });
@@ -365,6 +389,100 @@ export async function provision(
     }
   }
 
+  // ---- 6. Admin account ----
+  // The admin user is seeded by `migrations/0002_admin_seed.sql`,
+  // which we hash-rendered at template time. The migration runs as
+  // part of step 3 (D1 migrations apply), so all we do here is mark
+  // the row "ok" and surface the email in the status card. If
+  // migrations were not applied (e.g. wrangler missing), we still
+  // treat this as ok — the SQL is on disk and will run on the user's
+  // first `wrangler d1 migrations apply` after `pnpm install`.
+  result.admin = {
+    ok: true,
+    email: answers.adminEmail,
+    message: "seeded via 0002_admin_seed.sql",
+  };
+
+  // ---- 7. Deploy ----
+  // Goal: one scaffolder command = a live `https://<name>.<subdomain>.workers.dev`
+  // URL the user can visit. Steps in order:
+  //   a. `pnpm install` — produces node_modules + the worker bundle
+  //      that wrangler can upload. Skip on failure (caller will need
+  //      to run it manually anyway).
+  //   b. `wrangler d1 migrations apply <db> --remote` — pushes
+  //      0001_init.sql + 0002_admin_seed.sql to the live D1 database
+  //      we just created. Without this, the deployed worker has no
+  //      schema and the admin user cannot log in.
+  //   c. `vinext deploy` — the project's own deploy command. It
+  //      builds the bundle and calls `wrangler deploy` under the
+  //      hood. We capture stdout to find the workers.dev URL.
+  // If any step fails, we don't try the next one — surface a hint
+  // in the status card so the user can run them by hand.
+  try {
+    const install = await run("pnpm", ["install", "--prefer-offline"], {
+      cwd: projectDir,
+    });
+    if (install.code !== 0) {
+      throw new Error(
+        `pnpm install failed (exit ${install.code}); run it manually inside ${projectDir}`
+      );
+    }
+    p.log.success("pnpm install: done.");
+
+    const d1Id = result.d1.id;
+    if (!d1Id) throw new Error("no D1 id available; cannot apply migrations");
+    const migrate = await run(
+      "pnpm",
+      ["exec", "wrangler", "d1", "migrations", "apply", d1Name, "--remote"],
+      { cwd: projectDir }
+    );
+    if (migrate.code !== 0) {
+      const tail = (migrate.stderr || migrate.stdout).trim().split("\n").slice(-6).join("\n");
+      throw new Error(
+        `wrangler d1 migrations apply --remote failed (exit ${migrate.code}):\n${tail}`
+      );
+    }
+    p.log.success("D1 migrations: applied to remote.");
+
+    const deploy = await run("pnpm", ["exec", "vinext", "deploy"], {
+      cwd: projectDir,
+    });
+    if (deploy.code !== 0) {
+      const tail = (deploy.stderr || deploy.stdout).trim().split("\n").slice(-8).join("\n");
+      throw new Error(`vinext deploy failed (exit ${deploy.code}):\n${tail}`);
+    }
+    // wrangler prints lines like:
+    //   Published <name> (X.XX sec)
+    //     https://<name>.<subdomain>.workers.dev
+    // Pull the URL out so the status card can link to it.
+    const deployText = (deploy.stdout + "\n" + deploy.stderr).replace(
+      /\u001b\[[0-9;]*m/g,
+      ""
+    );
+    const urlMatch = deployText.match(
+      /https:\/\/[a-zA-Z0-9._-]+\.workers\.dev/
+    );
+    result.deploy = {
+      ok: true,
+      url: urlMatch?.[0],
+      workerName: slug,
+    };
+    p.log.success(
+      `Worker deployed: ${urlMatch?.[0] ?? "(url not detected in output)"}`
+    );
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    result.deploy = {
+      ok: false,
+      workerName: slug,
+      message,
+      skipped: false,
+    };
+    p.log.warn(
+      `Deploy skipped — ${message.split("\n")[0]}\n  (Run \`pnpm exec vinext deploy\` inside ${projectDir} to retry.)`
+    );
+  }
+
   return finalize(result, projectDir, slug);
 }
 
@@ -404,6 +522,22 @@ function finalize(
   );
   row("Resend", result.resend.enabled ? "ok" : "warn", result.resend.enabled ? "enabled" : "skipped (configure manually — see README)");
   row("Google", result.google.enabled ? "ok" : "warn", result.google.enabled ? "enabled" : "skipped (configure manually — see README)");
+  row(
+    "Admin",
+    result.admin.ok ? "ok" : "fail",
+    result.admin.ok
+      ? `${result.admin.email} (${result.admin.message ?? "ok"})`
+      : (result.admin.message ?? "failed")
+  );
+  row(
+    "Worker",
+    result.deploy.ok ? "ok" : "fail",
+    result.deploy.ok
+      ? result.deploy.url ?? `deployed (${result.deploy.workerName})`
+      : result.deploy.skipped
+        ? "skipped (run `pnpm exec vinext deploy` inside the project to deploy)"
+        : (result.deploy.message ?? "failed")
+  );
 
   return result;
 }

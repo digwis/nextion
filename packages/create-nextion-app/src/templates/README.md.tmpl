@@ -64,9 +64,10 @@ pnpm exec wrangler r2 bucket create {{projectNameLower}}-assets
 #   Create an integration at https://www.notion.so/my-integrations
 #   Share a target page with the integration
 #   Put the integration token into .dev.vars → NOTION_TOKEN
-#   Create a database under that page with properties matching the
-#   fields in lib/content/models.ts; put its data source id into
-#   .dev.vars → NOTION_DATA_SOURCE_ID
+#   For the default blog scaffold, create a database under that page
+#   with: Name, Slug, Description, Published, Date, Tags, Cover
+#   Article body content lives in the Notion page content blocks.
+#   Put its data source id into .dev.vars → NOTION_DATA_SOURCE_ID
 #   (If the scaffolder already auto-created the database via `ntn`,
 #    see "Switching the Notion integration" below to use your own
 #    integration for ongoing API access.)
@@ -118,19 +119,24 @@ pnpm exec vinext deploy
 ## Wiring up the @notionx/core package
 
 The dependency is `"@notionx/core": "{{nextionSource}}"` — by default
-`workspace:*` so this project can be developed inside the vinext monorepo.
-For a published project, the scaffolder passes `--nextion-source "^0.1.0"`
-which pins you to a released version on npm.
+`^0.1.1` (the version published to npm). This works for any host
+machine with no extra setup.
 
-To consume a local build of the package, add to your own
-`pnpm-workspace.yaml`:
+To consume a local build of the package instead, switch the specifier
+to a `link:` / `file:` / `workspace:*` reference and re-run
+`pnpm install`. For monorepo development, drop a `pnpm-workspace.yaml`
+next to this project:
 
 ```yaml
 packages:
+  - "."
   - "../vinext-monorepo/packages/nextion"
 ```
 
-Then re-run `pnpm install` so pnpm picks up the local link.
+(Adding `.` is necessary so pnpm still treats this project as a
+workspace package — otherwise the existing workspace assumption that
+`"@notionx/core": "workspace:*"` is being resolved from the workspace
+breaks.)
 
 ## Customize the look
 

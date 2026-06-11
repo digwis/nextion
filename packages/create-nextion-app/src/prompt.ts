@@ -28,11 +28,34 @@ export interface Answers {
   contentSource: AnswersContentSource;
   /**
    * Dependency specifier used for `@notionx/core` in the
-   * generated `package.json`. Default: `"workspace:*"`. The CLI
-   * `--nextion-source` flag overrides this for non-monorepo
-   * smoke tests.
+   * generated `package.json`. Default: `"^0.1.1"` (the version
+   * published to npm). When developing inside the vinext monorepo,
+   * pass `--nextion-source workspace:*` (or `link:…` / `file:…`)
+   * so the scaffold consumes the local checkout instead.
    */
   nextionSource: string;
+  /**
+   * Email that gets `role = 'admin'` after the worker boots. Stored
+   * in `app_settings.admin_email` and used by `isAdminEmail` to grant
+   * the admin role on first login.
+   */
+  adminEmail: string;
+  /**
+   * Plaintext password for the admin account. Hashed via PBKDF2-SHA256
+   * (matching `@notionx/core`'s `hashPassword`) at render time and
+   * baked into `migrations/0002_admin_seed.sql`. Never persisted in
+   * plaintext — it lives only in memory for the duration of one
+   * scaffolder run.
+   */
+  adminPassword: string;
+  /**
+   * Optional Notion parent page id. When set (and a token is
+   * resolvable), the scaffolder auto-creates the content database
+   * under this page. Empty string means "ask / skip".
+   */
+  notionParentPage: string;
+  /** Number of sample pages to insert into the new database (0 to skip). */
+  notionSeedCount: number;
 }
 
 const FIELD_KEY_RE = /^[a-z][a-zA-Z0-9]*$/;
@@ -54,17 +77,32 @@ function toCamelCase(name: string): string {
 }
 
 /** Defaults applied when the user accepts the canned scaffolding. */
-export const DEFAULT_ANSWERS: Omit<Answers, "projectName" | "targetDir"> = {
+export const DEFAULT_ANSWERS: Omit<
+  Answers,
+  "projectName" | "targetDir"
+> = {
   defaultLocale: "en",
   supportedLocales: ["en"],
-  nextionSource: "workspace:*",
+  nextionSource: "^0.1.1",
+  // Admin defaults are placeholders only — `gatherAnswers()` and the
+  // interactive prompt both overwrite them. The strings here are
+  // chosen so any logic that accidentally reads them sees clearly
+  // non-runnable values.
+  adminEmail: "admin@example.com",
+  adminPassword: "ChangeMe1234",
+  notionParentPage: "",
+  notionSeedCount: 3,
   contentSource: {
     id: "blog",
     title: "Blog",
     fields: [
-      { key: "title", notionName: "Title" },
+      { key: "title", notionName: "Name" },
       { key: "slug", notionName: "Slug" },
       { key: "description", notionName: "Description" },
+      { key: "published", notionName: "Published" },
+      { key: "date", notionName: "Date" },
+      { key: "tags", notionName: "Tags" },
+      { key: "cover", notionName: "Cover" },
     ],
   },
 };
@@ -126,6 +164,42 @@ export async function prompt(argv: string[] = process.argv): Promise<Answers> {
     throw new Error("cancelled");
   }
 
+  // Admin account — collected last so users see what they're agreeing
+  // to before we ask for credentials. The password is hashed at
+  // render time and never persisted in plaintext.
+  p.log.info(
+    "Admin account: the email below is granted the `admin` role on first login. " +
+      "The password is hashed (PBKDF2-SHA256, 100k iter) and stored in D1; the scaffolder " +
+      "does not save it anywhere on disk."
+  );
+  const adminEmail = asString(
+    await p.text({
+      message: "Admin email?",
+      placeholder: "you@example.com",
+      validate: (v) => {
+        const t = (v ?? "").trim();
+        if (!t) return "Admin email is required";
+        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(t))
+          return "Must be a valid email address";
+        return undefined;
+      },
+    }),
+    ""
+  );
+  const adminPassword = asString(
+    await p.password({
+      message: "Admin password? (≥8 chars, letters + digits)",
+      validate: (v) => {
+        const t = (v ?? "").trim();
+        if (t.length < 8) return "Password must be at least 8 characters";
+        if (!/[a-zA-Z]/.test(t) || !/\d/.test(t))
+          return "Password must contain both letters and digits";
+        return undefined;
+      },
+    }),
+    ""
+  );
+
   p.outro("Prompt complete — generating files…");
 
   // Validate field keys (defensive — DEFAULT_ANSWERS is hand-written so
@@ -151,5 +225,9 @@ export async function prompt(argv: string[] = process.argv): Promise<Answers> {
       title: DEFAULT_ANSWERS.contentSource.title,
       fields: fields.length ? fields : DEFAULT_ANSWERS.contentSource.fields,
     },
+    adminEmail: adminEmail.toLowerCase(),
+    adminPassword,
+    notionParentPage: DEFAULT_ANSWERS.notionParentPage,
+    notionSeedCount: DEFAULT_ANSWERS.notionSeedCount,
   };
 }
