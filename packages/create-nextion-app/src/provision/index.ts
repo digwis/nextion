@@ -34,6 +34,12 @@ import {
 import { promptNotion } from "./prompts.js";
 import { patchWranglerJsonc, writeDevVars, type WireInputs } from "./wire.js";
 import { ensureDependencies } from "./dependencies.js";
+import {
+  readNtnToken,
+  isNtnLoggedIn,
+  describeNtnSource,
+  type NtnCredential,
+} from "./ntn-credentials.js";
 
 export interface ProvisionResult {
   d1: { ok: boolean; id?: string; message?: string; created?: boolean };
@@ -196,21 +202,52 @@ export async function provision(
   };
 
   // ---- 5. Notion ----
+  // Token resolution order:
+  //   1. `NOTION_API_TOKEN` env var (explicit, highest priority)
+  //   2. `ntn` CLI's local credentials (keychain / auth.json)
+  //   3. Interactive `secret_…` paste (only when interactive and no
+  //      auto-source found)
+  // Regardless of source, we still need a parent page id, which we
+  // always prompt for interactively.
   try {
-    const envToken = process.env.NOTION_API_TOKEN;
-    if (envToken) {
-      const ok = await verifyNotionToken(envToken);
-      if (!ok) throw new Error("NOTION_API_TOKEN failed verification");
+    const envToken = process.env.NOTION_API_TOKEN?.trim();
+    let autoToken: NtnCredential | null = null;
+    let resolvedToken: string | null = envToken || null;
+
+    if (!resolvedToken) {
+      autoToken = await readNtnToken();
+      if (autoToken) {
+        resolvedToken = autoToken.token;
+        p.log.success(
+          `Notion: auto-detected credentials (${describeNtnSource(autoToken.source)})`
+        );
+      } else {
+        // Give a useful hint about the fastest path forward.
+        const ntnLoggedIn = await isNtnLoggedIn();
+        if (!ntnLoggedIn) {
+          p.log.info(
+            "Notion: no credentials detected. Run `ntn login` once to skip the token prompt, or paste a `secret_…` token below."
+          );
+        }
+      }
+    }
+
+    if (resolvedToken) {
+      const ok = await verifyNotionToken(resolvedToken);
+      if (!ok) throw new Error("Notion token failed verification");
       const ntn = await isNtnAvailable();
       if (!ntn) {
         throw new Error("`ntn` CLI not installed. Run: npm i -g ntn@latest");
       }
-      // With env token but no parent page id known, fall through to
-      // interactive prompt for parent page.
-      const notion = await promptNotion({ interactive: options.interactive }, answers.contentSource.fields);
+      // Skip the token question, but still need parent page + seed count.
+      const notion = await promptNotion(
+        { interactive: options.interactive },
+        answers.contentSource.fields,
+        resolvedToken
+      );
       if (notion) {
         const r = await ensureNotionDatabase({
-          apiToken: envToken,
+          apiToken: notion.apiToken,
           parentPageId: notion.parentPageId,
           title: answers.contentSource.title,
           fields: answers.contentSource.fields,
@@ -220,11 +257,14 @@ export async function provision(
           ok: true,
           dataSourceId: r.dataSourceId,
           seeded: r.seeded,
+          ...(autoToken
+            ? { message: `token from ${describeNtnSource(autoToken.source)}` }
+            : {}),
         };
         p.log.success(
           `Notion: database created (${r.dataSourceId.slice(0, 8)}…), seeded ${r.seeded} pages.`
         );
-        result._notionToken = envToken;
+        result._notionToken = resolvedToken;
       } else {
         result.notion = {
           ok: false,
@@ -234,7 +274,12 @@ export async function provision(
         p.log.warn("Notion: skipped (no parent page id).");
       }
     } else {
-      const notion = await promptNotion({ interactive: options.interactive }, answers.contentSource.fields);
+      // No env, no auto-detected ntn credentials. Fall back to the
+      // interactive paste prompt.
+      const notion = await promptNotion(
+        { interactive: options.interactive },
+        answers.contentSource.fields
+      );
       if (notion) {
         const r = await ensureNotionDatabase({
           apiToken: notion.apiToken,
@@ -256,7 +301,8 @@ export async function provision(
         result.notion = {
           ok: false,
           skipped: true,
-          message: "Notion: set NOTION_API_TOKEN (and rerun), or set it later in .dev.vars.",
+          message:
+            "Notion: set NOTION_API_TOKEN (and rerun), or run `ntn login` once to skip the prompt.",
         };
         p.log.warn("Notion: skipped.");
       }
@@ -351,9 +397,9 @@ function finalize(
     "Notion",
     result.notion.ok ? "ok" : result.notion.skipped ? "warn" : "fail",
     result.notion.ok
-      ? `data source ${result.notion.dataSourceId?.slice(0, 8)}…, seeded ${result.notion.seeded ?? 0} pages`
+      ? `data source ${result.notion.dataSourceId?.slice(0, 8)}…, seeded ${result.notion.seeded ?? 0} pages${result.notion.message ? " (" + result.notion.message + ")" : ""}`
       : result.notion.skipped
-        ? "skipped (set NOTION_API_TOKEN to auto-create)"
+        ? "skipped (set NOTION_API_TOKEN or run `ntn login` to auto-create)"
         : (result.notion.message ?? "failed")
   );
   row("Resend", result.resend.enabled ? "ok" : "warn", result.resend.enabled ? "enabled" : "skipped (configure manually — see README)");

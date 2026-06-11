@@ -90,25 +90,33 @@ export async function promptGoogle(
 }
 
 /**
- * "Wire up Notion now?" — only triggered if `NOTION_API_TOKEN` is not
- * already in env. Returns the token + parent page id the user types
- * in, or null to skip.
+ * "Wire up Notion now?" — triggered when no `NOTION_API_TOKEN` env var
+ * is set and we couldn't auto-detect credentials from `ntn`. The
+ * caller can pass a `preloadedToken` (e.g. read from the ntn CLI's
+ * local keychain) to skip the token prompt entirely. Returns the
+ * token + parent page id the user types in, or null to skip.
  */
 export async function promptNotion(
   ctx: PromptContext,
-  fields: AnswersContentField[]
+  fields: AnswersContentField[],
+  preloadedToken?: string
 ): Promise<OptionalNotion | null> {
   if (!ctx.interactive) return null;
-  p.log.info(
-    "Notion: create an integration at https://www.notion.so/my-integrations, share a target page with it, then paste the token below."
-  );
-  const apiToken = await p.password({
-    message: "Notion integration token (secret_…) — Enter to skip",
-  });
-  if (p.isCancel(apiToken) || !apiToken) return null;
+  let apiToken = preloadedToken ?? "";
+  if (!apiToken) {
+    p.log.info(
+      "Notion: create an integration at https://www.notion.so/my-integrations, share a target page with it, then paste the token below. (Tip: run `ntn login` first and the scaffolder will pick up the token automatically.)"
+    );
+    const input = await p.password({
+      message: "Notion integration token (secret_…) — Enter to skip",
+    });
+    if (p.isCancel(input) || !input) return null;
+    apiToken = String(input).trim();
+  }
   const parentPageId = await p.text({
     message: "Parent page id (the page your integration can edit)",
-    placeholder: "00000000000000000000000000000000",
+    placeholder: "00000000000000000000000000",
+    initialValue: preloadedToken ? "" : undefined,
     validate: (v) =>
       !v || !/^[0-9a-f]{32}$/.test(v.trim())
         ? "Must be a 32-char hex page id"
@@ -128,7 +136,7 @@ export async function promptNotion(
   });
   if (p.isCancel(seedCountRaw)) return null;
   return {
-    apiToken: String(apiToken).trim(),
+    apiToken,
     parentPageId: String(parentPageId).trim(),
     seedCount: Number(seedCountRaw),
   };
