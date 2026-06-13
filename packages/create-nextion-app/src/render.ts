@@ -140,7 +140,7 @@ async function buildTokenMap(answers: Answers): Promise<TokenMap> {
     adminName: localPart(answers.adminEmail),
     adminPasswordHash,
     uiPreset: answers.uiPreset,
-    dependenciesBlock: buildDependenciesBlock(answers.uiPreset),
+    dependenciesBlock: buildDependenciesBlock(answers.uiPreset, answers.nextionSource),
     uiComponentList: uiComponents.map((name) => `\`${name}\``).join(", "),
     uiComponents,
   };
@@ -158,12 +158,12 @@ async function buildTokenMap(answers: Answers): Promise<TokenMap> {
  * `site` preset), filtered against the base set so we never emit
  * duplicate keys.
  */
-function buildDependenciesBlock(uiPreset: UiPreset): string {
+function buildDependenciesBlock(uiPreset: UiPreset, nextionSource: string): string {
   // The base dependency set — what every preset needs regardless
   // of which components it vendors. Keep this list stable: it is
   // the floor of every generated project.
   const baseDependencies: ReadonlyArray<readonly [string, string]> = [
-    ["@notionx/core", "{{nextionSource}}"],
+    ["@notionx/core", nextionSource],
     ["class-variance-authority", "^0.7.1"],
     ["clsx", "^2.1.1"],
     ["lucide-react", "^0.460.0"],
@@ -213,15 +213,7 @@ function buildDependenciesBlock(uiPreset: UiPreset): string {
   const keys = [...merged.keys()].sort();
   for (const name of keys) {
     const version = merged.get(name)!;
-    // The `{{nextionSource}}` token is already a string, but we
-    // want to keep it unquoted in the output so the template
-    // interpolator can still replace it. (We only got here because
-    // the token wasn't substituted yet — `buildTokenMap` ran
-    // before this; the values array here is the *pre-substitution*
-    // shape. The template engine substitutes `{{nextionSource}}`
-    // post-merge, so a bare token placeholder must survive.)
-    const value = version === "{{nextionSource}}" ? `"{{nextionSource}}"` : JSON.stringify(version);
-    lines.push(`    "${name}": ${value}`);
+    lines.push(`    "${name}": ${JSON.stringify(version)}`);
   }
   return lines.join(",\n");
 }

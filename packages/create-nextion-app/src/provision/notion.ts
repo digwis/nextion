@@ -689,7 +689,14 @@ function lastEditedTime(input: Record<string, unknown>): string {
 function parentPageId(input: Record<string, unknown>): string | null {
   const parent = input.parent;
   if (!isRecord(parent)) return null;
-  return typeof parent.page_id === "string" ? parent.page_id : null;
+  // Old model: `database` objects have `parent: { type: "page_id", page_id }`
+  // directly.
+  if (typeof parent.page_id === "string") return parent.page_id;
+  // New model: `data_source` objects have `parent: { type: "database_id",
+  // database_id }` — the parent is the database, not the page. We can't
+  // resolve the page id without an extra API call, so return null and
+  // let the caller fall back to integration-scope-only matching.
+  return null;
 }
 
 function firstDataSourceId(input: Record<string, unknown>): string | null {
@@ -722,6 +729,69 @@ async function retrieveDatabaseInfo(
     dataSourceId: firstDataSourceId(raw) ?? id,
     url: databaseUrl(id, raw),
     description: databaseDescription(raw),
+  };
+}
+
+/**
+ * Resolve a single search result into the {databaseId, dataSourceId,
+ * url, description} shape we need to wire the project. Handles both
+ * Notion 2025-09-03+ `data_source` results and legacy `database`
+ * results, walking parent.database_id when necessary.
+ */
+async function readExistingDatabaseInfo(
+  apiToken: string,
+  item: Record<string, unknown>
+): Promise<ExistingDatabaseInfo | null> {
+  const objectType = item.object;
+
+  if (objectType === "data_source") {
+    // New model: the result's `id` is the data_source id; the
+    // database id is on `parent.database_id` (or fetchable from
+    // the parent if not inlined).
+    const dataSourceId = typeof item.id === "string" ? item.id : null;
+    const parent = item.parent;
+    const databaseIdFromParent =
+      isRecord(parent) && typeof parent.database_id === "string"
+        ? parent.database_id
+        : null;
+    if (!dataSourceId) return null;
+    if (databaseIdFromParent) {
+      return {
+        databaseId: databaseIdFromParent,
+        dataSourceId,
+        url: databaseUrl(databaseIdFromParent, item),
+        description: databaseDescription(item),
+      };
+    }
+    // Fallback: ask the data_source endpoint for its full shape.
+    const stdout = await runOrThrowNtn(
+      ["api", `v1/data_sources/${dataSourceId}`],
+      { env: { NOTION_API_TOKEN: apiToken } }
+    );
+    const raw = JSON.parse(stdout) as Record<string, unknown>;
+    const parentDb = raw.parent;
+    const databaseId =
+      isRecord(parentDb) && typeof parentDb.database_id === "string"
+        ? parentDb.database_id
+        : dataSourceId;
+    return {
+      databaseId,
+      dataSourceId,
+      url: databaseUrl(databaseId, raw),
+      description: databaseDescription(raw),
+    };
+  }
+
+  // Legacy `database` object (or anything else with an `id`).
+  const databaseId = typeof item.id === "string" ? item.id : null;
+  if (!databaseId) return null;
+  return {
+    databaseId,
+    dataSourceId:
+      firstDataSourceId(item) ??
+      (await retrieveDatabaseInfo(apiToken, databaseId)).dataSourceId,
+    url: databaseUrl(databaseId, item),
+    description: databaseDescription(item),
   };
 }
 
@@ -768,7 +838,13 @@ async function findExistingDatabaseByStableKey(input: {
       "-d",
       JSON.stringify({
         query: input.stableKey,
-        filter: { property: "object", value: "database" },
+        // Notion 2025-09-03 API no longer accepts `"database"` as a
+        // search filter value; `"data_source"` covers new-style
+        // databases (which are now content-only objects whose parent
+        // is the database container). We also accept legacy
+        // `object === "database"` results below in case the
+        // integration's workspace still has any.
+        filter: { property: "object", value: "data_source" },
         sort: { timestamp: "last_edited_time", direction: "descending" },
         page_size: 50,
       }),
@@ -779,9 +855,15 @@ async function findExistingDatabaseByStableKey(input: {
   const expectedParent = compactNotionId(input.parentPageId);
   const matches = (raw.results ?? [])
     .filter((item): item is Record<string, unknown> => {
-      if (!isRecord(item) || item.object !== "database") return false;
-      const parentId = parentPageId(item);
-      if (!parentId || compactNotionId(parentId) !== expectedParent) return false;
+      if (!isRecord(item)) return false;
+      // Accept both the new `data_source` and the legacy `database`
+      // object types — Notion's search is supposed to filter server-
+      // side, but we keep the client check defensive.
+      if (item.object !== "data_source" && item.object !== "database") return false;
+      const itemParent = parentPageId(item);
+      // data_source items return null here (the parent is a database,
+      // not a page) — trust the integration's access scope for them.
+      if (itemParent !== null && compactNotionId(itemParent) !== expectedParent) return false;
       return extractScaffoldKey(databaseDescription(item)) === input.stableKey;
     })
     .sort((a, b) => lastEditedTime(b).localeCompare(lastEditedTime(a)));
@@ -792,17 +874,7 @@ async function findExistingDatabaseByStableKey(input: {
       `[notion] found ${matches.length} databases with scaffold key "${input.stableKey}" under the parent page; reusing the most recently edited one.`
     );
   }
-  const first = matches[0];
-  const databaseId = typeof first.id === "string" ? first.id : null;
-  if (!databaseId) return null;
-  return {
-    databaseId,
-    dataSourceId:
-      firstDataSourceId(first) ??
-      (await retrieveDatabaseInfo(input.apiToken, databaseId)).dataSourceId,
-    url: databaseUrl(databaseId, first),
-    description: databaseDescription(first),
-  };
+  return readExistingDatabaseInfo(input.apiToken, matches[0]);
 }
 
 async function findExistingDatabaseByTitle(input: {
@@ -812,7 +884,9 @@ async function findExistingDatabaseByTitle(input: {
 }): Promise<ExistingDatabaseInfo | null> {
   const body = {
     query: input.title,
-    filter: { property: "object", value: "database" },
+    // Notion 2025-09-03 API no longer accepts `"database"`; see the
+    // matching note in findExistingDatabaseByStableKey.
+    filter: { property: "object", value: "data_source" },
     sort: { timestamp: "last_edited_time", direction: "descending" },
     page_size: 25,
   };
@@ -825,10 +899,13 @@ async function findExistingDatabaseByTitle(input: {
   const expectedParent = compactNotionId(input.parentPageId);
   const matches = (raw.results ?? []).filter((item): item is Record<string, unknown> => {
     if (!isRecord(item)) return false;
-    if (item.object !== "database") return false;
+    if (item.object !== "data_source" && item.object !== "database") return false;
     if (normalizeTitle(databaseTitle(item)) !== expectedTitle) return false;
-    const parentId = parentPageId(item);
-    return parentId ? compactNotionId(parentId) === expectedParent : false;
+    const itemParent = parentPageId(item);
+    // data_source items return null here — trust the integration's
+    // access scope for them (see parentPageId's comment).
+    if (itemParent !== null && compactNotionId(itemParent) !== expectedParent) return false;
+    return true;
   });
 
   if (matches.length === 0) return null;
@@ -837,17 +914,7 @@ async function findExistingDatabaseByTitle(input: {
       `[notion] found ${matches.length} databases named "${input.title}" under the parent page; reusing the most recently edited one.`
     );
   }
-  const first = matches[0];
-  const databaseId = typeof first.id === "string" ? first.id : null;
-  if (!databaseId) return null;
-  return {
-    databaseId,
-    dataSourceId:
-      firstDataSourceId(first) ??
-      (await retrieveDatabaseInfo(input.apiToken, databaseId)).dataSourceId,
-    url: databaseUrl(databaseId, first),
-    description: databaseDescription(first),
-  };
+  return readExistingDatabaseInfo(input.apiToken, matches[0]);
 }
 
 const NOTION_PROPERTY_TYPES = [

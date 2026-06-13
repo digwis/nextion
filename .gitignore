@@ -34,6 +34,12 @@ yarn-error.log*
 .env*
 .dev.vars
 .dev.vars.*
+# The scaffolder template file `.dev.vars.example.tmpl` (under
+# `packages/create-nextion-app/src/templates/`) must be committed so
+# downstream users can render their own `.dev.vars.example` at scaffold
+# time. The matching rendered file in *their* project is whitelisted by
+# the per-project `.gitignore` the scaffolder writes.
+!.dev.vars.example.tmpl
 
 # wrangler local state & secrets
 .wrangler/

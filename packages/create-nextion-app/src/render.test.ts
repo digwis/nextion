@@ -95,3 +95,78 @@ describe("UI preset rendering", () => {
   });
 });
 
+describe("template token substitution", () => {
+  it("replaces {{nextionSource}} with a real semver in the generated package.json", async () => {
+    const root = await fs.mkdtemp(path.join(os.tmpdir(), "nextion-tokens-"));
+    const outDir = path.join(root, "app");
+    const answers = applyDefaults(
+      {
+        projectName: "tokens-app",
+        targetDir: outDir,
+        uiPreset: "site",
+        adminEmail: "admin@example.com",
+        adminPassword: "Password123",
+        nextionSource: "^1.2.3",
+        yes: true,
+      },
+      ["node", "cli"]
+    );
+
+    await render(answers, templatesDir, outDir);
+
+    const raw = await fs.readFile(path.join(outDir, "package.json"), "utf8");
+
+    // The literal token must not survive — pnpm install would fail
+    // with an invalid version specifier.
+    expect(raw).not.toContain("{{nextionSource}}");
+
+    const packageJson = JSON.parse(raw) as {
+      dependencies: Record<string, string>;
+    };
+    // The substituted value must be a valid npm semver/range.
+    expect(packageJson.dependencies["@notionx/core"]).toBe("^1.2.3");
+  });
+
+  it("writes .dev.vars.example as part of the rendered project", async () => {
+    const root = await fs.mkdtemp(path.join(os.tmpdir(), "nextion-devvars-"));
+    const outDir = path.join(root, "app");
+    const answers = applyDefaults(
+      {
+        projectName: "devvars-app",
+        targetDir: outDir,
+        uiPreset: "site",
+        adminEmail: "admin@example.com",
+        adminPassword: "Password123",
+        yes: true,
+      },
+      ["node", "cli"]
+    );
+
+    await render(answers, templatesDir, outDir);
+
+    const devVarsExample = await fs.readFile(
+      path.join(outDir, ".dev.vars.example"),
+      "utf8"
+    );
+
+    // Every key that writeDevVars() expects to update must be present
+    // as a declared line, otherwise the wiring step throws ENOENT.
+    for (const key of [
+      "D1_DATABASE_ID",
+      "KV_NAMESPACE_ID",
+      "TURNSTILE_SITE_KEY",
+      "TURNSTILE_SECRET_KEY",
+      "NOTION_TOKEN",
+      "NOTION_DATA_SOURCE_ID",
+      "NOTION_PAGES_DATA_SOURCE_ID",
+      "NOTION_SITE_SETTINGS_DATA_SOURCE_ID",
+      "RESEND_API_KEY",
+      "RESEND_FROM",
+      "GOOGLE_CLIENT_ID",
+      "GOOGLE_CLIENT_SECRET",
+    ]) {
+      expect(devVarsExample).toMatch(new RegExp(`^${key}=`, "m"));
+    }
+  });
+});
+
