@@ -1,120 +1,135 @@
 # 发布到 npm 指南
 
-本文档说明如何将 vinext monorepo 中的两个包发布到 npm。
+本文档说明如何将 vinext monorepo 中的包发布到 npm。
 
 ## 包结构
 
 | 包 | 作用 | 当前版本 |
 |---|---|---|
-| `@notionx/core` | 核心框架库（运行时） | 0.1.0 |
-| `@notionx/create-nextion-app` | CLI 脚手架工具 | 0.2.0 |
+| `@notionx/core` | 核心框架库（运行时） | 1.0.0 |
+| `@notionx/create-nextion-app` | CLI 脚手架工具 | 0.5.0 |
+| `@notionx/skill` | nextion AI agent skill 安装器 | 0.2.0 |
 
-**两个包都发布到 npmjs.com**（不是 GitHub Packages）。
+**所有包都发布到 npmjs.com**（不是 GitHub Packages）。
 
-## 前置准备
+## 一句话流程
 
-### 1. npm 账号
+> 改完代码 → `pnpm changeset` → commit + `git push` → CI 自动 publish。
 
-```bash
-npm login
-# 或编辑 ~/.npmrc：
-# registry=https://registry.npmjs.org/
-# //registry.npmjs.org/:_authToken=<your-token>
+发布在 `main` 上自动完成（GitHub Actions），前提是 push 里带了一个 changeset。**没有 changeset = npm 不动**。
+
+## 推送之前：本地预检
+
+`.husky/pre-push` 钩子会先跑一次 `scripts/check-changeset.mjs`，告诉你这次 push 会不会触发 publish：
+
+```text
+  ✓  npm publish WILL run for this push.
+    Packages to bump: @notionx/create-nextion-app (0.5.0 → ?)
+    ...
+```
+或
+```text
+  ✗  npm publish will NOT run for this push.
+    Code changed in: @notionx/create-nextion-app (5 files)
+    No changeset was added or modified.
+    Add one before pushing: pnpm changeset
 ```
 
-### 2. 组织权限
-
-需要 `notionx` 组织的 owner 权限。组织是单用户组织时，创建者自动是 owner。
-
-### 3. npm token
-
-推荐用 **Granular Access Token**：
-- Bypass 2FA: ✅
-- Packages and scopes: `@notionx`（或 All packages）
-- Permissions: Read and write
-
-Generate at: https://www.npmjs.com/settings/digwis/tokens
-
-### 4. GitHub Secrets（可选，仅自动发布需要）
-
-`NPM_TOKEN` → token 字符串  
-配置位置: https://github.com/digwis/nextion/settings/secrets/actions
-
-## 发布流程
-
-### 手动发布
+如果想手动检查（不 push）：
 
 ```bash
-# 1. 构建
-pnpm --filter @notionx/core build
-pnpm --filter @notionx/create-nextion-app build
-
-# 2. 升级版本（手动改 package.json，或 pnpm version）
-# 3. 发布
-cd packages/nextion
-npm publish --access public
-cd ../create-nextion-app
-npm publish --access public
+pnpm release:status
 ```
 
-### Changesets + GitHub Actions（自动）
+## 详细步骤
 
-1. 创建一个 changeset：
-   ```bash
-   pnpm changeset
-   ```
-2. 提交并推送：
-   ```bash
-   git add .
-   git commit -m "feat: 新功能"
-   git push origin main
-   ```
-3. Actions 自动：
-   - 跑 CI（test / lint / typecheck）
-   - 开一个 "Version Packages" PR
-   - 合并该 PR → 自动发布到 npm
+### 1. 写代码
 
-## 版本策略
+跟平时一样开发、跑 `pnpm -r test`、`pnpm -r typecheck`、`pnpm -r lint`。
 
-[语义化版本](https://semver.org/)：
+### 2. 加 changeset
 
-- **Major (X.0.0)**: 不兼容的 API 变更
-- **Minor (0.X.0)**: 向后兼容的功能新增（改了 prompt 行为、改了模板结构）
-- **Patch (0.0.X)**: 文档、bug 修复、内部重构
-
-## 发布前检查
-
-- [ ] `pnpm -r test`
-- [ ] `pnpm -r lint`（如有）
-- [ ] `pnpm -r typecheck`（如有）
-- [ ] `pnpm --filter @notionx/core build`
-- [ ] `pnpm --filter @notionx/create-nextion-app build`
-- [ ] README 和 CHANGELOG 已更新
-
-## 发布后验证
+每个有改动的包都需要一个 changeset。**必须**在 `git add` 之前加，否则 pre-push 会拦你。
 
 ```bash
-# 包元信息
-npm view @notionx/core
-npm view @notionx/create-nextion-app
-
-# 端到端测试
-npx @notionx/create-nextion-app my-test-app
-cd my-test-app
-pnpm install
-pnpm test
+pnpm changeset
 ```
 
-## 回滚发布
+交互式选包 + bump 级别（patch / minor / major）+ 写一行描述。它会创建一个 `.changeset/<random-name>.md`：
+
+```md
+---
+"@notionx/create-nextion-app": minor
+---
+
+加了一个 `--no-site-settings` flag 跳过 Notion site settings
+```
+
+或者直接手写：
 
 ```bash
-# 撤回 72 小时内的版本
-npm unpublish @notionx/core@0.1.0
-npm unpublish @notionx/create-nextion-app@0.2.0
+cat > .changeset/no-site-settings.md <<'EOF'
+---
+"@notionx/create-nextion-app": minor
+---
 
-# 或废弃（推荐）
-npm deprecate @notionx/core@0.1.0 "Use 0.1.1+ for bug fix"
+Add `--no-site-settings` flag
+EOF
 ```
+
+**bump 级别速查**：
+
+- **patch** — bug 修复、依赖升级、文档、内部重构
+- **minor** — 新功能、新 CLI flag、新模板文件（向后兼容）
+- **major** — 破坏性改动（改 package 公共 API、改模板目录结构）
+
+### 3. Commit + push
+
+```bash
+git add -A
+git commit -m "feat: 加 --no-site-settings flag"
+git push origin main
+```
+
+push 时 pre-push 钩子会预测这次会不会 publish，**有错就拦你**。
+
+### 4. 看 CI 跑没跑
+
+去 https://github.com/digwis/nextion/actions 看 `release` workflow。
+
+完整流程：
+1. `pnpm install --frozen-lockfile`
+2. 三个包各自 `build`
+3. `pnpm changeset version`（在 runner 上 bump 版本、删 `.changeset/*.md`）
+4. commit + push `chore(release): version packages` 回 main
+5. `pnpm -r publish --tag latest`
+
+### 5. 验证
+
+```bash
+npm view @notionx/core version
+npm view @notionx/create-nextion-app version
+npm view @notionx/skill version
+```
+
+## 跳过 pre-push 检查
+
+不推荐，但偶尔有必要（紧急修复、批量更新）：
+
+```bash
+git push --no-verify origin main
+```
+
+## 协作模式：以后开 PR 怎么搞
+
+目前是「直接 push 到 main」。要切到 PR 流程的话：
+
+1. GitHub → Settings → Branches → Add rule for `main`
+2. 勾上 "Require a pull request before merging"
+3. 勾上 "Require approvals"（至少 1 个 reviewer）
+4. 勾上 "Do not allow bypassing the above settings"
+
+`release.yml` 不会改——它只关心 push 到 main 的 commit 内容，PR merge 也是 push 到 main。**PR 头部分支不会触发 release**，所以 PR review 期间可以反复 push 调试而不污染 npm。
 
 ## 资源链接
 

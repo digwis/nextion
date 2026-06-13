@@ -1,0 +1,22 @@
+#!/usr/bin/env sh
+# Predict whether the next `git push` will trigger the release workflow to
+# publish packages to npm. Blocks the push if a changeset is required but
+# missing. See scripts/check-changeset.mjs for the full rules.
+#
+# git invokes pre-push with one line per ref on stdin:
+#   <local_ref> <local_sha> <remote_ref> <remote_sha>
+# For brand-new branches, remote_sha is 40 zeros — in that case we fall back
+# to origin/main as the diff base (the "what's new on this branch" set).
+
+while read -r local_ref local_sha remote_ref remote_sha; do
+  [ -z "$local_ref" ] && continue
+  remote_branch="${remote_ref#refs/heads/}"
+  if [ "$remote_sha" = "0000000000000000000000000000000000000000" ]; then
+    # New branch: compare against main, since the branch doesn't exist
+    # upstream yet.
+    export NEXTION_DIFF_BASE="origin/main"
+  else
+    export NEXTION_DIFF_BASE="origin/${remote_branch}"
+  fi
+  node "$(dirname "$0")/../scripts/check-changeset.mjs" || exit 1
+done
