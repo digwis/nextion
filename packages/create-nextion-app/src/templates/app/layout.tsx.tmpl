@@ -5,24 +5,21 @@ import { getSiteSettings, getStaticSiteSettings } from "@/lib/site/settings";
 import { fallbackSiteConfig } from "@/lib/site/config";
 
 export async function generateMetadata(): Promise<Metadata> {
-  // `generateMetadata` is async, so we can read site settings from
-  // Notion at request time. The KV cache in `getSiteSettings` keeps
-  // this cheap — only the first request after a Notion edit pays the
-  // upstream RTT.
   const settings = await getSiteSettings();
   return {
     title: {
-      default: settings.name,
-      // The `template` only applies to *child* segments. The home
-      // page below overrides with `title: { absolute: ... }` so the
-      // tab title doesn't render as `${name} · ${name}`.
-      template: `%s · ${settings.name}`,
+      default: settings.seo.title || settings.name,
+      template: `%s · ${settings.seo.title || settings.name}`,
     },
-    description: settings.description,
+    description: settings.seo.description || settings.description,
     openGraph: {
-      title: settings.name,
-      description: settings.description,
-      ...(settings.socialImageUrl ? { images: [{ url: settings.socialImageUrl }] } : {}),
+      title: settings.seo.title || settings.name,
+      description: settings.seo.description || settings.description,
+      ...(settings.ogImageUrl
+        ? { images: [{ url: settings.ogImageUrl }] }
+        : settings.socialImageUrl
+          ? { images: [{ url: settings.socialImageUrl }] }
+          : {}),
       type: "website",
     },
   };
@@ -33,13 +30,13 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  // Read once on the server so children can use a synchronous
-  // reference. Falls back to the hard-coded values when Notion is
-  // unreachable.
   const settings = (await getSiteSettings()) ?? getStaticSiteSettings();
   return (
     <html
       lang={settings.defaultLocale ?? fallbackSiteConfig.defaultLocale}
+      data-theme-primary={settings.theme.primary}
+      data-theme-accent={settings.theme.accent}
+      data-theme-font={settings.theme.font}
       suppressHydrationWarning
     >
       <body className="min-h-screen bg-background font-sans antialiased">
