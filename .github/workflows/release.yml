@@ -94,14 +94,16 @@ jobs:
             exit 1
           fi
 
-          # Write the auth token to the project root .npmrc so
-          # `pnpm publish` picks it up (it auto-loads .npmrc from
-          # the project directory and from $HOME — both paths are
-          # written below for belt-and-braces).
-          for rc in "$HOME/.npmrc" ".npmrc"; do
-            printf '//registry.npmjs.org/:_authToken=%s\n' "$TOKEN" > "$rc"
-          done
-          echo "Auth configured (token length: ${#TOKEN}) in ~/.npmrc and ./.npmrc."
+          # Write the auth token ONLY to the user-level `~/.npmrc`.
+          # We deliberately avoid writing `./.npmrc` in the project
+          # root because (a) the next step's `git add -A` has, in
+          # past runs, staged `./.npmrc` and triggered GitHub push
+          # protection — the `.gitignore` rule is a defense that
+          # should not be the only one; and (b) the user-level rc
+          # is already on `pnpm publish`'s lookup path, so the
+          # project-level file is redundant.
+          printf '//registry.npmjs.org/:_authToken=%s\n' "$TOKEN" > "$HOME/.npmrc"
+          echo "Auth configured in ~/.npmrc (token length: ${#TOKEN})."
 
       - name: Publish packages
         if: steps.pending_changesets.outputs.has_changesets == 'true'
@@ -113,6 +115,17 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add -A
+          # Defense in depth: if any local-only file (`./.npmrc`
+          # written by an older workflow revision, scratch files
+          # etc.) was inadvertently staged, drop it before the
+          # commit. The version bump is fully described by
+          # `pnpm changeset version`'s output (deleted .changeset
+          # entries + bumped package.json + bumped CHANGELOG.md),
+          # and nothing else should ever ride along.
+          git reset HEAD -- .npmrc 2>/dev/null || true
+          echo "--- staged files ---"
+          git diff --cached --stat
+          echo "--------------------"
           if ! git diff --cached --quiet; then
             git commit -m "chore(release): version packages"
             # `--no-verify` is required because the husky pre-push
