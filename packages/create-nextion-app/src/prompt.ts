@@ -21,32 +21,12 @@ export interface AnswersContentSource {
   fields: AnswersContentField[];
 }
 
-export type UiPreset = "minimal" | "site" | "app";
-
 export interface Answers {
   projectName: string;
   targetDir: string;
   defaultLocale: string;
   supportedLocales: string[];
   contentSource: AnswersContentSource;
-  /**
-   * UI preset selected at scaffold time. Controls which shadcn/ui
-   * primitives are vendored into the generated project, which Radix
-   * packages are wired into `package.json`, and which block-renderer
-   * modules the generated `components/notion/` tree imports.
-   *
-   * - `minimal` — lean blog set: Button, Card, Input, Label, Badge,
-   *   Separator, Skeleton. The smallest scaffold footprint.
-   * - `site` — Notion page builder set: everything in `minimal` plus
-   *   Accordion, Alert, Table, AspectRatio, Tabs, Tooltip,
-   *   DropdownMenu, Sheet, Dialog. Recommended for Notion-driven
-   *   public sites and landing pages.
-   * - `app` — full app/dashboard set: everything in `site` plus the
-   *   form/control primitives (Select, Textarea, Checkbox, Switch,
-   *   RadioGroup, Avatar, Sonner, Form, Popover, Command,
-   *   NavigationMenu). Heaviest preset.
-   */
-  uiPreset: UiPreset;
   /**
    * Dependency specifier used for `@notionx/core` in the
    * generated `package.json`. Default: `"^0.1.2"` (the version
@@ -83,43 +63,6 @@ export interface Answers {
    * keep site config hard-coded in `lib/site/config.ts`.
    */
   enableSiteSettings: boolean;
-}
-
-export const UI_PRESETS: ReadonlyArray<{
-  id: UiPreset;
-  label: string;
-  hint: string;
-  description: string;
-}> = [
-  {
-    id: "site",
-    label: "Site Builder (recommended)",
-    hint: "Notion page builder, marketing sites, docs",
-    description:
-      "Rich set of shadcn primitives for Notion-driven public sites, " +
-      "landing pages, and documentation. Recommended default for " +
-      "Notion page-building projects.",
-  },
-  {
-    id: "minimal",
-    label: "Minimal",
-    hint: "lean blog, simple content site, quick demo",
-    description:
-      "Smallest footprint. Just enough primitives for blog posts and " +
-      "simple content. Easy to extend with `pnpm dlx shadcn add …`.",
-  },
-  {
-    id: "app",
-    label: "App Dashboard",
-    hint: "admin, dashboards, forms, authenticated apps",
-    description:
-      "Largest preset. Adds form controls, command palette, popover, " +
-      "and navigation menu on top of the site set.",
-  },
-] as const;
-
-export function isUiPreset(value: unknown): value is UiPreset {
-  return value === "minimal" || value === "site" || value === "app";
 }
 
 const FIELD_KEY_RE = /^[a-z][a-zA-Z0-9]*$/;
@@ -171,7 +114,6 @@ export const DEFAULT_ANSWERS: Omit<
   // non-runnable values.
   adminEmail: "admin@example.com",
   adminPassword: "ChangeMe1234",
-  uiPreset: "site",
   notionParentPage: "",
   notionSeedCount: 3,
   // Site-level config lives in a separate Notion data source by
@@ -262,7 +204,6 @@ export async function prompt(
     LANGUAGE_OPTIONS.en;
 
   // Summarise the canned defaults so the user knows what they're agreeing to.
-  // (UI preset is summarised after the user picks it below.)
   const fieldsList = DEFAULT_ANSWERS.contentSource.fields
     .map((f) => f.notionName)
     .join(", ");
@@ -286,29 +227,6 @@ export async function prompt(
     p.cancel("Cancelled by user");
     throw new Error("cancelled");
   }
-
-  // UI preset — controls which shadcn primitives get vendored into
-  // `components/ui/` and which Radix packages land in
-  // `package.json`. The `site` preset is the recommended default for
-  // Notion-driven public sites; `minimal` is the lean-blog escape
-  // hatch; `app` is the heaviest set (admin / forms / dashboards).
-  const uiPresetSelection = await p.select({
-    message: "UI preset?",
-    initialValue: DEFAULT_ANSWERS.uiPreset,
-    options: UI_PRESETS.map((preset) => ({
-      value: preset.id,
-      label: preset.label,
-      hint: preset.hint,
-    })),
-  });
-  if (p.isCancel(uiPresetSelection)) {
-    p.cancel("Cancelled by user");
-    throw new Error("cancelled");
-  }
-  const uiPreset: UiPreset = isUiPreset(uiPresetSelection)
-    ? uiPresetSelection
-    : DEFAULT_ANSWERS.uiPreset;
-  p.log.info(`UI preset: ${uiPreset}`);
 
   // Admin account — collected last so users see what they're agreeing
   // to before we ask for credentials. The password is generated here,
@@ -364,7 +282,6 @@ export async function prompt(
     notionParentPage: DEFAULT_ANSWERS.notionParentPage,
     notionSeedCount: DEFAULT_ANSWERS.notionSeedCount,
     enableSiteSettings: DEFAULT_ANSWERS.enableSiteSettings,
-    uiPreset,
     _generatedAdminPassword: adminPassword,
   } as Answers & { _generatedAdminPassword: string };
 }

@@ -5,10 +5,8 @@
 // CI / non-TTY smoke tests where `@clack/prompts` would just hang.
 
 import * as p from "@clack/prompts";
-import type { Answers, AnswersContentField, UiPreset } from "./prompt.js";
-import { isUiPreset } from "./prompt.js";
+import type { Answers, AnswersContentField } from "./prompt.js";
 import { generateRandomPassword } from "./password.js";
-import { normalizeUiPreset } from "./ui-presets.js";
 import { resolveNextionSource } from "./nextion-source.js";
 
 interface CliOverrides {
@@ -20,13 +18,6 @@ interface CliOverrides {
   contentTitle?: string;
   fields?: string;
   nextionSource?: string;
-  /**
-   * UI preset — see `UI_PRESETS` in `prompt.ts` for the canonical
-   * list. The string flows straight into the token map (so the
-   * generated `package.json` and the per-preset block-renderer
-   * imports can branch on it).
-   */
-  uiPreset?: UiPreset;
   adminEmail?: string;
   adminPassword?: string;
   /**
@@ -140,10 +131,6 @@ function parseArgs(argv: string[]): CliOverrides {
         case "--nextion-source":
           out.nextionSource = takeNext(next);
           break;
-        case "--ui":
-        case "--ui-preset":
-          out.uiPreset = normalizeUiPreset(takeNext(next));
-          break;
         case "--admin-email":
           out.adminEmail = takeNext(next);
           break;
@@ -201,14 +188,6 @@ Flags:
                                 target dir to live inside a pnpm
                                 workspace that has @notionx/core
                                 listed), or "file:../path/to/core".
-  --ui <preset>                UI preset for shadcn primitives and
-                               the Notion block renderer. One of:
-                                 minimal  - lean blog set
-                                 site     - Notion page builder set (default)
-                                 app      - admin / dashboard set
-                               Drives which files are vendored into
-                               components/ui/ and which Radix
-                               packages are added to package.json.
   --admin-email <addr>         Email granted the admin role (required).
   --admin-password <pwd>       Optional initial password for the admin
                                account (≥8 chars, letters + digits).
@@ -289,29 +268,6 @@ function applyDefaults(overrides: CliOverrides, argv: string[]): Answers {
     }
   }
 
-  // UI preset: CLI flag, env var, then the recommended `site` default.
-  // We accept both CREATE_NEXTION_UI (the current name, mirroring
-  // CREATE_NEXTION_ADMIN_*) and CREATE_NEXTION_UI_PRESET (kept for
-  // backward compatibility with older scaffolder versions) and
-  // validate the env value with `isUiPreset` so a typo (e.g.
-  // `CREATE_NEXTION_UI=siite`) fails loud rather than silently
-  // downgrading to the default.
-  let uiPreset: UiPreset = "site";
-  if (overrides.uiPreset) {
-    uiPreset = normalizeUiPreset(overrides.uiPreset);
-  } else {
-    const envValue =
-      process.env.CREATE_NEXTION_UI ?? process.env.CREATE_NEXTION_UI_PRESET;
-    if (envValue !== undefined && envValue !== "") {
-      if (!isUiPreset(envValue)) {
-        throw new Error(
-          `Invalid CREATE_NEXTION_UI value "${envValue}". Expected one of: minimal, site, app.`
-        );
-      }
-      uiPreset = envValue;
-    }
-  }
-
   return {
     projectName,
     targetDir,
@@ -320,7 +276,6 @@ function applyDefaults(overrides: CliOverrides, argv: string[]): Answers {
       ? Array.from(new Set([defaultLocale, ...supportedLocales]))
       : [defaultLocale],
     nextionSource: overrides.nextionSource ?? "^0.5.2",
-    uiPreset,
     contentSource: {
       id: contentId,
       title: contentTitle,
