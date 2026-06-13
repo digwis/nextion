@@ -340,6 +340,18 @@ describe("site-settings reuse", () => {
           Description: { rich_text: {} },
           "Default Locale": { select: {} },
           "Social Image": { url: {} },
+          "Meta Title": { rich_text: {} },
+          "Meta Description": { rich_text: {} },
+          "OG Image": { url: {} },
+          Nav: { rich_text: {} },
+          "Nav CTA": { rich_text: {} },
+          "Primary Color": { select: {} },
+          "Accent Color": { select: {} },
+          "Font Family": { select: {} },
+          "Footer Columns": { rich_text: {} },
+          "Footer Copyright": { rich_text: {} },
+          "Footer Social Links": { rich_text: {} },
+          "Footer Tagline": { rich_text: {} },
         },
       })
     );
@@ -381,7 +393,7 @@ describe("site-settings reuse", () => {
       })
     );
     // Third call: ensureDataSourceProperties → getDataSourceSchema
-    // (all 5 existing properties present → no PATCH needed).
+    // (all 17 properties present → no PATCH needed).
     runOrThrowNtnMock.mockResolvedValueOnce(
       JSON.stringify({
         properties: {
@@ -390,6 +402,18 @@ describe("site-settings reuse", () => {
           Description: { rich_text: {} },
           "Default Locale": { select: {} },
           "Social Image": { url: {} },
+          "Meta Title": { rich_text: {} },
+          "Meta Description": { rich_text: {} },
+          "OG Image": { url: {} },
+          Nav: { rich_text: {} },
+          "Nav CTA": { rich_text: {} },
+          "Primary Color": { select: {} },
+          "Accent Color": { select: {} },
+          "Font Family": { select: {} },
+          "Footer Columns": { rich_text: {} },
+          "Footer Copyright": { rich_text: {} },
+          "Footer Social Links": { rich_text: {} },
+          "Footer Tagline": { rich_text: {} },
         },
       })
     );
@@ -466,38 +490,65 @@ describe("site-settings reuse", () => {
 });
 
 describe("site-settings builders", () => {
-  it("emits a schema that mirrors the runtime loader's field map", () => {
+  it("emits a 17-property schema covering the full editor surface", () => {
     const properties = _internal.buildSiteSettingsProperties();
-
+    const keys = Object.keys(properties);
+    expect(keys).toHaveLength(17);
+    // Existing 5
     expect(properties["Site Name"]).toEqual({ title: {} });
     expect(properties.Tagline).toEqual({ rich_text: {} });
     expect(properties.Description).toEqual({ rich_text: {} });
     expect(properties["Default Locale"]).toEqual({ select: {} });
     expect(properties["Social Image"]).toEqual({ url: {} });
+    // 12 new (SEO / Nav / Theme / Footer)
+    expect(properties["Meta Title"]).toEqual({ rich_text: {} });
+    expect(properties["Meta Description"]).toEqual({ rich_text: {} });
+    expect(properties["OG Image"]).toEqual({ url: {} });
+    expect(properties.Nav).toEqual({ rich_text: {} });
+    expect(properties["Nav CTA"]).toEqual({ rich_text: {} });
+    expect(properties["Primary Color"]).toEqual({ select: {} });
+    expect(properties["Accent Color"]).toEqual({ select: {} });
+    expect(properties["Font Family"]).toEqual({ select: {} });
+    expect(properties["Footer Columns"]).toEqual({ rich_text: {} });
+    expect(properties["Footer Copyright"]).toEqual({ rich_text: {} });
+    expect(properties["Footer Social Links"]).toEqual({ rich_text: {} });
+    expect(properties["Footer Tagline"]).toEqual({ rich_text: {} });
   });
 
-  it("builds a seed row pre-populated with the project name", () => {
+  it("seeds the singleton row with all 17 properties", () => {
     const seed = _internal.buildSiteSettingsSeedPage({
       projectName: "digwis",
       description: "A demo description.",
       defaultLocale: "en",
       dataSourceId: "ds-id",
     });
-    const properties = seed.properties as {
-      "Site Name": { title: Array<{ text: { content: string } }> };
-      Tagline: { rich_text: Array<{ text: { content: string } }> };
-      Description: { rich_text: Array<{ text: { content: string } }> };
-      "Default Locale": { select: { name: string } };
+    const properties = seed.properties as Record<string, unknown>;
+    const titleProps = properties["Site Name"] as {
+      title: Array<{ text: { content: string } }>;
     };
-
-    expect(properties["Site Name"].title[0].text.content).toBe("digwis");
-    expect(properties.Tagline.rich_text[0].text.content).toBe("digwis");
-    expect(properties.Description.rich_text[0].text.content).toBe(
-      "A demo description."
-    );
-    expect(properties["Default Locale"].select.name).toBe("en");
-    // Notion's 2025-09-03 schema requires `data_source_id` here —
-    // the legacy `database_id` form silently returns 400.
+    expect(titleProps.title[0].text.content).toBe("digwis");
+    const metaTitle = properties["Meta Title"] as {
+      rich_text: Array<{ text: { content: string } }>;
+    };
+    expect(metaTitle.rich_text[0].text.content).toBe("digwis");
+    const nav = properties.Nav as {
+      rich_text: Array<{ text: { content: string } }>;
+    };
+    const parsed = JSON.parse(nav.rich_text[0].text.content);
+    expect(parsed[0]).toEqual({ label: "Home", href: "/" });
+    const theme = properties["Primary Color"] as {
+      select: { name: string };
+    };
+    expect(theme.select.name).toBe("slate");
+    const accent = properties["Accent Color"] as {
+      select: { name: string };
+    };
+    expect(accent.select.name).toBe("blue");
+    const font = properties["Font Family"] as {
+      select: { name: string };
+    };
+    expect(font.select.name).toBe("inter");
+    // Notion's 2025-09-03 schema requires `data_source_id` here.
     expect(seed.parent).toEqual({
       type: "data_source_id",
       data_source_id: "ds-id",

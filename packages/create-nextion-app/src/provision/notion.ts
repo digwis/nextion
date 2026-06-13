@@ -1649,11 +1649,25 @@ export interface SiteSettingsProvisionResult {
  */
 export function buildSiteSettingsProperties(): NotionPropertyMap {
   const props: NotionPropertyMap = {
+    // 5 pre-existing
     "Site Name": { title: {} },
     Tagline: { rich_text: {} },
     Description: { rich_text: {} },
     "Default Locale": { select: {} },
     "Social Image": { url: {} },
+    // 12 new (0.5.4) — SEO, navigation, theme, footer
+    "Meta Title": { rich_text: {} },
+    "Meta Description": { rich_text: {} },
+    "OG Image": { url: {} },
+    Nav: { rich_text: {} },
+    "Nav CTA": { rich_text: {} },
+    "Primary Color": { select: {} },
+    "Accent Color": { select: {} },
+    "Font Family": { select: {} },
+    "Footer Columns": { rich_text: {} },
+    "Footer Copyright": { rich_text: {} },
+    "Footer Social Links": { rich_text: {} },
+    "Footer Tagline": { rich_text: {} },
   };
   return props;
 }
@@ -1680,6 +1694,11 @@ export function buildSiteSettingsSeedPage(input: {
   defaultLocale: string;
   dataSourceId: string;
 }) {
+  const defaultNav = JSON.stringify([
+    { label: "Home", href: "/" },
+    { label: "Blog", href: "/blog" },
+  ]);
+  const footerCopyright = `© ${new Date().getFullYear()} ${input.projectName}`;
   return {
     parent: { type: "data_source_id", data_source_id: input.dataSourceId },
     properties: {
@@ -1695,6 +1714,30 @@ export function buildSiteSettingsSeedPage(input: {
       "Default Locale": {
         select: { name: input.defaultLocale },
       },
+      "Meta Title": {
+        rich_text: [{ text: { content: input.projectName } }],
+      },
+      "Meta Description": {
+        rich_text: [{ text: { content: input.description } }],
+      },
+      "OG Image": { url: null },
+      Nav: {
+        rich_text: [{ text: { content: defaultNav } }],
+      },
+      "Nav CTA": { rich_text: [] },
+      "Primary Color": { select: { name: "slate" } },
+      "Accent Color": { select: { name: "blue" } },
+      "Font Family": { select: { name: "inter" } },
+      "Footer Columns": {
+        rich_text: [{ text: { content: "[]" } }],
+      },
+      "Footer Copyright": {
+        rich_text: [{ text: { content: footerCopyright } }],
+      },
+      "Footer Social Links": {
+        rich_text: [{ text: { content: "[]" } }],
+      },
+      "Footer Tagline": { rich_text: [] },
     },
   };
 }
