@@ -71,8 +71,10 @@ dist/
 **/.wrangler/
 .playwright-cli/
 
-# moviebluebook: kept locally as a working reference, never pushed; consumers scaffold via `pnpm create vinext-app`
-apps/moviebluebook/
+# Consumer apps scaffolded via `pnpm create vinext-app` are kept locally
+# as working references and never pushed; downstream users scaffold
+# their own apps from the published packages.
+apps/
 
 # IDE / agent working state
 .agent-runs/
