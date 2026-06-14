@@ -21,6 +21,7 @@ interface TokenMap {
   supportedLocales: string;
   supportedLocalesJson: string;
   nextionSource: string;
+  createNextionAppVersion: string;
   contentSourceId: string;
   contentSourceTitle: string;
   contentSourceKind: string;
@@ -82,7 +83,10 @@ function localPart(email: string): string {
   return at > 0 ? email.slice(0, at) : email;
 }
 
-async function buildTokenMap(answers: Answers): Promise<TokenMap> {
+async function buildTokenMap(
+  answers: Answers,
+  scaffoldVersion: string
+): Promise<TokenMap> {
   const id = answers.contentSource.id;
   const isBlog = id === "blog";
   // Build the field map block that the generated `defineContentSource`
@@ -113,6 +117,7 @@ async function buildTokenMap(answers: Answers): Promise<TokenMap> {
     supportedLocales: answers.supportedLocales.join(", "),
     supportedLocalesJson: JSON.stringify(answers.supportedLocales),
     nextionSource: answers.nextionSource,
+    createNextionAppVersion: `^${scaffoldVersion}`,
     contentSourceId: id,
     contentSourceTitle: answers.contentSource.title,
     contentSourceKind: '"article"',
@@ -290,7 +295,8 @@ export async function render(
   templatesDir: string,
   outDir: string
 ): Promise<void> {
-  const tokens = await buildTokenMap(answers);
+  const scaffoldVersion = await readPackageVersion();
+  const tokens = await buildTokenMap(answers, scaffoldVersion);
   const absoluteOut = path.resolve(process.cwd(), outDir);
 
   if (await exists(absoluteOut)) {
@@ -303,7 +309,6 @@ export async function render(
   }
 
   await ensureDir(absoluteOut);
-  const scaffoldVersion = await readPackageVersion();
   const metadata = buildScaffoldMetadata(answers, scaffoldVersion);
   const metadataPath = path.join(absoluteOut, SCAFFOLD_METADATA_FILE);
   await ensureDir(path.dirname(metadataPath));

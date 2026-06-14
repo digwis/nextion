@@ -208,7 +208,7 @@ describe("request-scoped env access (AsyncLocalStorage pattern)", () => {
 });
 
 describe("scaffolded project ships the scaffolder CLI as a devDependency", () => {
-  it("renders @notionx/create-nextion-app in devDependencies with a real semver", async () => {
+  it("pins @notionx/create-nextion-app to the scaffolder version, not nextionSource", async () => {
     const root = await fs.mkdtemp(path.join(os.tmpdir(), "nextion-devdep-"));
     const outDir = path.join(root, "app");
     const answers = applyDefaults(
@@ -217,6 +217,7 @@ describe("scaffolded project ships the scaffolder CLI as a devDependency", () =>
         targetDir: outDir,
         adminEmail: "admin@example.com",
         adminPassword: "Password123",
+        nextionSource: "^9.9.9",
         yes: true,
       },
       ["node", "cli"]
@@ -247,10 +248,15 @@ describe("scaffolded project ships the scaffolder CLI as a devDependency", () =>
     expect(version).not.toContain("}}");
     expect(version).toMatch(/^\^?\d+\.\d+\.\d+/);
 
-    // Version must align with the @notionx/core runtime dep so the
-    // scaffolder CLI is guaranteed to be >= the runtime it scaffolds.
+    const scaffolderPackage = JSON.parse(
+      await fs.readFile(path.resolve(__dirname, "..", "package.json"), "utf8")
+    ) as { version: string };
+
+    // The runtime dep follows nextionSource, but the scaffolder CLI
+    // must stay pinned to the actual published CLI version so the
+    // generated project never references a non-existent npm release.
     const coreDep = packageJson.dependencies!["@notionx/core"];
-    expect(coreDep).toBe(version);
+    expect(coreDep).toBe("^9.9.9");
+    expect(version).toBe(`^${scaffolderPackage.version}`);
   });
 });
-
