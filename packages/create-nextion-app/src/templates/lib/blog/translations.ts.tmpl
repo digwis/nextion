@@ -1,0 +1,52 @@
+// Locale-aware blog lookup. Falls back to the default-locale
+// translation when a target locale is missing (rule: hide).
+
+import {
+  pickTranslation,
+  hideWhenMissing,
+  mapNotionPageToLocalizedContentTranslation,
+} from "@notionx/core";
+import { i18n } from "@/lib/i18n";
+import { blogContract } from "@/lib/locale-contract";
+import type { NotionPageLike } from "@notionx/core";
+
+export type BlogTranslationExtra = {
+  summary: string;
+  tags: string[];
+};
+
+export type BlogTranslation = NonNullable<
+  ReturnType<typeof mapNotionPageToLocalizedContentTranslation<BlogTranslationExtra>>
+>;
+
+export function mapBlogTranslation(page: NotionPageLike): BlogTranslation | null {
+  return mapNotionPageToLocalizedContentTranslation<BlogTranslationExtra>(page, {
+    fields: {
+      title: "Title",
+      source: "Source",
+      locale: "Locale",
+      slug: "Slug",
+      published: "Published",
+    },
+    extraFields: {
+      summary: "Description",
+      tags: { field: "Tags", kind: "tags" },
+    },
+    isValidLocale: (locale) =>
+      (i18n.supportedLocales as readonly string[]).includes(locale),
+  });
+}
+
+export function pickBlogTranslation(
+  rows: readonly BlogTranslation[],
+  locale: string
+) {
+  return pickTranslation(rows, locale, blogContract, i18n.defaultLocale);
+}
+
+export function blogListForLocale(
+  rows: readonly BlogTranslation[],
+  locale: string
+) {
+  return hideWhenMissing(rows, locale);
+}

@@ -1,0 +1,29 @@
+// Thin wrappers around the core path helpers that bake the project's
+// default locale and the blog content source list path in. Route code
+// should import from this module rather than the core helpers directly
+// so the defaults stay consistent.
+
+import { i18n } from "@/lib/i18n";
+import {
+  localizedListPath as coreLocalizedListPath,
+  localizedDetailPathFor as coreLocalizedDetailPathFor,
+  stripLocalePrefix as coreStripLocalePrefix,
+} from "@notionx/core";
+import { blogContract } from "./built-in";
+
+export function blogListPath(locale: string) {
+  return coreLocalizedListPath(locale, blogContract, i18n.defaultLocale);
+}
+
+export function blogDetailPath(locale: string, slug: string) {
+  return coreLocalizedDetailPathFor(
+    locale,
+    slug,
+    blogContract,
+    i18n.defaultLocale
+  );
+}
+
+export function stripBlogLocale(path: string, locale: string) {
+  return coreStripLocalePrefix(path, locale);
+}

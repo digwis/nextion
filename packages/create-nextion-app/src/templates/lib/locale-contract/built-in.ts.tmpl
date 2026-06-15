@@ -1,0 +1,19 @@
+// Built-in locale contracts re-exported under a project-friendly
+// import path. The list paths here are the canonical ones for the
+// starter: the blog content source list and the page detail route.
+
+import {
+  blogContract as coreBlogContract,
+  pagesContract as corePagesContract,
+  blocksContract as coreBlocksContract,
+  siteSettingsContract as coreSiteSettingsContract,
+} from "@notionx/core";
+
+export const blogContract = {
+  ...coreBlogContract,
+  listPath: "{{contentSourceListPath}}",
+};
+
+export const pagesContract = corePagesContract;
+export const blocksContract = coreBlocksContract;
+export const siteSettingsContract = coreSiteSettingsContract;

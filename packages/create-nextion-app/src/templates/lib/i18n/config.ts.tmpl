@@ -1,0 +1,18 @@
+// Project-level i18n config. Re-exports the runtime helpers from
+// `@notionx/core` so app code, route handlers, and components share
+// one set of locale constants. The supported locales are baked in
+// at scaffold time; use `npx nextion locale add <locale>` to extend
+// an existing project.
+
+import { defineI18nConfig } from "@notionx/core/i18n";
+
+export const i18n = defineI18nConfig({
+  defaultLocale: "{{defaultLocale}}",
+  supportedLocales: {{supportedLocalesJson}},
+});
+
+export type AppLocale = (typeof i18n.supportedLocales)[number];
+
+export function isAppLocale(value: string): value is AppLocale {
+  return (i18n.supportedLocales as readonly string[]).includes(value);
+}
