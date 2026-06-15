@@ -31,10 +31,5 @@
     "husky": "^9",
     "typescript": "^5",
     "typescript-eslint": "^8"
-  },
-  "pnpm": {
-    "patchedDependencies": {
-      "vinext@0.1.1": "patches/vinext@0.1.1.patch"
-    }
   }
 }
