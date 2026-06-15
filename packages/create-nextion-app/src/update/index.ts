@@ -2,6 +2,16 @@ import { mkdir, writeFile } from "node:fs/promises";
 import path from "node:path";
 import type { ProjectContext } from "../project-context.js";
 import { buildUpdatePlan, type UpdatePlanEntry } from "./template-sync.js";
+export {
+  buildUnifiedUpdatePlan,
+  formatUnifiedUpdateSummary,
+  runUnifiedUpdate,
+} from "./unified.js";
+export type {
+  UnifiedUpdateEntry,
+  UnifiedUpdatePlan,
+  UnifiedUpdateSummary,
+} from "./types.js";
 
 export interface UpdateSummary {
   updated: UpdatePlanEntry[];

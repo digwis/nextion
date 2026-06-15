@@ -4,8 +4,13 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import * as p from "@clack/prompts";
 import { loadProjectContext } from "./project-context.js";
-import { runProvisionRepair } from "./provision/repair.js";
-import { runUpdate, type UpdateSummary } from "./update/index.js";
+import { inspectProvisionRepair } from "./provision/inspect.js";
+import { buildUpdatePlan } from "./update/template-sync.js";
+import {
+  formatUnifiedUpdateSummary,
+  runUnifiedUpdate,
+} from "./update/unified.js";
+import type { UpdateSummary } from "./update/index.js";
 
 export function formatUpdateSummary(summary: UpdateSummary): string[] {
   const lines: string[] = [];
@@ -36,20 +41,47 @@ export function formatUpdateSummary(summary: UpdateSummary): string[] {
   return lines;
 }
 
-async function main(): Promise<void> {
-  const [command, subcommand] = process.argv.slice(2);
-  const context = await loadProjectContext(process.cwd());
-
-  if (command === "update" && !subcommand) {
-    const summary = await runUpdate(context);
-    for (const line of formatUpdateSummary(summary)) {
-      p.log.info(line);
-    }
-    return;
+async function chooseConflictStrategy(conflictCount: number) {
+  if (conflictCount === 0) {
+    return "safe-only" as const;
   }
 
-  if (command === "provision" && subcommand === "repair") {
-    await runProvisionRepair(context);
+  return (await p.select({
+    message: `Found ${conflictCount} conflicts. How should update proceed?`,
+    options: [
+      { value: "apply-all", label: "Apply all conflict updates" },
+      { value: "safe-only", label: "Apply only safe updates" },
+      { value: "cancel", label: "Cancel" },
+    ],
+  })) as "apply-all" | "safe-only" | "cancel";
+}
+
+export async function main(argv = process.argv.slice(2)): Promise<void> {
+  const [command, subcommand] = argv;
+
+  if (command === "update" && !subcommand) {
+    const context = await loadProjectContext(process.cwd());
+    const [templateEntries, repairEntries] = await Promise.all([
+      buildUpdatePlan(context),
+      inspectProvisionRepair(context),
+    ]);
+    const conflictCount =
+      templateEntries.filter((entry) => entry.status === "updated").length +
+      repairEntries.filter((entry) => entry.risk === "conflict").length;
+    const conflictChoice = await chooseConflictStrategy(conflictCount);
+
+    if (conflictChoice === "cancel") {
+      return;
+    }
+
+    const summary = await runUnifiedUpdate(context, {
+      templateEntries,
+      repairEntries,
+      conflictChoice,
+    });
+    for (const line of formatUnifiedUpdateSummary(summary)) {
+      p.log.info(line);
+    }
     return;
   }
 

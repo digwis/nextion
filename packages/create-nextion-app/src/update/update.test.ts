@@ -6,7 +6,12 @@ import { describe, expect, it } from "vitest";
 import { isScaffoldManagedFile, scaffoldManagedFiles } from "./scaffold-files.js";
 import { vi } from "vitest";
 // @ts-ignore NodeNext test imports use .js specifiers that resolve to local .ts sources.
-import { runUpdate } from "./index.js";
+import {
+  buildUnifiedUpdatePlan,
+  formatUnifiedUpdateSummary,
+  runUnifiedUpdate,
+  runUpdate,
+} from "./index.js";
 import type { ProjectContext } from "../project-context.js";
 // @ts-ignore NodeNext test imports use .js specifiers that resolve to local .ts sources.
 import { formatUpdateSummary } from "../cli-nextion.js";
@@ -16,6 +21,24 @@ import { buildUpdateAnswers } from "./update-answers.js";
 import { resolveTemplatesDir } from "../render.js";
 
 const buildUpdatePlanMock = vi.hoisted(() => vi.fn());
+
+const unifiedContext: ProjectContext = {
+  projectDir: "/tmp/demo",
+  metadata: {
+    projectKind: "nextion",
+    projectName: "demo",
+    scaffoldVersion: "0.6.1",
+    defaultLocale: "en",
+    supportedLocales: ["en"],
+    nextionSource: "^1.0.0",
+    enableSiteSettings: true,
+    contentSource: {
+      id: "blog",
+      title: "Blog",
+      fields: [{ key: "title", notionName: "Name" }],
+    },
+  },
+};
 
 vi.mock("./template-sync.js", async () => {
   const actual =
@@ -114,6 +137,66 @@ describe("runUpdate", () => {
     expect(summary.needsInstall).toBe(true);
     expect(custom).toBe("keep me\n");
     expect(updatedPackageJson).toBe('{"name":"new"}\n');
+  });
+});
+
+describe("buildUnifiedUpdatePlan", () => {
+  it("classifies missing scaffold-managed files as safe entries", async () => {
+    const plan = await buildUnifiedUpdatePlan({
+      context: unifiedContext,
+      templateEntries: [
+        { filePath: "README.md", status: "missing", nextContent: "# Demo\n" },
+      ],
+      repairEntries: [],
+    });
+
+    expect(plan.safe.map((entry) => entry.label)).toContain("file:README.md");
+    expect(plan.conflicts).toHaveLength(0);
+  });
+
+  it("classifies changed scaffold-managed files as conflicts", async () => {
+    const plan = await buildUnifiedUpdatePlan({
+      context: unifiedContext,
+      templateEntries: [
+        { filePath: "wrangler.jsonc", status: "updated", nextContent: "{}\n" },
+      ],
+      repairEntries: [],
+    });
+
+    expect(plan.safe).toHaveLength(0);
+    expect(plan.conflicts.map((entry) => entry.label)).toContain(
+      "file:wrangler.jsonc"
+    );
+    expect(plan.conflictGroups.codeTemplate).toHaveLength(1);
+  });
+});
+
+describe("runUnifiedUpdate", () => {
+  it("applies only safe entries automatically and reports grouped conflicts", async () => {
+    const projectDir = await mkdtemp(
+      path.join(os.tmpdir(), "nextion-run-unified-update-")
+    );
+    const context: ProjectContext = {
+      ...unifiedContext,
+      projectDir,
+    };
+
+    const summary = await runUnifiedUpdate(context, {
+      templateEntries: [
+        { filePath: "README.md", status: "missing", nextContent: "# Demo\n" },
+        { filePath: "wrangler.jsonc", status: "updated", nextContent: "{}\n" },
+      ],
+      repairEntries: [],
+      conflictChoice: "safe-only",
+    });
+
+    expect(summary.appliedSafe.map((entry) => entry.label)).toContain(
+      "file:README.md"
+    );
+    expect(summary.appliedConflicts).toHaveLength(0);
+    expect(summary.conflictsRemaining.map((entry) => entry.label)).toContain(
+      "file:wrangler.jsonc"
+    );
   });
 });
 
@@ -300,6 +383,38 @@ describe("formatUpdateSummary", () => {
   });
 });
 
+describe("formatUnifiedUpdateSummary", () => {
+  it("prints safe, conflict, and follow-up groups", () => {
+    const lines = formatUnifiedUpdateSummary({
+      appliedSafe: [
+        {
+          label: "file:README.md",
+          kind: "file",
+          risk: "safe",
+          group: "codeTemplate",
+          apply: async () => undefined,
+        },
+      ],
+      appliedConflicts: [],
+      conflictsRemaining: [
+        {
+          label: "file:wrangler.jsonc",
+          kind: "file",
+          risk: "conflict",
+          group: "codeTemplate",
+          apply: async () => undefined,
+        },
+      ],
+      needsInstall: true,
+      compatibilityPreserved: true,
+    });
+
+    expect(lines).toContain("safe updates:");
+    expect(lines).toContain("conflicts remaining:");
+    expect(lines).toContain("  - run `pnpm install`");
+  });
+});
+
 describe("buildUpdatePlan", () => {
   it("marks changed and missing scaffold-owned files from temp scaffold output", async () => {
     const projectDir = await mkdtemp(
@@ -362,5 +477,15 @@ describe("buildUpdatePlan", () => {
           entry.filePath === "README.md" && entry.status === "missing"
       )
     ).toBe(true);
+  });
+
+  it("documents update as the only public upgrade command", async () => {
+    const upgradingDoc = await readFile(
+      new URL("../../../../docs/architecture/upgrading-nextion.md", import.meta.url),
+      "utf8"
+    );
+
+    expect(upgradingDoc).toContain("nextion update");
+    expect(upgradingDoc).not.toContain("nextion provision repair");
   });
 });

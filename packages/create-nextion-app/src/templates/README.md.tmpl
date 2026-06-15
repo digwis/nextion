@@ -166,6 +166,17 @@ The single sanity test under `tests/smoke.test.ts` confirms that
 `defineContentSource` registered the `{{contentSourceId}}` source with the
 nextion registry and that re-registration is idempotent on `id`.
 
+## Keeping The Project Updated
+
+```bash
+npx nextion update
+```
+
+The update command upgrades `@notionx/core`, syncs scaffold-managed files, and
+repairs safe Notion / Cloudflare drift automatically. If an update would
+overwrite customized code or populated Notion content, it pauses once and asks
+for confirmation before applying those conflict updates.
+
 ## Deploy
 
 ```bash

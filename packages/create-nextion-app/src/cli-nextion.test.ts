@@ -1,0 +1,85 @@
+import { describe, expect, it, vi } from "vitest";
+
+const loadProjectContextMock = vi.hoisted(() => vi.fn());
+const buildTemplatePlanMock = vi.hoisted(() => vi.fn());
+const inspectProvisionRepairMock = vi.hoisted(() => vi.fn());
+const runUnifiedUpdateMock = vi.hoisted(() => vi.fn());
+const selectMock = vi.hoisted(() => vi.fn());
+const infoMock = vi.hoisted(() => vi.fn());
+
+const context = {
+  projectDir: "/tmp/demo",
+  metadata: {
+    projectKind: "nextion" as const,
+    projectName: "demo",
+    scaffoldVersion: "0.6.1",
+    defaultLocale: "en",
+    supportedLocales: ["en"],
+    nextionSource: "^1.0.0",
+    enableSiteSettings: true,
+    contentSource: {
+      id: "blog",
+      title: "Blog",
+      fields: [{ key: "title", notionName: "Name" }],
+    },
+  },
+};
+
+vi.mock("./project-context.js", () => ({
+  loadProjectContext: loadProjectContextMock,
+}));
+
+vi.mock("./update/template-sync.js", () => ({
+  buildUpdatePlan: buildTemplatePlanMock,
+}));
+
+vi.mock("./provision/inspect.js", () => ({
+  inspectProvisionRepair: inspectProvisionRepairMock,
+}));
+
+vi.mock("./update/unified.js", () => ({
+  runUnifiedUpdate: runUnifiedUpdateMock,
+  formatUnifiedUpdateSummary: () => ["safe updates:", "  - file:README.md"],
+}));
+
+vi.mock("@clack/prompts", () => ({
+  select: selectMock,
+  log: { info: infoMock, error: vi.fn() },
+}));
+
+// @ts-ignore NodeNext test imports use .js specifiers that resolve to local .ts sources.
+import { main } from "./cli-nextion.js";
+
+describe("cli nextion update", () => {
+  it("runs unified update and prompts once when conflicts exist", async () => {
+    loadProjectContextMock.mockResolvedValue(context);
+    buildTemplatePlanMock.mockResolvedValue([
+      { filePath: "wrangler.jsonc", status: "updated", nextContent: "{}\n" },
+    ]);
+    inspectProvisionRepairMock.mockResolvedValue([]);
+    selectMock.mockResolvedValue("safe-only");
+    runUnifiedUpdateMock.mockResolvedValue({
+      appliedSafe: [],
+      appliedConflicts: [],
+      conflictsRemaining: [],
+      needsInstall: false,
+      compatibilityPreserved: false,
+    });
+
+    await main(["update"]);
+
+    expect(selectMock).toHaveBeenCalledTimes(1);
+    expect(runUnifiedUpdateMock).toHaveBeenCalledWith(
+      context,
+      expect.objectContaining({ conflictChoice: "safe-only" })
+    );
+  });
+
+  it("rejects provision repair as an unsupported public command", async () => {
+    loadProjectContextMock.mockResolvedValue(context);
+
+    await expect(main(["provision", "repair"])).rejects.toThrow(
+      "Unsupported command: provision repair"
+    );
+  });
+});

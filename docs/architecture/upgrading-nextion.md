@@ -1,17 +1,14 @@
 # 升级 Nextion
 
-> 范围：Nextion 项目的升级分成三层：
-> 1. `@notionx/core` 运行时依赖升级
-> 2. 脚手架模板同步：`nextion update`
-> 3. 外部资源修复与补齐：`nextion provision repair`
+> 范围：消费项目统一通过 `nextion update` 升级。
+> 命令会自动升级 `@notionx/core`、同步脚手架模板，并检查 Notion /
+> Cloudflare 资源漂移。
 
 ## 命令边界
 
 | 场景 | 命令 | 默认是否改云资源 | 默认是否 deploy |
 |---|---|---:|---:|
-| 升级运行时依赖 | `pnpm update @notionx/core` | 否 | 否 |
-| 同步脚手架模板 | `nextion update` | 否 | 否 |
-| 修复 Notion / Cloudflare 资源 | `nextion provision repair` | 是，仅修差异 | 否 |
+| 统一升级 Nextion 项目 | `nextion update` | 是，仅自动应用安全项；冲突项统一确认 | 否 |
 
 ## 1. Dependabot 配置（推荐）
 
@@ -108,20 +105,26 @@ pnpm --filter @notionx/core typecheck
 
 ## 4. 手动升级
 
-任何时候都可以绕过 Dependabot：
+任何时候都可以直接运行：
 
 ```bash
-pnpm update @notionx/core
-# 或锁定到具体版本
-pnpm add @notionx/core@^1.2.0
+npx nextion update
 ```
 
-升级后必跑：
+这个命令会：
+
+- 自动把 `@notionx/core` 升到当前脚手架推荐版本
+- 自动同步 scaffold-managed 文件
+- 自动检查 Notion / Cloudflare 漂移
+- 自动执行安全项
+- 在会覆盖用户改过的代码或已填写的 Notion 内容时，统一给出一次确认
+
+升级后推荐验证：
 
 ```bash
 pnpm test
 pnpm dev        # 验证 /admin/content-models、/login、/api/health 正常
-pnpm exec wrangler d1 migrations apply <db-name> --remote   # 仅当发布说明要求
+pnpm exec wrangler d1 migrations apply <db-name> --remote   # 仅当 release notes 要求
 ```
 
 ## 5. 收尾
@@ -134,7 +137,8 @@ release notes 链接到项目的 release notes / changelog，方便 reviewer 看
 
 当脚手架和 `@notionx/core` 都在快速变化时，推荐按下面顺序判断：
 
-1. 只改了运行时库能力：先跑 `pnpm update @notionx/core`
-2. 改了模板、配置、README、脚手架生成代码：跑 `nextion update`
-3. 改了 Notion schema、Cloudflare bindings、secrets 或资源对齐逻辑：跑 `nextion provision repair`
-4. 只有需要验证线上环境时，再手动 deploy
+1. 运行 `nextion update`
+2. 命令自动检测项目元数据、依赖版本、Notion 资源和 Cloudflare bindings
+3. 安全项自动执行
+4. 冲突项统一确认
+5. 只有需要验证线上环境时，再手动 deploy
