@@ -19,6 +19,10 @@ export const RELEASE_PACKAGES = [
     directory: "packages/create-nextion-app",
   },
   {
+    name: "create-nextion-app",
+    directory: "packages/create-nextion-app-shim",
+  },
+  {
     name: "@notionx/skill",
     directory: "packages/nextion-skill",
   },

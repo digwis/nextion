@@ -1,0 +1,43 @@
+{
+  "name": "create-nextion-app",
+  "version": "0.6.2",
+  "description": "Unscoped npm create alias for @notionx/create-nextion-app.",
+  "type": "module",
+  "bin": {
+    "create-nextion-app": "./bin/index.js"
+  },
+  "files": [
+    "bin",
+    "README.md"
+  ],
+  "keywords": [
+    "nextion",
+    "notion",
+    "cloudflare",
+    "workers",
+    "vinext",
+    "scaffold",
+    "create-nextion-app"
+  ],
+  "license": "MIT",
+  "engines": {
+    "node": ">=22"
+  },
+  "dependencies": {
+    "@notionx/create-nextion-app": "^0.6.0"
+  },
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/digwis/nextion.git",
+    "directory": "packages/create-nextion-app-shim"
+  },
+  "author": "zhaofilms",
+  "homepage": "https://github.com/digwis/nextion#readme",
+  "bugs": {
+    "url": "https://github.com/digwis/nextion/issues"
+  }
+}

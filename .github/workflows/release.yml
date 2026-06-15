@@ -6,9 +6,11 @@ on:
     paths:
       - "packages/nextion/**"
       - "packages/create-nextion-app/**"
+      - "packages/create-nextion-app-shim/**"
       - "packages/nextion-skill/**"
       - ".changeset/**"
       - ".github/workflows/release.yml"
+      - "scripts/publish-packages.mjs"
 
 concurrency:
   group: release

@@ -93,6 +93,7 @@ function listChangedFiles(diffBase) {
 const PACKAGE_DIR_TO_NAME = {
   nextion: "@notionx/core",
   "create-nextion-app": "@notionx/create-nextion-app",
+  "create-nextion-app-shim": "create-nextion-app",
   "nextion-skill": "@notionx/skill",
 };
 
@@ -125,7 +126,8 @@ function categorize(file) {
     p === "package.json" ||
     p === "pnpm-lock.yaml" ||
     p === "pnpm-workspace.yaml" ||
-    p === "scripts/check-changeset.mjs"
+    p === "scripts/check-changeset.mjs" ||
+    p === "scripts/publish-packages.mjs"
   ) {
     return { kind: "ci" };
   }
@@ -242,10 +244,10 @@ function main() {
   console.log("");
   console.log("    What the release workflow will do:");
   console.log("      1. pnpm install --frozen-lockfile");
-  console.log("      2. build all 3 packages");
+  console.log("      2. build all buildable packages");
   console.log("      3. pnpm changeset version   (bumps versions, deletes .changeset/*.md)");
   console.log("      4. commit + push 'chore(release): version packages' to main");
-  console.log("      5. pnpm -r publish --tag latest");
+  console.log("      5. node scripts/publish-packages.mjs");
   console.log("");
   process.exit(0);
 }
