@@ -784,7 +784,14 @@ async function setProvisionedWorkerSecrets({
     value: string | undefined,
     required: boolean
   ) => {
-    if (!value) return;
+    if (!value) {
+      if (required) {
+        throw new Error(
+          `failed to set ${name}; production content will be empty until this secret is set:\nmissing local value`
+        );
+      }
+      return;
+    }
     try {
       await setWorkerSecret(name, value, projectDir, [value]);
       p.log.success(`Worker secret: ${name} set.`);
@@ -802,6 +809,16 @@ async function setProvisionedWorkerSecrets({
 
   await putSecret("TURNSTILE_SECRET_KEY", wireInputs.turnstileSecret, false);
   await putSecret("NOTION_TOKEN", wireInputs.notionToken, requireNotionSecrets);
+  await putSecret(
+    "NOTION_DATA_SOURCE_ID",
+    wireInputs.notionDataSourceId,
+    requireNotionSecrets
+  );
+  await putSecret(
+    "NOTION_PAGES_DATA_SOURCE_ID",
+    wireInputs.notionPagesDataSourceId,
+    requireNotionSecrets
+  );
 
   return changed;
 }

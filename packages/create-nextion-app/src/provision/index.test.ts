@@ -19,7 +19,7 @@ describe("setProvisionedWorkerSecrets", () => {
     setWorkerSecretMock.mockReset();
   });
 
-  it("writes only true worker secrets and skips Notion data source ids", async () => {
+  it("writes all required Notion production secrets when available", async () => {
     const wireInputs: WireInputs = {
       d1DatabaseId: "db-id",
       kvNamespaceId: "kv-id",
@@ -40,7 +40,7 @@ describe("setProvisionedWorkerSecrets", () => {
       })
     ).resolves.toBe(true);
 
-    expect(setWorkerSecretMock).toHaveBeenCalledTimes(2);
+    expect(setWorkerSecretMock).toHaveBeenCalledTimes(4);
     expect(setWorkerSecretMock).toHaveBeenNthCalledWith(
       1,
       "TURNSTILE_SECRET_KEY",
@@ -54,6 +54,41 @@ describe("setProvisionedWorkerSecrets", () => {
       "secret-token",
       "/tmp/demo",
       ["secret-token"]
+    );
+    expect(setWorkerSecretMock).toHaveBeenNthCalledWith(
+      3,
+      "NOTION_DATA_SOURCE_ID",
+      "content-ds",
+      "/tmp/demo",
+      ["content-ds"]
+    );
+    expect(setWorkerSecretMock).toHaveBeenNthCalledWith(
+      4,
+      "NOTION_PAGES_DATA_SOURCE_ID",
+      "pages-ds",
+      "/tmp/demo",
+      ["pages-ds"]
+    );
+  });
+
+  it("throws when required Notion content ids are missing", async () => {
+    const wireInputs: WireInputs = {
+      d1DatabaseId: "db-id",
+      kvNamespaceId: "kv-id",
+      vinextKvNamespaceId: "vinext-kv-id",
+      notionToken: "secret-token",
+      notionDataSourceId: "",
+      notionPagesDataSourceId: "pages-ds",
+    };
+
+    await expect(
+      _internal.setProvisionedWorkerSecrets({
+        projectDir: "/tmp/demo",
+        wireInputs,
+        requireNotionSecrets: true,
+      })
+    ).rejects.toThrow(
+      "failed to set NOTION_DATA_SOURCE_ID; production content will be empty until this secret is set"
     );
   });
 });

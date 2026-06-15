@@ -39,7 +39,32 @@ vi.mock("./provision/inspect.js", () => ({
 
 vi.mock("./update/unified.js", () => ({
   runUnifiedUpdate: runUnifiedUpdateMock,
-  formatUnifiedUpdateSummary: () => ["safe updates:", "  - file:README.md"],
+  formatUnifiedUpdateSummary: (summary: {
+    appliedSafe: Array<{ label: string }>;
+    appliedConflicts: Array<{ label: string }>;
+    conflictsRemaining: Array<{ label: string }>;
+  }) => {
+    const lines: string[] = [];
+    if (summary.appliedSafe.length > 0) {
+      lines.push("safe updates:");
+      for (const entry of summary.appliedSafe) {
+        lines.push(`  - ${entry.label}`);
+      }
+    }
+    if (summary.appliedConflicts.length > 0) {
+      lines.push("conflict updates:");
+      for (const entry of summary.appliedConflicts) {
+        lines.push(`  - ${entry.label}`);
+      }
+    }
+    if (summary.conflictsRemaining.length > 0) {
+      lines.push("conflicts remaining:");
+      for (const entry of summary.conflictsRemaining) {
+        lines.push(`  - ${entry.label}`);
+      }
+    }
+    return lines;
+  },
 }));
 
 vi.mock("@clack/prompts", () => ({
@@ -80,6 +105,42 @@ describe("cli nextion update", () => {
 
     await expect(main(["provision", "repair"])).rejects.toThrow(
       "Unsupported command: provision repair"
+    );
+  });
+
+  it("prints cloudflare secret repair labels in unified update summary", async () => {
+    loadProjectContextMock.mockResolvedValue(context);
+    buildTemplatePlanMock.mockResolvedValue([]);
+    inspectProvisionRepairMock.mockResolvedValue([
+      {
+        label: "cloudflare-secret:NOTION_DATA_SOURCE_ID",
+        kind: "cloudflare",
+        group: "cloudflareBinding",
+        risk: "safe",
+        apply: vi.fn(),
+      },
+    ]);
+    runUnifiedUpdateMock.mockResolvedValue({
+      appliedSafe: [
+        {
+          label: "cloudflare-secret:NOTION_DATA_SOURCE_ID",
+          kind: "cloudflare",
+          group: "cloudflareBinding",
+          risk: "safe",
+          apply: vi.fn(),
+        },
+      ],
+      appliedConflicts: [],
+      conflictsRemaining: [],
+      needsInstall: false,
+      compatibilityPreserved: false,
+    });
+
+    await main(["update"]);
+
+    expect(infoMock).toHaveBeenCalledWith("safe updates:");
+    expect(infoMock).toHaveBeenCalledWith(
+      "  - cloudflare-secret:NOTION_DATA_SOURCE_ID"
     );
   });
 });
