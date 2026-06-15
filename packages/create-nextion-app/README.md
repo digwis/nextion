@@ -84,6 +84,25 @@ accounts in one shot. If you accept, it will:
 If you decline, the project is fully scaffolded but you'll need to wire
 resources manually — see the README generated inside the project.
 
+## Adding a locale
+
+The generated project supports a multilingual foundation out of the box
+(blog, pages, blocks, and site settings each get a `base + translations`
+pattern in Notion). To enable an additional locale on an existing
+project, see the `Multilingual foundation` section in the generated
+project README for the full flow:
+
+- `npx nextion locale add <locale>` — dry run
+- `npx nextion locale add <locale> --apply` — writes scaffold metadata
+  and the locale config (no Notion calls)
+- `npx nextion locale add <locale> --with-notion --apply [--copy-from <locale>]`
+  — provisions the four translation data sources in Notion and pushes
+  the resulting data source ids as worker secrets
+
+The command refuses to remove or overwrite existing locales. Re-running
+with the same locale is a no-op (the validator returns
+"already in supportedLocales").
+
 ## Requirements
 
 - **Node.js 22+** (`node --version`)
