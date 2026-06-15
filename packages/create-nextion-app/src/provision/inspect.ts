@@ -75,5 +75,56 @@ export async function inspectProvisionRepair(
   addSecretEntry("NOTION_DATA_SOURCE_ID", local.notionDataSourceId);
   addSecretEntry("NOTION_PAGES_DATA_SOURCE_ID", local.notionPagesDataSourceId);
 
+  // Translation-source secrets come from `.nextion/scaffold.json`
+  // (the metadata written by `nextion locale add --with-notion`).
+  // Surface them in the update repair so a fresh deploy picks them
+  // up automatically.
+  const localTranslations = await readLocalTranslationSourceState(
+    context.projectDir
+  );
+  for (const [modelId, ref] of Object.entries(localTranslations)) {
+    if (!ref.dataSourceId) continue;
+    if (remoteNames.has(ref.envVar)) continue;
+    entries.push({
+      label: `cloudflare-secret:${ref.envVar}`,
+      kind: "cloudflare",
+      group: "cloudflareBinding",
+      risk: "safe",
+      async apply() {
+        await setWorkerSecret(ref.envVar, ref.dataSourceId, context.projectDir, [
+          ref.dataSourceId,
+        ]);
+      },
+    });
+    // Mark unused variable to satisfy linting without renaming the
+    // iteration key. The modelId is here purely to make the
+    // iteration order stable for tests; the secret write is driven
+    // by `ref` alone.
+    void modelId;
+  }
+
   return entries;
+}
+
+async function readLocalTranslationSourceState(
+  projectDir: string
+): Promise<Record<string, { envVar: string; dataSourceId: string }>> {
+  try {
+    const raw = await readFile(
+      path.join(projectDir, ".nextion", "scaffold.json"),
+      "utf8"
+    );
+    const parsed = JSON.parse(raw) as {
+      translationSources?: Record<string, { dataSourceId: string; envVar: string }>;
+    };
+    if (!parsed.translationSources) return {};
+    const out: Record<string, { envVar: string; dataSourceId: string }> = {};
+    for (const [name, ref] of Object.entries(parsed.translationSources)) {
+      if (!ref?.envVar || !ref.dataSourceId) continue;
+      out[name] = { envVar: ref.envVar, dataSourceId: ref.dataSourceId };
+    }
+    return out;
+  } catch {
+    return {};
+  }
 }
