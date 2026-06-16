@@ -556,10 +556,15 @@ describe("request-scoped env access (AsyncLocalStorage pattern)", () => {
 
     const worker = await fs.readFile(path.join(outDir, "worker/index.ts"), "utf8");
 
-    // The worker must call runWithRequestEnv(env, ...) so that
+    // The worker must call runWithRequestEnv(...) so that
     // AsyncLocalStorage is populated for the request lifetime.
     expect(worker).toMatch(/import\s+\{\s*runWithRequestEnv\s*\}\s+from/);
-    expect(worker).toMatch(/runWithRequestEnv\(\s*env\s*,/);
+    // The locale prefix middleware sets `x-notionx-locale`; the worker
+    // threads it into the request env as `NOTIONX_LOCALE` alongside
+    // the original `env`.
+    expect(worker).toMatch(/request\.headers\.get\(["']x-notionx-locale["']\)/);
+    expect(worker).toMatch(/runWithRequestEnv\(\s*\{\s*\.\.\.env/);
+    expect(worker).toMatch(/NOTIONX_LOCALE:\s*locale/);
   });
 });
 

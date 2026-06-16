@@ -43,10 +43,19 @@ export default {
     // `getRequestEnv()`. See `lib/site/request-env.ts` for the
     // rationale — we cannot use `cloudflare:workers.getRequestContext`
     // because that module does not export it.
-    return runWithRequestEnv(env, async () => {
-      const notionxResponse = await notionx.fetch(request, env, ctx);
-      if (notionxResponse) return notionxResponse;
-      return handler.fetch(request, env, ctx);
-    });
+    //
+    // The locale prefix middleware (Next.js middleware) sets the
+    // `x-notionx-locale` header on every request. Thread it into
+    // the request env so data loaders can read it via
+    // `getRequestLocale()` without reaching into headers themselves.
+    const locale = request.headers.get("x-notionx-locale") ?? undefined;
+    return runWithRequestEnv(
+      { ...env, ...(locale ? { NOTIONX_LOCALE: locale } : {}) },
+      async () => {
+        const notionxResponse = await notionx.fetch(request, env, ctx);
+        if (notionxResponse) return notionxResponse;
+        return handler.fetch(request, env, ctx);
+      }
+    );
   },
 };
