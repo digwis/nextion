@@ -3,8 +3,14 @@
 // holds locale-specific copy. Missing locale copy falls back to the
 // default-locale translation.
 
+import {
+  mapNotionPageToLocalizedContentTranslation,
+  listGenericNotionContentForLocale,
+} from "@notionx/core";
 import { i18n } from "@/lib/i18n";
 import { siteSettingsContract } from "@/lib/locale-contract";
+import { siteSettingsTranslationsSource } from "@/lib/content/models";
+import type { NotionPageLike } from "@notionx/core";
 
 export type SiteSettingsTranslation = {
   pageId: string;
@@ -27,4 +33,22 @@ export function pickSiteSettingsTranslation(
   const direct = rows.find((row) => row.locale === locale);
   if (direct) return direct;
   return rows.find((row) => row.locale === i18n.defaultLocale) ?? null;
+}
+
+export async function listSiteSettingsTranslations(
+  locale: string
+): Promise<SiteSettingsTranslation[]> {
+  if (!siteSettingsTranslationsSource) return [];
+  const pages = await listGenericNotionContentForLocale(siteSettingsTranslationsSource, locale);
+  return pages
+    .map((p) => mapNotionPageToLocalizedContentTranslation<SiteSettingsTranslation>(p as unknown as NotionPageLike, {
+      fields: {
+        title: "Title",
+        source: "Source",
+        locale: "Locale",
+        slug: "Slug",
+        published: "Published",
+      },
+    }))
+    .filter((row): row is SiteSettingsTranslation => row !== null);
 }

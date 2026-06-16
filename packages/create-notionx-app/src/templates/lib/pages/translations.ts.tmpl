@@ -2,9 +2,15 @@
 // localized page is missing in the target locale, do not pretend the
 // page exists — let the caller render a localized not-found.
 
-import { pickTranslation } from "@notionx/core";
+import {
+  pickTranslation,
+  mapNotionPageToLocalizedContentTranslation,
+  listGenericNotionContentForLocale,
+} from "@notionx/core";
 import { i18n } from "@/lib/i18n";
 import { pagesContract } from "@/lib/locale-contract";
+import { pageTranslationsSource } from "@/lib/content/models";
+import type { NotionPageLike } from "@notionx/core";
 
 export type PageTranslation = {
   pageId: string;
@@ -31,4 +37,20 @@ export function getDefaultLocalePage(
   rows: readonly PageTranslation[]
 ): PageTranslation | null {
   return pickTranslation(rows, i18n.defaultLocale, pagesContract, i18n.defaultLocale);
+}
+
+export async function listPageTranslations(locale: string): Promise<PageTranslation[]> {
+  if (!pageTranslationsSource) return [];
+  const pages = await listGenericNotionContentForLocale(pageTranslationsSource, locale);
+  return pages
+    .map((p) => mapNotionPageToLocalizedContentTranslation<PageTranslation>(p as unknown as NotionPageLike, {
+      fields: {
+        title: "Title",
+        source: "Source",
+        locale: "Locale",
+        slug: "Slug",
+        published: "Published",
+      },
+    }))
+    .filter((row): row is PageTranslation => row !== null);
 }

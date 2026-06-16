@@ -5,9 +5,13 @@
 import {
   pickTranslation,
   pickTranslationOrDefault,
+  mapNotionPageToLocalizedContentTranslation,
+  listGenericNotionContentForLocale,
 } from "@notionx/core";
 import { i18n } from "@/lib/i18n";
 import { blocksContract } from "@/lib/locale-contract";
+import { blockTranslationsSource } from "@/lib/content/models";
+import type { NotionPageLike } from "@notionx/core";
 
 export type BlockTranslation = {
   pageId: string;
@@ -41,4 +45,20 @@ export function pickBlockTranslation(
       blocksContract
     )
   );
+}
+
+export async function listBlockTranslations(locale: string): Promise<BlockTranslation[]> {
+  if (!blockTranslationsSource) return [];
+  const pages = await listGenericNotionContentForLocale(blockTranslationsSource, locale);
+  return pages
+    .map((p) => mapNotionPageToLocalizedContentTranslation<BlockTranslation>(p as unknown as NotionPageLike, {
+      fields: {
+        title: "Title",
+        source: "Source",
+        locale: "Locale",
+        slug: "Slug",
+        published: "Published",
+      },
+    }))
+    .filter((row): row is BlockTranslation => row !== null);
 }

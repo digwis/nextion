@@ -1,13 +1,16 @@
-// Locale-aware blog lookup. Falls back to the default-locale
-// translation when a target locale is missing (rule: hide).
+// Locale-aware blog lookup. Falls back per the blog contract's
+// `hide` rule: a base post without a translation in the target
+// locale is hidden from the list.
 
 import {
   pickTranslation,
   hideWhenMissing,
   mapNotionPageToLocalizedContentTranslation,
+  listGenericNotionContentForLocale,
 } from "@notionx/core";
 import { i18n } from "@/lib/i18n";
 import { blogContract } from "@/lib/locale-contract";
+import { blogTranslationsSource } from "@/lib/content/models";
 import type { NotionPageLike } from "@notionx/core";
 
 export type BlogTranslationExtra = {
@@ -49,4 +52,17 @@ export function blogListForLocale(
   locale: string
 ) {
   return hideWhenMissing(rows, locale);
+}
+
+/**
+ * Load all blog translation rows for a given locale from the
+ * `blog-translations` Notion data source. Returns an empty array
+ * when the translation source is not configured.
+ */
+export async function listBlogTranslations(locale: string): Promise<BlogTranslation[]> {
+  if (!blogTranslationsSource) return [];
+  const pages = await listGenericNotionContentForLocale(blogTranslationsSource, locale);
+  return pages
+    .map((p) => mapBlogTranslation(p as unknown as NotionPageLike))
+    .filter((row): row is BlogTranslation => row !== null);
 }
