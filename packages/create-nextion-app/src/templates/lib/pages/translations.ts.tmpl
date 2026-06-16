@@ -1,0 +1,34 @@
+// Locale-aware page lookup. Uses the strict-missing rule: if a
+// localized page is missing in the target locale, do not pretend the
+// page exists — let the caller render a localized not-found.
+
+import { pickTranslation } from "@notionx/core";
+import { i18n } from "@/lib/i18n";
+import { pagesContract } from "@/lib/locale-contract";
+
+export type PageTranslation = {
+  pageId: string;
+  sourcePageId: string;
+  locale: string;
+  slug: string;
+  title: string;
+  description: string;
+  seoTitle: string;
+  seoDescription: string;
+  navLabel: string;
+  footerLabel: string;
+  published: boolean;
+};
+
+export function pickPageTranslation(
+  rows: readonly PageTranslation[],
+  locale: string
+): PageTranslation | null {
+  return pickTranslation(rows, locale, pagesContract, i18n.defaultLocale);
+}
+
+export function getDefaultLocalePage(
+  rows: readonly PageTranslation[]
+): PageTranslation | null {
+  return pickTranslation(rows, i18n.defaultLocale, pagesContract, i18n.defaultLocale);
+}

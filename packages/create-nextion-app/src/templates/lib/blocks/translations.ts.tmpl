@@ -1,0 +1,44 @@
+// Locale-aware block lookup. Uses the default-locale fallback rule:
+// a block without a translation in the target locale resolves to the
+// default-locale copy so page shells stay usable.
+
+import {
+  pickTranslation,
+  pickTranslationOrDefault,
+} from "@notionx/core";
+import { i18n } from "@/lib/i18n";
+import { blocksContract } from "@/lib/locale-contract";
+
+export type BlockTranslation = {
+  pageId: string;
+  sourcePageId: string;
+  locale: string;
+  title: string;
+  description: string;
+  eyebrow: string;
+  headline: string;
+  subheadline: string;
+  body: string;
+  quote: string;
+  quoteAttribution: string;
+  primaryCtaLabel: string;
+  primaryCtaHref: string;
+  secondaryCtaLabel: string;
+  secondaryCtaHref: string;
+  published: boolean;
+};
+
+export function pickBlockTranslation(
+  rows: readonly BlockTranslation[],
+  locale: string
+) {
+  return (
+    pickTranslation(rows, locale, blocksContract, i18n.defaultLocale) ??
+    pickTranslationOrDefault(
+      rows,
+      locale,
+      i18n.defaultLocale,
+      blocksContract
+    )
+  );
+}

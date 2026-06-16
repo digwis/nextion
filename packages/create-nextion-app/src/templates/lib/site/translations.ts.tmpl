@@ -1,0 +1,30 @@
+// Locale-aware site settings merge. The `site-settings` Notion row
+// holds the global config; the `site-settings-translations` row
+// holds locale-specific copy. Missing locale copy falls back to the
+// default-locale translation.
+
+import { i18n } from "@/lib/i18n";
+import { siteSettingsContract } from "@/lib/locale-contract";
+
+export type SiteSettingsTranslation = {
+  pageId: string;
+  sourcePageId: string;
+  locale: string;
+  tagline: string;
+  description: string;
+  seoTitle: string;
+  seoDescription: string;
+  navLabels: Record<string, string>;
+  footerLabels: Record<string, string>;
+  globalFallbackCopy: string;
+  published: boolean;
+};
+
+export function pickSiteSettingsTranslation(
+  rows: readonly SiteSettingsTranslation[],
+  locale: string
+) {
+  const direct = rows.find((row) => row.locale === locale);
+  if (direct) return direct;
+  return rows.find((row) => row.locale === i18n.defaultLocale) ?? null;
+}

@@ -22,6 +22,19 @@ export type ContentModelDefinition<TFields extends NotionFieldMap = NotionFieldM
     type: "notion";
     tokenEnv: "NOTION_TOKEN";
     dataSourceEnv: string;
+    /**
+     * Env var name for the Notion translation data source for this
+     * model. Optional; only present when the model participates in
+     * the multilingual foundation.
+     */
+    translationSourceEnv?: string;
+    /**
+     * Translation source names (matching the keys in
+     * ScaffoldMetadata.translationSources) that this model relies
+     * on. Each entry must resolve to a configured translation
+     * data source for the doctor check to pass.
+     */
+    translationSources?: readonly string[];
     defaultDataSourceId?: string;
     fields: TFields;
     query: {

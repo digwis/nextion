@@ -58,6 +58,15 @@ type BuildNextionDoctorReportOptions = {
   runtimeId?: RuntimeId;
   wranglerConfig?: WranglerConfigLike | null;
   models?: readonly ContentModelDefinition<NotionFieldMap>[];
+  supportedLocales?: readonly string[];
+  /**
+   * Translation source map. Each key is a translation source name
+   * (e.g. `blog-translations`); each value is at least the env-var
+   * name that should be populated in the deploy environment. The
+   * doctor surfaces a `missing` check for any model that declares a
+   * `translationSources` entry not present in this map.
+   */
+  translationSources?: Record<string, { envVar: string }>;
 };
 
 function envValue(env: EnvLike, name: string) {
@@ -195,6 +204,47 @@ function notionChecks(env: EnvLike): NextionDoctorCheck[] {
   ];
 }
 
+function translationSourceChecks(
+  env: EnvLike,
+  supportedLocales: readonly string[] | undefined,
+  translationSources: Record<string, { envVar: string }> | undefined,
+  models: readonly ContentModelDefinition<NotionFieldMap>[]
+): NextionDoctorCheck[] {
+  // No point surfacing translation-source checks when the project
+  // hasn't enabled multilingualism: a single locale never needs a
+  // translation data source.
+  if (!supportedLocales || supportedLocales.length < 2) return [];
+  if (models.length === 0) return [];
+
+  const checks: NextionDoctorCheck[] = [];
+  for (const model of models) {
+    const names = model.source.translationSources;
+    if (!names || names.length === 0) continue;
+    for (const name of names) {
+      const ref = translationSources?.[name];
+      // A translation source is considered "present" once the project
+      // metadata declares it (via `nextion locale add --with-notion`).
+      // The doctor is reporting project configuration, not whether
+      // the deploy environment has the secret uploaded.
+      const present = Boolean(ref);
+      const envVar = ref?.envVar;
+      checks.push({
+        id: `locale.translationSources.${name}`,
+        label: `Translation source: ${name}`,
+        status: present ? "ok" : "missing",
+        required: false,
+        detail: present
+          ? `${name} is configured${envVar ? ` (${envVar})` : ""}`
+          : `${name} is missing for ${model.id}`,
+        action: present
+          ? undefined
+          : `Run \`npx nextion locale add <locale> --with-notion --apply\` to provision ${name}.`,
+      });
+    }
+  }
+  return checks;
+}
+
 function modelDoctorStatus(
   env: EnvLike,
   model: ContentModelDefinition<NotionFieldMap>
@@ -257,6 +307,12 @@ export function buildNextionDoctorReport(
   const checks = [
     ...cloudflareChecks(options.wranglerConfig),
     ...notionChecks(env),
+    ...translationSourceChecks(
+      env,
+      options.supportedLocales,
+      options.translationSources,
+      options.models ?? []
+    ),
   ].map(omitResolvedActions);
   const models = modelChecks(env, options.models ?? []);
   const status = overallStatus(checks, models);
@@ -266,6 +322,14 @@ export function buildNextionDoctorReport(
       (model) =>
         `Set ${model.dataSourceEnv} for the ${model.id} content model or add a model defaultDataSourceId.`
     );
+  const translationActions = checks
+    .filter(
+      (check) =>
+        check.id.startsWith("locale.translationSources.") &&
+        check.status === "missing" &&
+        Boolean(check.action)
+    )
+    .map((check) => check.action as string);
 
   return {
     overall: {
@@ -279,7 +343,11 @@ export function buildNextionDoctorReport(
     },
     checks,
     models,
-    nextSteps: [...uniqueActions(checks), ...modelActions],
+    nextSteps: [
+      ...uniqueActions(checks),
+      ...modelActions,
+      ...translationActions,
+    ],
   };
 }
 
