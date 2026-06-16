@@ -4,7 +4,7 @@
 
 **Goal:** Add an optional `nextion` skill install step to `create-nextion-app` with interactive auto-detect-and-ask behavior and explicit non-interactive overrides.
 
-**Architecture:** Introduce a small `skill-install/` module in `packages/create-nextion-app/src` that owns parsing, detection, prompting, installer invocation, and outcome formatting. Keep the existing create flow intact by threading resolved skill-install intent through `answers.ts` / `prompt.ts`, then run the installer after project render in `index.ts` as a best-effort post-create step.
+**Architecture:** Introduce a small `skill-install/` module in `packages/create-notionx-app/src` that owns parsing, detection, prompting, installer invocation, and outcome formatting. Keep the existing create flow intact by threading resolved skill-install intent through `answers.ts` / `prompt.ts`, then run the installer after project render in `index.ts` as a best-effort post-create step.
 
 **Tech Stack:** TypeScript, Node.js child processes and fs APIs, `@clack/prompts`, Vitest
 
@@ -12,33 +12,33 @@
 
 ## File Structure
 
-- Create: `packages/create-nextion-app/src/skill-install/types.ts`
+- Create: `packages/create-notionx-app/src/skill-install/types.ts`
   - Shared types for install mode, target, detection results, resolved execution plan, and install outcomes.
-- Create: `packages/create-nextion-app/src/skill-install/detect.ts`
+- Create: `packages/create-notionx-app/src/skill-install/detect.ts`
   - Conservative best-effort detection of likely `trae`, `claude`, and `codex` targets.
-- Create: `packages/create-nextion-app/src/skill-install/install.ts`
+- Create: `packages/create-notionx-app/src/skill-install/install.ts`
   - Resolution of CLI/interactive behavior plus installer execution via `npx @notionx/skill`.
-- Create: `packages/create-nextion-app/src/skill-install/detect.test.ts`
+- Create: `packages/create-notionx-app/src/skill-install/detect.test.ts`
   - Unit tests for detection logic and target ordering.
-- Create: `packages/create-nextion-app/src/skill-install/install.test.ts`
+- Create: `packages/create-notionx-app/src/skill-install/install.test.ts`
   - Unit tests for mode resolution, prompt gating, command construction, and failure handling.
-- Modify: `packages/create-nextion-app/src/prompt.ts`
+- Modify: `packages/create-notionx-app/src/prompt.ts`
   - Extend the interactive answers shape to carry skill install intent and insert the optional prompt flow.
-- Modify: `packages/create-nextion-app/src/answers.ts`
+- Modify: `packages/create-notionx-app/src/answers.ts`
   - Parse `--install-skill`, apply interactive/non-interactive defaults, and expose resolved skill-install config to callers.
-- Modify: `packages/create-nextion-app/src/index.ts`
+- Modify: `packages/create-notionx-app/src/index.ts`
   - Call the installer after render, log non-blocking warnings, and include retry guidance.
-- Modify: `packages/create-nextion-app/README.md`
+- Modify: `packages/create-notionx-app/README.md`
   - Document the new flag and behavior.
-- Modify: `packages/create-nextion-app/src/render.test.ts`
+- Modify: `packages/create-notionx-app/src/render.test.ts`
   - Add CLI parsing coverage for the new flag because this file already exercises `parseArgs()` and `applyDefaults()`.
 
 ### Task 1: Add Skill Install Domain Types And Target Detection
 
 **Files:**
-- Create: `packages/create-nextion-app/src/skill-install/types.ts`
-- Create: `packages/create-nextion-app/src/skill-install/detect.ts`
-- Create: `packages/create-nextion-app/src/skill-install/detect.test.ts`
+- Create: `packages/create-notionx-app/src/skill-install/types.ts`
+- Create: `packages/create-notionx-app/src/skill-install/detect.ts`
+- Create: `packages/create-notionx-app/src/skill-install/detect.test.ts`
 
 - [ ] **Step 1: Write the failing detection tests**
 
@@ -100,7 +100,7 @@ Expected: FAIL with module-not-found errors for `./detect.js`.
 
 - [ ] **Step 3: Add the shared skill-install types**
 
-Create `packages/create-nextion-app/src/skill-install/types.ts`:
+Create `packages/create-notionx-app/src/skill-install/types.ts`:
 
 ```ts
 export type SkillInstallMode =
@@ -135,7 +135,7 @@ export interface SkillInstallResult {
 
 - [ ] **Step 4: Implement conservative target detection**
 
-Create `packages/create-nextion-app/src/skill-install/detect.ts`:
+Create `packages/create-notionx-app/src/skill-install/detect.ts`:
 
 ```ts
 import { homedir } from "node:os";
@@ -207,23 +207,23 @@ Expected: PASS with 4 passing tests.
 - [ ] **Step 6: Commit the detection module**
 
 ```bash
-git add packages/create-nextion-app/src/skill-install/types.ts \
-  packages/create-nextion-app/src/skill-install/detect.ts \
-  packages/create-nextion-app/src/skill-install/detect.test.ts
+git add packages/create-notionx-app/src/skill-install/types.ts \
+  packages/create-notionx-app/src/skill-install/detect.ts \
+  packages/create-notionx-app/src/skill-install/detect.test.ts
 git commit -m "feat: add skill target detection"
 ```
 
 ### Task 2: Extend CLI Parsing And Interactive Prompt Resolution
 
 **Files:**
-- Modify: `packages/create-nextion-app/src/answers.ts`
-- Modify: `packages/create-nextion-app/src/prompt.ts`
-- Modify: `packages/create-nextion-app/src/render.test.ts`
-- Test: `packages/create-nextion-app/src/render.test.ts`
+- Modify: `packages/create-notionx-app/src/answers.ts`
+- Modify: `packages/create-notionx-app/src/prompt.ts`
+- Modify: `packages/create-notionx-app/src/render.test.ts`
+- Test: `packages/create-notionx-app/src/render.test.ts`
 
 - [ ] **Step 1: Add failing parsing tests for `--install-skill`**
 
-Append to `packages/create-nextion-app/src/render.test.ts`:
+Append to `packages/create-notionx-app/src/render.test.ts`:
 
 ```ts
 describe("skill install answers", () => {
@@ -260,7 +260,7 @@ Expected: FAIL because `CliOverrides.installSkill` and the returned answer field
 
 - [ ] **Step 3: Thread install mode through the answers model**
 
-Update `packages/create-nextion-app/src/prompt.ts` interface section:
+Update `packages/create-notionx-app/src/prompt.ts` interface section:
 
 ```ts
 import type {
@@ -313,7 +313,7 @@ export const DEFAULT_ANSWERS: Omit<
 
 - [ ] **Step 4: Parse and default the new CLI flag**
 
-Update `packages/create-nextion-app/src/answers.ts`:
+Update `packages/create-notionx-app/src/answers.ts`:
 
 ```ts
 import type { SkillInstallMode, SkillInstallTarget } from "./skill-install/types.js";
@@ -405,7 +405,7 @@ return {
 
 - [ ] **Step 5: Add the interactive skill prompt hook**
 
-At the end of `packages/create-nextion-app/src/prompt.ts`, after the admin email is collected and before `p.outro(...)`, insert:
+At the end of `packages/create-notionx-app/src/prompt.ts`, after the admin email is collected and before `p.outro(...)`, insert:
 
 ```ts
 import { detectSkillTargets } from "./skill-install/detect.js";
@@ -491,23 +491,23 @@ Expected: PASS with the new parsing tests and prior UI preset tests still green.
 - [ ] **Step 7: Commit the answer-model changes**
 
 ```bash
-git add packages/create-nextion-app/src/answers.ts \
-  packages/create-nextion-app/src/prompt.ts \
-  packages/create-nextion-app/src/render.test.ts
+git add packages/create-notionx-app/src/answers.ts \
+  packages/create-notionx-app/src/prompt.ts \
+  packages/create-notionx-app/src/render.test.ts
 git commit -m "feat: add skill install answer flow"
 ```
 
 ### Task 3: Add Installer Resolution And Best-Effort Execution
 
 **Files:**
-- Create: `packages/create-nextion-app/src/skill-install/install.ts`
-- Create: `packages/create-nextion-app/src/skill-install/install.test.ts`
-- Modify: `packages/create-nextion-app/src/index.ts`
-- Test: `packages/create-nextion-app/src/skill-install/install.test.ts`
+- Create: `packages/create-notionx-app/src/skill-install/install.ts`
+- Create: `packages/create-notionx-app/src/skill-install/install.test.ts`
+- Modify: `packages/create-notionx-app/src/index.ts`
+- Test: `packages/create-notionx-app/src/skill-install/install.test.ts`
 
 - [ ] **Step 1: Write failing installer-resolution tests**
 
-Create `packages/create-nextion-app/src/skill-install/install.test.ts`:
+Create `packages/create-notionx-app/src/skill-install/install.test.ts`:
 
 ```ts
 import { describe, expect, it } from "vitest";
@@ -583,7 +583,7 @@ Expected: FAIL with missing exports from `./install.js`.
 
 - [ ] **Step 3: Implement plan resolution and installer execution**
 
-Create `packages/create-nextion-app/src/skill-install/install.ts`:
+Create `packages/create-notionx-app/src/skill-install/install.ts`:
 
 ```ts
 import type { Answers } from "../prompt.js";
@@ -661,7 +661,7 @@ export async function installSkill(
 
 - [ ] **Step 4: Integrate best-effort installation into the create flow**
 
-Update `packages/create-nextion-app/src/index.ts`:
+Update `packages/create-notionx-app/src/index.ts`:
 
 ```ts
 import { installSkill } from "./skill-install/install.js";
@@ -717,22 +717,22 @@ Expected: PASS with installer resolution, parsing, and detection tests all green
 - [ ] **Step 6: Commit the installer integration**
 
 ```bash
-git add packages/create-nextion-app/src/skill-install/install.ts \
-  packages/create-nextion-app/src/skill-install/install.test.ts \
-  packages/create-nextion-app/src/index.ts
+git add packages/create-notionx-app/src/skill-install/install.ts \
+  packages/create-notionx-app/src/skill-install/install.test.ts \
+  packages/create-notionx-app/src/index.ts
 git commit -m "feat: install nextion skill during scaffold"
 ```
 
 ### Task 4: Update Help Text And Package Documentation
 
 **Files:**
-- Modify: `packages/create-nextion-app/src/answers.ts`
-- Modify: `packages/create-nextion-app/README.md`
-- Test: `packages/create-nextion-app/src/render.test.ts`
+- Modify: `packages/create-notionx-app/src/answers.ts`
+- Modify: `packages/create-notionx-app/README.md`
+- Test: `packages/create-notionx-app/src/render.test.ts`
 
 - [ ] **Step 1: Add a failing documentation assertion**
 
-Append to `packages/create-nextion-app/src/render.test.ts`:
+Append to `packages/create-notionx-app/src/render.test.ts`:
 
 ```ts
 describe("skill install help text", () => {
@@ -760,7 +760,7 @@ Expected: FAIL because `--install-skill` is not present in the help output.
 
 - [ ] **Step 3: Update help output and README examples**
 
-Update the help text in `packages/create-nextion-app/src/answers.ts`:
+Update the help text in `packages/create-notionx-app/src/answers.ts`:
 
 ```ts
   --install-skill <mode>      Install nextion AI skill: auto, none, prompt,
@@ -769,7 +769,7 @@ Update the help text in `packages/create-nextion-app/src/answers.ts`:
                               --yes / non-interactive default: none.
 ```
 
-Update `packages/create-nextion-app/README.md` quick-start examples:
+Update `packages/create-notionx-app/README.md` quick-start examples:
 
 ```md
 ### Install skill automatically when a supported tool is detected
@@ -808,9 +808,9 @@ Expected: PASS with all create-nextion-app tests green.
 - [ ] **Step 5: Commit docs and help text**
 
 ```bash
-git add packages/create-nextion-app/src/answers.ts \
-  packages/create-nextion-app/README.md \
-  packages/create-nextion-app/src/render.test.ts
+git add packages/create-notionx-app/src/answers.ts \
+  packages/create-notionx-app/README.md \
+  packages/create-notionx-app/src/render.test.ts
 git commit -m "docs: document scaffold skill install options"
 ```
 

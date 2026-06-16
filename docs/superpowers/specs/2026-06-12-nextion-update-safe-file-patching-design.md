@@ -211,7 +211,7 @@ Recommended responsibilities:
   - render to temp dir, compare files, and produce actionable results
 - `update/index.ts`
   - orchestrate update execution and summary output
-- `cli-nextion.ts`
+- `cli-notionx.ts`
   - dispatch the command
 
 This keeps update logic isolated from create and repair logic.

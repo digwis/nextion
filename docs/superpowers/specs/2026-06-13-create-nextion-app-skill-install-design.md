@@ -259,7 +259,7 @@ Detected AI tools: Trae, Codex
 
 Install the official nextion AI skill for this project?
 This writes project-local files such as:
-  ./.trae/skills/nextion/
+  ./.trae/skills/notionx/
   ./AGENTS.md
 ```
 
@@ -268,7 +268,7 @@ For a single target, the copy can be simpler:
 ```text
 Detected Trae on this machine.
 Install the official nextion AI skill for this project?
-This writes ./.trae/skills/nextion/
+This writes ./.trae/skills/notionx/
 ```
 
 ### Multi-Select Behavior

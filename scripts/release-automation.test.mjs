@@ -28,12 +28,12 @@ test("planPublications skips versions that are already on npm", () => {
     {
       name: "@notionx/create-notionx-app",
       version: "0.6.0",
-      directory: "packages/create-nextion-app",
+      directory: "packages/create-notionx-app",
     },
     {
       name: "@notionx/core",
       version: "1.1.0",
-      directory: "packages/nextion",
+      directory: "packages/notionx",
     },
   ];
 

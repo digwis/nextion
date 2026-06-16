@@ -132,7 +132,7 @@ For each provisioned database, the flow becomes:
 
 ### Notion Helpers
 
-Add helper functions in `packages/create-nextion-app/src/provision/notion.ts`
+Add helper functions in `packages/create-notionx-app/src/provision/notion.ts`
 to:
 
 - normalize and extract database description text

@@ -37,7 +37,7 @@ installer rather than a one-shot starter.
   - user-owned
 - Make the add flow produce a machine-readable install plan before writing files.
 - Keep the design small enough to implement inside the current
-  `packages/create-nextion-app` package.
+  `packages/create-notionx-app` package.
 
 ## Non-Goals
 

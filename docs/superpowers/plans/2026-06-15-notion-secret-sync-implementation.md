@@ -4,7 +4,7 @@
 
 **Goal:** Make new Nextion Notion-backed projects sync `NOTION_DATA_SOURCE_ID` and `NOTION_PAGES_DATA_SOURCE_ID` to Worker secrets during provisioned deploys, and let existing projects repair the same drift through `nextion update`.
 
-**Architecture:** Extend the existing provision secret-sync helper in `packages/create-nextion-app/src/provision/index.ts` so the first live deploy writes all required production Notion secrets, then replace the placeholder provision-repair inspector with a real Cloudflare secret drift detector that emits safe unified-update entries. Keep all production sync on the existing `wrangler secret put` path instead of moving ids into public `wrangler.jsonc` vars.
+**Architecture:** Extend the existing provision secret-sync helper in `packages/create-notionx-app/src/provision/index.ts` so the first live deploy writes all required production Notion secrets, then replace the placeholder provision-repair inspector with a real Cloudflare secret drift detector that emits safe unified-update entries. Keep all production sync on the existing `wrangler secret put` path instead of moving ids into public `wrangler.jsonc` vars.
 
 **Tech Stack:** TypeScript, Vitest, Wrangler CLI integration helpers, Clack prompts, existing Nextion unified update pipeline
 
@@ -13,8 +13,8 @@
 ### Task 1: Expand Provision Secret Sync Coverage
 
 **Files:**
-- Modify: `packages/create-nextion-app/src/provision/index.ts`
-- Test: `packages/create-nextion-app/src/provision/index.test.ts`
+- Modify: `packages/create-notionx-app/src/provision/index.ts`
+- Test: `packages/create-notionx-app/src/provision/index.test.ts`
 
 - [ ] **Step 1: Write the failing test for required Notion ids**
 
@@ -57,7 +57,7 @@ it("writes required Notion ids to worker secrets during provisioned deploys", as
 Run:
 
 ```bash
-pnpm --filter @notionx/create-nextion-app test -- --run packages/create-nextion-app/src/provision/index.test.ts
+pnpm --filter @notionx/create-nextion-app test -- --run packages/create-notionx-app/src/provision/index.test.ts
 ```
 
 Expected: FAIL because `setProvisionedWorkerSecrets()` currently only writes `TURNSTILE_SECRET_KEY` and `NOTION_TOKEN`.
@@ -183,7 +183,7 @@ Also tighten the helper so required values fail fast instead of silently returni
 Run:
 
 ```bash
-pnpm --filter @notionx/create-nextion-app test -- --run packages/create-nextion-app/src/provision/index.test.ts
+pnpm --filter @notionx/create-nextion-app test -- --run packages/create-notionx-app/src/provision/index.test.ts
 ```
 
 Expected: PASS with the new required Notion secret coverage.
@@ -191,16 +191,16 @@ Expected: PASS with the new required Notion secret coverage.
 - [ ] **Step 7: Commit**
 
 ```bash
-git add packages/create-nextion-app/src/provision/index.ts packages/create-nextion-app/src/provision/index.test.ts
+git add packages/create-notionx-app/src/provision/index.ts packages/create-notionx-app/src/provision/index.test.ts
 git commit -m "fix: sync notion datasource ids during provision"
 ```
 
 ### Task 2: Build Real Cloudflare Secret Drift Inspection
 
 **Files:**
-- Modify: `packages/create-nextion-app/src/provision/inspect.ts`
-- Modify: `packages/create-nextion-app/src/provision/repair.ts`
-- Test: `packages/create-nextion-app/src/provision/repair.test.ts`
+- Modify: `packages/create-notionx-app/src/provision/inspect.ts`
+- Modify: `packages/create-notionx-app/src/provision/repair.ts`
+- Test: `packages/create-notionx-app/src/provision/repair.test.ts`
 
 - [ ] **Step 1: Write the failing repair inspector test for missing remote secrets**
 
@@ -224,7 +224,7 @@ it("emits safe cloudflare repair entries for missing notion worker secrets", asy
 Run:
 
 ```bash
-pnpm --filter @notionx/create-nextion-app test -- --run packages/create-nextion-app/src/provision/repair.test.ts
+pnpm --filter @notionx/create-nextion-app test -- --run packages/create-notionx-app/src/provision/repair.test.ts
 ```
 
 Expected: FAIL because `inspectProvisionRepair()` currently returns a single placeholder entry.
@@ -345,7 +345,7 @@ it("skips notion secret repair when local ids are absent", async () => {
 Run:
 
 ```bash
-pnpm --filter @notionx/create-nextion-app test -- --run packages/create-nextion-app/src/provision/repair.test.ts
+pnpm --filter @notionx/create-nextion-app test -- --run packages/create-notionx-app/src/provision/repair.test.ts
 ```
 
 Expected: PASS with safe secret repair entries replacing the placeholder.
@@ -353,16 +353,16 @@ Expected: PASS with safe secret repair entries replacing the placeholder.
 - [ ] **Step 9: Commit**
 
 ```bash
-git add packages/create-nextion-app/src/provision/inspect.ts packages/create-nextion-app/src/provision/repair.test.ts packages/create-nextion-app/src/provision/repair.ts
+git add packages/create-notionx-app/src/provision/inspect.ts packages/create-notionx-app/src/provision/repair.test.ts packages/create-notionx-app/src/provision/repair.ts
 git commit -m "fix: inspect missing notion worker secrets"
 ```
 
 ### Task 3: Make Update Output and Inspector Tests Match Real Behavior
 
 **Files:**
-- Modify: `packages/create-nextion-app/src/cli-nextion.test.ts`
-- Modify: `packages/create-nextion-app/src/update/unified.ts`
-- Test: `packages/create-nextion-app/src/cli-nextion.test.ts`
+- Modify: `packages/create-notionx-app/src/cli-notionx.test.ts`
+- Modify: `packages/create-notionx-app/src/update/unified.ts`
+- Test: `packages/create-notionx-app/src/cli-notionx.test.ts`
 
 - [ ] **Step 1: Write the failing CLI summary expectation**
 
@@ -394,7 +394,7 @@ it("prints cloudflare secret repair labels in unified update summary", async () 
 Run:
 
 ```bash
-pnpm --filter @notionx/create-nextion-app test -- --run packages/create-nextion-app/src/cli-nextion.test.ts
+pnpm --filter @notionx/create-nextion-app test -- --run packages/create-notionx-app/src/cli-notionx.test.ts
 ```
 
 Expected: PASS and the new assertion locks the `cloudflare-secret:*` label in the printed update summary. If it fails, treat that as a signal to adjust only the CLI test fixture or summary formatting in Step 3, not to weaken the assertion.
@@ -420,7 +420,7 @@ Use it in `formatUnifiedUpdateSummary()` only if the new test exposes duplicated
 Run:
 
 ```bash
-pnpm --filter @notionx/create-nextion-app test -- --run packages/create-nextion-app/src/cli-nextion.test.ts
+pnpm --filter @notionx/create-nextion-app test -- --run packages/create-notionx-app/src/cli-notionx.test.ts
 ```
 
 Expected: PASS and show the new `cloudflare-secret:*` labels in the summary path.
@@ -428,16 +428,16 @@ Expected: PASS and show the new `cloudflare-secret:*` labels in the summary path
 - [ ] **Step 5: Commit**
 
 ```bash
-git add packages/create-nextion-app/src/cli-nextion.test.ts packages/create-nextion-app/src/update/unified.ts
+git add packages/create-notionx-app/src/cli-notionx.test.ts packages/create-notionx-app/src/update/unified.ts
 git commit -m "test: cover notion secret repair summary"
 ```
 
 ### Task 4: End-to-End Regression Pass
 
 **Files:**
-- Modify: `packages/create-nextion-app/src/provision/index.test.ts`
-- Modify: `packages/create-nextion-app/src/provision/repair.test.ts`
-- Modify: `packages/create-nextion-app/src/cli-nextion.test.ts`
+- Modify: `packages/create-notionx-app/src/provision/index.test.ts`
+- Modify: `packages/create-notionx-app/src/provision/repair.test.ts`
+- Modify: `packages/create-notionx-app/src/cli-notionx.test.ts`
 
 - [ ] **Step 1: Run the focused package test suite**
 
@@ -482,7 +482,7 @@ Expected: PASS so the change fits the repo's existing release gate for the scaff
 - [ ] **Step 5: Commit**
 
 ```bash
-git add packages/create-nextion-app/src/provision/index.test.ts packages/create-nextion-app/src/provision/repair.test.ts packages/create-nextion-app/src/cli-nextion.test.ts packages/create-nextion-app/src/provision/index.ts packages/create-nextion-app/src/provision/inspect.ts packages/create-nextion-app/src/update/unified.ts
+git add packages/create-notionx-app/src/provision/index.test.ts packages/create-notionx-app/src/provision/repair.test.ts packages/create-notionx-app/src/cli-notionx.test.ts packages/create-notionx-app/src/provision/index.ts packages/create-notionx-app/src/provision/inspect.ts packages/create-notionx-app/src/update/unified.ts
 git commit -m "fix: repair missing notion worker secrets"
 ```
 
@@ -542,6 +542,6 @@ Expected: `HTTP/2 200` and the public page no longer renders the empty "No blog 
 - [ ] **Step 5: Commit only if smoke validation required code tweaks**
 
 ```bash
-git add packages/create-nextion-app/src/provision/index.ts packages/create-nextion-app/src/provision/index.test.ts packages/create-nextion-app/src/provision/inspect.ts packages/create-nextion-app/src/provision/repair.test.ts packages/create-nextion-app/src/cli-nextion.test.ts packages/create-nextion-app/src/update/unified.ts
+git add packages/create-notionx-app/src/provision/index.ts packages/create-notionx-app/src/provision/index.test.ts packages/create-notionx-app/src/provision/inspect.ts packages/create-notionx-app/src/provision/repair.test.ts packages/create-notionx-app/src/cli-notionx.test.ts packages/create-notionx-app/src/update/unified.ts
 git commit -m "fix: stabilize notion secret sync smoke flow"
 ```

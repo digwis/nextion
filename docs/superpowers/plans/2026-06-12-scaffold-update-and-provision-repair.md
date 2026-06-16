@@ -14,54 +14,54 @@
 
 ### Existing files to modify
 
-- `packages/create-nextion-app/package.json`
+- `packages/create-notionx-app/package.json`
   - Add the long-lived `nextion` bin entry and any scripts needed for tests/build.
-- `packages/create-nextion-app/src/index.ts`
+- `packages/create-notionx-app/src/index.ts`
   - Keep create-project flow focused on first-run generation; delegate shared logic to reusable modules when needed.
-- `packages/create-nextion-app/src/render.ts`
+- `packages/create-notionx-app/src/render.ts`
   - Write scaffold metadata into generated projects and expose deterministic token generation helpers if update regeneration needs them.
-- `packages/create-nextion-app/src/provision/index.ts`
+- `packages/create-notionx-app/src/provision/index.ts`
   - Split first-run provisioning from repair-safe provisioning so repair can reuse the same resource logic without install/deploy side effects.
 - `docs/architecture/upgrading-nextion.md`
   - Document the new command boundaries.
 
 ### New files to create
 
-- `packages/create-nextion-app/src/metadata.ts`
+- `packages/create-notionx-app/src/metadata.ts`
   - Read/write/validate scaffold metadata for generated projects.
-- `packages/create-nextion-app/src/cli-nextion.ts`
+- `packages/create-notionx-app/src/cli-notionx.ts`
   - New maintenance CLI entry point for `nextion update` and `nextion provision repair`.
-- `packages/create-nextion-app/src/project-context.ts`
+- `packages/create-notionx-app/src/project-context.ts`
   - Resolve current project directory, load metadata, and enforce “this is a Nextion project”.
-- `packages/create-nextion-app/src/update/index.ts`
+- `packages/create-notionx-app/src/update/index.ts`
   - Top-level `nextion update` orchestration.
-- `packages/create-nextion-app/src/update/scaffold-files.ts`
+- `packages/create-notionx-app/src/update/scaffold-files.ts`
   - Define the first-version scaffold-owned file list and file classification rules.
-- `packages/create-nextion-app/src/update/template-sync.ts`
+- `packages/create-notionx-app/src/update/template-sync.ts`
   - Generate expected template output for the current project metadata and compute safe file updates.
-- `packages/create-nextion-app/src/provision/repair.ts`
+- `packages/create-notionx-app/src/provision/repair.ts`
   - Top-level `nextion provision repair` orchestration.
-- `packages/create-nextion-app/src/provision/options.ts`
+- `packages/create-notionx-app/src/provision/options.ts`
   - Shared provisioning mode flags such as create vs repair and deploy enabled vs disabled.
-- `packages/create-nextion-app/src/__tests__/metadata.test.ts`
+- `packages/create-notionx-app/src/__tests__/metadata.test.ts`
   - Metadata parsing/writing tests.
-- `packages/create-nextion-app/src/update/update.test.ts`
+- `packages/create-notionx-app/src/update/update.test.ts`
   - Focused update behavior tests.
-- `packages/create-nextion-app/src/provision/repair.test.ts`
+- `packages/create-notionx-app/src/provision/repair.test.ts`
   - Focused repair behavior tests.
 
 ### Existing tests to modify
 
-- `packages/create-nextion-app/src/provision/notion.test.ts`
+- `packages/create-notionx-app/src/provision/notion.test.ts`
   - Extend as needed if repair introduces new Notion result semantics.
 
 ## Task 1: Add scaffold metadata for generated projects
 
 **Files:**
-- Create: `packages/create-nextion-app/src/metadata.ts`
-- Modify: `packages/create-nextion-app/src/render.ts`
-- Modify: `packages/create-nextion-app/src/prompt.ts`
-- Test: `packages/create-nextion-app/src/__tests__/metadata.test.ts`
+- Create: `packages/create-notionx-app/src/metadata.ts`
+- Modify: `packages/create-notionx-app/src/render.ts`
+- Modify: `packages/create-notionx-app/src/prompt.ts`
+- Test: `packages/create-notionx-app/src/__tests__/metadata.test.ts`
 
 - [ ] **Step 1: Write the failing metadata tests**
 
@@ -200,7 +200,7 @@ export function parseScaffoldMetadata(raw: string): ScaffoldMetadata {
 
 - [ ] **Step 4: Teach render to emit metadata**
 
-Add this import near the top of `packages/create-nextion-app/src/render.ts`:
+Add this import near the top of `packages/create-notionx-app/src/render.ts`:
 
 ```ts
 import { buildScaffoldMetadata, SCAFFOLD_METADATA_FILE } from "./metadata.js";
@@ -240,19 +240,19 @@ Expected: PASS.
 - [ ] **Step 6: Commit**
 
 ```bash
-git add packages/create-nextion-app/src/metadata.ts packages/create-nextion-app/src/render.ts packages/create-nextion-app/src/__tests__/metadata.test.ts
+git add packages/create-notionx-app/src/metadata.ts packages/create-notionx-app/src/render.ts packages/create-notionx-app/src/__tests__/metadata.test.ts
 git commit -m "feat: add scaffold project metadata"
 ```
 
 ## Task 2: Add project context loading for existing Nextion apps
 
 **Files:**
-- Create: `packages/create-nextion-app/src/project-context.ts`
-- Test: `packages/create-nextion-app/src/__tests__/metadata.test.ts`
+- Create: `packages/create-notionx-app/src/project-context.ts`
+- Test: `packages/create-notionx-app/src/__tests__/metadata.test.ts`
 
 - [ ] **Step 1: Extend metadata tests with a failing project-context case**
 
-Append this test block to `packages/create-nextion-app/src/__tests__/metadata.test.ts`:
+Append this test block to `packages/create-notionx-app/src/__tests__/metadata.test.ts`:
 
 ```ts
 import { mkdtemp, mkdir, readFile, writeFile } from "node:fs/promises";
@@ -344,20 +344,20 @@ Expected: PASS.
 - [ ] **Step 5: Commit**
 
 ```bash
-git add packages/create-nextion-app/src/project-context.ts packages/create-nextion-app/src/__tests__/metadata.test.ts
+git add packages/create-notionx-app/src/project-context.ts packages/create-notionx-app/src/__tests__/metadata.test.ts
 git commit -m "feat: load existing nextion project context"
 ```
 
 ## Task 3: Extract repair-safe provisioning options from first-run provisioning
 
 **Files:**
-- Create: `packages/create-nextion-app/src/provision/options.ts`
-- Modify: `packages/create-nextion-app/src/provision/index.ts`
-- Test: `packages/create-nextion-app/src/provision/repair.test.ts`
+- Create: `packages/create-notionx-app/src/provision/options.ts`
+- Modify: `packages/create-notionx-app/src/provision/index.ts`
+- Test: `packages/create-notionx-app/src/provision/repair.test.ts`
 
 - [ ] **Step 1: Write the failing provisioning-options test**
 
-Create `packages/create-nextion-app/src/provision/repair.test.ts` with:
+Create `packages/create-notionx-app/src/provision/repair.test.ts` with:
 
 ```ts
 import { describe, expect, it } from "vitest";
@@ -386,7 +386,7 @@ Expected: FAIL because `options.ts` does not exist.
 
 - [ ] **Step 3: Implement the minimal provisioning options module**
 
-Create `packages/create-nextion-app/src/provision/options.ts`:
+Create `packages/create-notionx-app/src/provision/options.ts`:
 
 ```ts
 export type ProvisionModeName = "create" | "repair";
@@ -416,7 +416,7 @@ export function defaultProvisionMode(name: ProvisionModeName): ProvisionMode {
 
 - [ ] **Step 4: Thread the mode into provisioning**
 
-Update the `provision(...)` signature in `packages/create-nextion-app/src/provision/index.ts`:
+Update the `provision(...)` signature in `packages/create-notionx-app/src/provision/index.ts`:
 
 ```ts
 import { defaultProvisionMode, type ProvisionMode } from "./options.js";
@@ -477,23 +477,23 @@ Expected: PASS.
 - [ ] **Step 7: Commit**
 
 ```bash
-git add packages/create-nextion-app/src/provision/options.ts packages/create-nextion-app/src/provision/index.ts packages/create-nextion-app/src/provision/repair.test.ts
+git add packages/create-notionx-app/src/provision/options.ts packages/create-notionx-app/src/provision/index.ts packages/create-notionx-app/src/provision/repair.test.ts
 git commit -m "refactor: add repair-safe provisioning mode"
 ```
 
 ## Task 4: Add the `nextion provision repair` command
 
 **Files:**
-- Create: `packages/create-nextion-app/src/provision/repair.ts`
-- Create: `packages/create-nextion-app/src/cli-nextion.ts`
-- Modify: `packages/create-nextion-app/package.json`
-- Modify: `packages/create-nextion-app/src/provision/index.ts`
-- Modify: `packages/create-nextion-app/src/provision/repair.test.ts`
-- Test: `packages/create-nextion-app/src/provision/repair.test.ts`
+- Create: `packages/create-notionx-app/src/provision/repair.ts`
+- Create: `packages/create-notionx-app/src/cli-notionx.ts`
+- Modify: `packages/create-notionx-app/package.json`
+- Modify: `packages/create-notionx-app/src/provision/index.ts`
+- Modify: `packages/create-notionx-app/src/provision/repair.test.ts`
+- Test: `packages/create-notionx-app/src/provision/repair.test.ts`
 
 - [ ] **Step 1: Add failing repair command tests**
 
-Append to `packages/create-nextion-app/src/provision/repair.test.ts`:
+Append to `packages/create-notionx-app/src/provision/repair.test.ts`:
 
 ```ts
 import { describe, expect, it, vi } from "vitest";
@@ -568,7 +568,7 @@ Expected: FAIL because `repair.ts` does not exist.
 
 - [ ] **Step 3: Implement the repair runner**
 
-Create `packages/create-nextion-app/src/provision/repair.ts`:
+Create `packages/create-notionx-app/src/provision/repair.ts`:
 
 ```ts
 import type { Answers } from "../prompt.js";
@@ -589,7 +589,7 @@ export async function runProvisionRepair(
 
 - [ ] **Step 4: Create the maintenance CLI entry**
 
-Create `packages/create-nextion-app/src/cli-nextion.ts`:
+Create `packages/create-notionx-app/src/cli-notionx.ts`:
 
 ```ts
 #!/usr/bin/env node
@@ -639,12 +639,12 @@ main().catch((err) => {
 
 - [ ] **Step 5: Expose the `nextion` bin**
 
-Update `packages/create-nextion-app/package.json`:
+Update `packages/create-notionx-app/package.json`:
 
 ```json
   "bin": {
     "create-nextion-app": "./dist/index.js",
-    "nextion": "./dist/cli-nextion.js"
+    "nextion": "./dist/cli-notionx.js"
   },
 ```
 
@@ -661,20 +661,20 @@ Expected: PASS.
 - [ ] **Step 7: Commit**
 
 ```bash
-git add packages/create-nextion-app/src/provision/repair.ts packages/create-nextion-app/src/cli-nextion.ts packages/create-nextion-app/package.json packages/create-nextion-app/src/provision/repair.test.ts
+git add packages/create-notionx-app/src/provision/repair.ts packages/create-notionx-app/src/cli-notionx.ts packages/create-notionx-app/package.json packages/create-notionx-app/src/provision/repair.test.ts
 git commit -m "feat: add provision repair command"
 ```
 
 ## Task 5: Add scaffold-owned file classification and update planning
 
 **Files:**
-- Create: `packages/create-nextion-app/src/update/scaffold-files.ts`
-- Create: `packages/create-nextion-app/src/update/template-sync.ts`
-- Create: `packages/create-nextion-app/src/update/update.test.ts`
+- Create: `packages/create-notionx-app/src/update/scaffold-files.ts`
+- Create: `packages/create-notionx-app/src/update/template-sync.ts`
+- Create: `packages/create-notionx-app/src/update/update.test.ts`
 
 - [ ] **Step 1: Write the failing update planning tests**
 
-Create `packages/create-nextion-app/src/update/update.test.ts`:
+Create `packages/create-notionx-app/src/update/update.test.ts`:
 
 ```ts
 import { describe, expect, it } from "vitest";
@@ -710,7 +710,7 @@ Expected: FAIL because `scaffold-files.ts` does not exist.
 
 - [ ] **Step 3: Implement the minimal scaffold file list**
 
-Create `packages/create-nextion-app/src/update/scaffold-files.ts`:
+Create `packages/create-notionx-app/src/update/scaffold-files.ts`:
 
 ```ts
 export const scaffoldManagedFiles = [
@@ -728,7 +728,7 @@ export function isScaffoldManagedFile(filePath: string): boolean {
 
 - [ ] **Step 4: Create a minimal template-sync helper**
 
-Create `packages/create-nextion-app/src/update/template-sync.ts`:
+Create `packages/create-notionx-app/src/update/template-sync.ts`:
 
 ```ts
 import { readFile } from "node:fs/promises";
@@ -771,21 +771,21 @@ Expected: PASS.
 - [ ] **Step 6: Commit**
 
 ```bash
-git add packages/create-nextion-app/src/update/scaffold-files.ts packages/create-nextion-app/src/update/template-sync.ts packages/create-nextion-app/src/update/update.test.ts
+git add packages/create-notionx-app/src/update/scaffold-files.ts packages/create-notionx-app/src/update/template-sync.ts packages/create-notionx-app/src/update/update.test.ts
 git commit -m "feat: define scaffold-managed update scope"
 ```
 
 ## Task 6: Add the `nextion update` command
 
 **Files:**
-- Create: `packages/create-nextion-app/src/update/index.ts`
-- Modify: `packages/create-nextion-app/src/cli-nextion.ts`
-- Modify: `packages/create-nextion-app/src/update/update.test.ts`
-- Test: `packages/create-nextion-app/src/update/update.test.ts`
+- Create: `packages/create-notionx-app/src/update/index.ts`
+- Modify: `packages/create-notionx-app/src/cli-notionx.ts`
+- Modify: `packages/create-notionx-app/src/update/update.test.ts`
+- Test: `packages/create-notionx-app/src/update/update.test.ts`
 
 - [ ] **Step 1: Add a failing update runner test**
 
-Append to `packages/create-nextion-app/src/update/update.test.ts`:
+Append to `packages/create-notionx-app/src/update/update.test.ts`:
 
 ```ts
 import { describe, expect, it, vi } from "vitest";
@@ -834,7 +834,7 @@ Expected: FAIL because `update/index.ts` does not exist.
 
 - [ ] **Step 3: Implement the minimal update runner**
 
-Create `packages/create-nextion-app/src/update/index.ts`:
+Create `packages/create-notionx-app/src/update/index.ts`:
 
 ```ts
 import type { ProjectContext } from "../project-context.js";
@@ -847,7 +847,7 @@ export async function runUpdate(context: ProjectContext) {
 
 - [ ] **Step 4: Wire the `update` command into the maintenance CLI**
 
-Update `packages/create-nextion-app/src/cli-nextion.ts` imports:
+Update `packages/create-notionx-app/src/cli-notionx.ts` imports:
 
 ```ts
 import { runUpdate } from "./update/index.js";
@@ -878,7 +878,7 @@ Expected: PASS.
 - [ ] **Step 6: Commit**
 
 ```bash
-git add packages/create-nextion-app/src/update/index.ts packages/create-nextion-app/src/cli-nextion.ts packages/create-nextion-app/src/update/update.test.ts
+git add packages/create-notionx-app/src/update/index.ts packages/create-notionx-app/src/cli-notionx.ts packages/create-notionx-app/src/update/update.test.ts
 git commit -m "feat: add update command"
 ```
 
@@ -942,10 +942,10 @@ git commit -m "docs: document update and provision repair commands"
 
 **Files:**
 - Modify: none
-- Test: `packages/create-nextion-app/src/__tests__/metadata.test.ts`
-- Test: `packages/create-nextion-app/src/update/update.test.ts`
-- Test: `packages/create-nextion-app/src/provision/repair.test.ts`
-- Test: `packages/create-nextion-app/src/provision/notion.test.ts`
+- Test: `packages/create-notionx-app/src/__tests__/metadata.test.ts`
+- Test: `packages/create-notionx-app/src/update/update.test.ts`
+- Test: `packages/create-notionx-app/src/provision/repair.test.ts`
+- Test: `packages/create-notionx-app/src/provision/notion.test.ts`
 
 - [ ] **Step 1: Run focused metadata, update, and repair tests**
 
@@ -985,27 +985,27 @@ Run:
 pnpm --filter @notionx/create-nextion-app build
 ```
 
-Expected: PASS and `dist/cli-nextion.js` is generated.
+Expected: PASS and `dist/cli-notionx.js` is generated.
 
 - [ ] **Step 5: Check diagnostics on edited files**
 
 Run the editor diagnostics on:
 
-- `packages/create-nextion-app/src/metadata.ts`
-- `packages/create-nextion-app/src/project-context.ts`
-- `packages/create-nextion-app/src/cli-nextion.ts`
-- `packages/create-nextion-app/src/provision/index.ts`
-- `packages/create-nextion-app/src/provision/repair.ts`
-- `packages/create-nextion-app/src/update/index.ts`
-- `packages/create-nextion-app/src/update/scaffold-files.ts`
-- `packages/create-nextion-app/src/update/template-sync.ts`
+- `packages/create-notionx-app/src/metadata.ts`
+- `packages/create-notionx-app/src/project-context.ts`
+- `packages/create-notionx-app/src/cli-notionx.ts`
+- `packages/create-notionx-app/src/provision/index.ts`
+- `packages/create-notionx-app/src/provision/repair.ts`
+- `packages/create-notionx-app/src/update/index.ts`
+- `packages/create-notionx-app/src/update/scaffold-files.ts`
+- `packages/create-notionx-app/src/update/template-sync.ts`
 
 Expected: no new diagnostics.
 
 - [ ] **Step 6: Commit**
 
 ```bash
-git add packages/create-nextion-app docs/architecture/upgrading-nextion.md
+git add packages/create-notionx-app docs/architecture/upgrading-nextion.md
 git commit -m "feat: add scaffold update and provision repair workflows"
 ```
 

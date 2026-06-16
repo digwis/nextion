@@ -16,43 +16,43 @@
 
 ## File Map
 
-- Create: `packages/create-nextion-app/src/locale-add/plan.ts`
+- Create: `packages/create-notionx-app/src/locale-add/plan.ts`
   Purpose: Pure planning function: given a project context, a locale, and CLI flags, return a list of `LocaleAddChange` records describing what would change.
-- Create: `packages/create-nextion-app/src/locale-add/apply.ts`
+- Create: `packages/create-notionx-app/src/locale-add/apply.ts`
   Purpose: Apply a planned change set to disk + scaffold metadata. Each change is atomic and idempotent.
-- Create: `packages/create-nextion-app/src/locale-add/format.ts`
+- Create: `packages/create-notionx-app/src/locale-add/format.ts`
   Purpose: Print a dry-run summary (or a post-apply summary) using `@clack/prompts` style.
-- Create: `packages/create-nextion-app/src/locale-add/validate.ts`
+- Create: `packages/create-notionx-app/src/locale-add/validate.ts`
   Purpose: Validate the requested locale (BCP-47-ish) and refuse duplicates / removals.
-- Create: `packages/create-nextion-app/src/locale-add/index.ts`
+- Create: `packages/create-notionx-app/src/locale-add/index.ts`
   Purpose: Public entry point for the locale-add feature; re-exports the plan / apply / format functions.
-- Create: `packages/create-nextion-app/src/notion-translation-sources/plan.ts`
+- Create: `packages/create-notionx-app/src/notion-translation-sources/plan.ts`
   Purpose: Pure planning function for translation data source changes (create, reuse, copy-from).
-- Create: `packages/create-nextion-app/src/notion-translation-sources/apply.ts`
+- Create: `packages/create-notionx-app/src/notion-translation-sources/apply.ts`
   Purpose: Run the planned translation data source changes through the `ntn` CLI; return a list of `UnifiedUpdateEntry` records.
-- Create: `packages/create-nextion-app/src/notion-translation-sources/index.ts`
+- Create: `packages/create-notionx-app/src/notion-translation-sources/index.ts`
   Purpose: Public entry point for the translation-sources feature.
-- Create: `packages/create-nextion-app/tests/locale-add/validate.test.ts`
+- Create: `packages/create-notionx-app/tests/locale-add/validate.test.ts`
   Purpose: Test the locale validator (format, duplicates, removal refusal).
-- Create: `packages/create-nextion-app/tests/locale-add/plan.test.ts`
+- Create: `packages/create-notionx-app/tests/locale-add/plan.test.ts`
   Purpose: Test the planning function (dry-run, idempotency, change ordering, refusal of removal).
-- Create: `packages/create-nextion-app/tests/notion-translation-sources/plan.test.ts`
+- Create: `packages/create-notionx-app/tests/notion-translation-sources/plan.test.ts`
   Purpose: Test the Notion translation source planner (create, reuse, copy-from).
-- Modify: `packages/create-nextion-app/src/cli-nextion.ts`
+- Modify: `packages/create-notionx-app/src/cli-notionx.ts`
   Purpose: Dispatch the new `npx nextion locale add <locale>` subcommand.
-- Modify: `packages/create-nextion-app/src/metadata.ts`
+- Modify: `packages/create-notionx-app/src/metadata.ts`
   Purpose: Extend `ScaffoldMetadata` with an optional `translationSources` map to track per-model translation data source ids (used for idempotent re-runs and doctor checks).
-- Modify: `packages/create-nextion-app/src/update/types.ts`
+- Modify: `packages/create-notionx-app/src/update/types.ts`
   Purpose: No type changes needed; the locale-add changes flow through `UnifiedUpdateEntry` like the existing update path.
-- Modify: `packages/nextion/src/doctor/doctor.ts`
+- Modify: `packages/notionx/src/doctor/doctor.ts`
   Purpose: Add a `locale.translationSources` check group that flags missing translation data sources per built-in model.
-- Modify: `packages/nextion/src/doctor/doctor.ts` (continued)
+- Modify: `packages/notionx/src/doctor/doctor.ts` (continued)
   Purpose: Wire the new check into the overall report and into the `nextSteps` list (suggest `nextion locale add`).
-- Modify: `packages/create-nextion-app/src/templates/lib/i18n/config.ts.tmpl`
+- Modify: `packages/create-notionx-app/src/templates/lib/i18n/config.ts.tmpl`
   Purpose: No changes; existing template already accepts the supported-locales list. (We will instead write a stable file that the locale-add command can patch idempotently.)
-- Modify: `packages/create-nextion-app/src/templates/lib/locale-contract/built-in.ts.tmpl`
+- Modify: `packages/create-notionx-app/src/templates/lib/locale-contract/built-in.ts.tmpl`
   Purpose: Same — no template changes; the apply step writes directly to the project's copy of these files.
-- Modify: `packages/create-nextion-app/src/provision/inspect.ts`
+- Modify: `packages/create-notionx-app/src/provision/inspect.ts`
   Purpose: Add a translation-source-secrets repair pass that mirrors the existing Notion secret repair.
 - Create: `.changeset/multilingual-starter-foundation-phase-2.md`
   Purpose: Document the `nextion locale add` command as a `@notionx/create-nextion-app` minor.
@@ -62,12 +62,12 @@
 ### Task 1: Extend `ScaffoldMetadata` With Translation Sources
 
 **Files:**
-- Modify: `packages/create-nextion-app/src/metadata.ts`
-- Create: `packages/create-nextion-app/tests/metadata-translation-sources.test.ts`
+- Modify: `packages/create-notionx-app/src/metadata.ts`
+- Create: `packages/create-notionx-app/tests/metadata-translation-sources.test.ts`
 
 - [ ] **Step 1: Write the failing test**
 
-Create `packages/create-nextion-app/tests/metadata-translation-sources.test.ts`:
+Create `packages/create-notionx-app/tests/metadata-translation-sources.test.ts`:
 
 ```ts
 import { describe, expect, it } from "vitest";
@@ -125,7 +125,7 @@ Expected: FAIL with "Cannot read properties of undefined (reading 'blog')" or si
 
 - [ ] **Step 3: Extend `ScaffoldMetadata`**
 
-Edit `packages/create-nextion-app/src/metadata.ts` to add the optional `translationSources` field and update the builder to initialize it as an empty object. Add to the interface:
+Edit `packages/create-notionx-app/src/metadata.ts` to add the optional `translationSources` field and update the builder to initialize it as an empty object. Add to the interface:
 
 ```ts
 export interface TranslationSourceRef {
@@ -181,8 +181,8 @@ Expected: PASS
 - [ ] **Step 5: Commit**
 
 ```bash
-git add packages/create-nextion-app/src/metadata.ts \
-        packages/create-nextion-app/tests/metadata-translation-sources.test.ts
+git add packages/create-notionx-app/src/metadata.ts \
+        packages/create-notionx-app/tests/metadata-translation-sources.test.ts
 git commit -m "feat(create-nextion-app): add translationSources to scaffold metadata"
 ```
 
@@ -191,12 +191,12 @@ git commit -m "feat(create-nextion-app): add translationSources to scaffold meta
 ### Task 2: Add The Locale Validator
 
 **Files:**
-- Create: `packages/create-nextion-app/src/locale-add/validate.ts`
-- Create: `packages/create-nextion-app/tests/locale-add/validate.test.ts`
+- Create: `packages/create-notionx-app/src/locale-add/validate.ts`
+- Create: `packages/create-notionx-app/tests/locale-add/validate.test.ts`
 
 - [ ] **Step 1: Write the failing test**
 
-Create `packages/create-nextion-app/tests/locale-add/validate.test.ts`:
+Create `packages/create-notionx-app/tests/locale-add/validate.test.ts`:
 
 ```ts
 import { describe, expect, it } from "vitest";
@@ -258,10 +258,10 @@ Expected: FAIL with "Cannot find module '../../src/locale-add/validate'"
 
 - [ ] **Step 3: Implement the validator**
 
-Create `packages/create-nextion-app/src/locale-add/validate.ts`:
+Create `packages/create-notionx-app/src/locale-add/validate.ts`:
 
 ```ts
-// packages/create-nextion-app/src/locale-add/validate.ts
+// packages/create-notionx-app/src/locale-add/validate.ts
 //
 // Conservative validator for `nextion locale add <locale>`. The
 // command only ever adds, never removes. The validator refuses:
@@ -329,8 +329,8 @@ Expected: PASS
 - [ ] **Step 5: Commit**
 
 ```bash
-git add packages/create-nextion-app/src/locale-add/validate.ts \
-        packages/create-nextion-app/tests/locale-add/validate.test.ts
+git add packages/create-notionx-app/src/locale-add/validate.ts \
+        packages/create-notionx-app/tests/locale-add/validate.test.ts
 git commit -m "feat(create-nextion-app): add locale-add validator"
 ```
 
@@ -339,12 +339,12 @@ git commit -m "feat(create-nextion-app): add locale-add validator"
 ### Task 3: Plan The Local-Only Code Changes
 
 **Files:**
-- Create: `packages/create-nextion-app/src/locale-add/plan.ts`
-- Create: `packages/create-nextion-app/tests/locale-add/plan.test.ts`
+- Create: `packages/create-notionx-app/src/locale-add/plan.ts`
+- Create: `packages/create-notionx-app/tests/locale-add/plan.test.ts`
 
 - [ ] **Step 1: Write the failing test**
 
-Create `packages/create-nextion-app/tests/locale-add/plan.test.ts`:
+Create `packages/create-notionx-app/tests/locale-add/plan.test.ts`:
 
 ```ts
 import { describe, expect, it } from "vitest";
@@ -454,10 +454,10 @@ Expected: FAIL with "Cannot find module '../../src/locale-add/plan'"
 
 - [ ] **Step 3: Implement the planner**
 
-Create `packages/create-nextion-app/src/locale-add/plan.ts`:
+Create `packages/create-notionx-app/src/locale-add/plan.ts`:
 
 ```ts
-// packages/create-nextion-app/src/locale-add/plan.ts
+// packages/create-notionx-app/src/locale-add/plan.ts
 //
 // Pure planning step for `nextion locale add`. Given the project
 // context, a locale, and CLI flags, return the list of changes the
@@ -666,8 +666,8 @@ Expected: PASS
 - [ ] **Step 5: Commit**
 
 ```bash
-git add packages/create-nextion-app/src/locale-add/plan.ts \
-        packages/create-nextion-app/tests/locale-add/plan.test.ts
+git add packages/create-notionx-app/src/locale-add/plan.ts \
+        packages/create-notionx-app/tests/locale-add/plan.test.ts
 git commit -m "feat(create-nextion-app): add locale-add plan step"
 ```
 
@@ -676,12 +676,12 @@ git commit -m "feat(create-nextion-app): add locale-add plan step"
 ### Task 4: Add The Apply Step (Idempotent File Writes)
 
 **Files:**
-- Create: `packages/create-nextion-app/src/locale-add/apply.ts`
-- Create: `packages/create-nextion-app/tests/locale-add/apply.test.ts`
+- Create: `packages/create-notionx-app/src/locale-add/apply.ts`
+- Create: `packages/create-notionx-app/tests/locale-add/apply.test.ts`
 
 - [ ] **Step 1: Write the failing test**
 
-Create `packages/create-nextion-app/tests/locale-add/apply.test.ts`:
+Create `packages/create-notionx-app/tests/locale-add/apply.test.ts`:
 
 ```ts
 import { describe, expect, it } from "vitest";
@@ -768,10 +768,10 @@ Expected: FAIL with "Cannot find module '../../src/locale-add/apply'"
 
 - [ ] **Step 3: Implement the runner**
 
-Create `packages/create-nextion-app/src/locale-add/apply.ts`:
+Create `packages/create-notionx-app/src/locale-add/apply.ts`:
 
 ```ts
-// packages/create-nextion-app/src/locale-add/apply.ts
+// packages/create-notionx-app/src/locale-add/apply.ts
 //
 // Applies a planned set of `LocaleAddChange` records. The runner is
 // idempotent: if a file already contains the requested locale, the
@@ -832,8 +832,8 @@ Expected: PASS
 - [ ] **Step 5: Commit**
 
 ```bash
-git add packages/create-nextion-app/src/locale-add/apply.ts \
-        packages/create-nextion-app/tests/locale-add/apply.test.ts
+git add packages/create-notionx-app/src/locale-add/apply.ts \
+        packages/create-notionx-app/tests/locale-add/apply.test.ts
 git commit -m "feat(create-nextion-app): add locale-add runner"
 ```
 
@@ -842,14 +842,14 @@ git commit -m "feat(create-nextion-app): add locale-add runner"
 ### Task 5: Plan The Notion Translation Sources
 
 **Files:**
-- Create: `packages/create-nextion-app/src/notion-translation-sources/plan.ts`
-- Create: `packages/create-nextion-app/src/notion-translation-sources/apply.ts`
-- Create: `packages/create-nextion-app/src/notion-translation-sources/index.ts`
-- Create: `packages/create-nextion-app/tests/notion-translation-sources/plan.test.ts`
+- Create: `packages/create-notionx-app/src/notion-translation-sources/plan.ts`
+- Create: `packages/create-notionx-app/src/notion-translation-sources/apply.ts`
+- Create: `packages/create-notionx-app/src/notion-translation-sources/index.ts`
+- Create: `packages/create-notionx-app/tests/notion-translation-sources/plan.test.ts`
 
 - [ ] **Step 1: Write the failing test**
 
-Create `packages/create-nextion-app/tests/notion-translation-sources/plan.test.ts`:
+Create `packages/create-notionx-app/tests/notion-translation-sources/plan.test.ts`:
 
 ```ts
 import { describe, expect, it } from "vitest";
@@ -911,10 +911,10 @@ Expected: FAIL with "Cannot find module '../../src/notion-translation-sources/pl
 
 - [ ] **Step 3: Implement the planner and apply**
 
-Create `packages/create-nextion-app/src/notion-translation-sources/plan.ts`:
+Create `packages/create-notionx-app/src/notion-translation-sources/plan.ts`:
 
 ```ts
-// packages/create-nextion-app/src/notion-translation-sources/plan.ts
+// packages/create-notionx-app/src/notion-translation-sources/plan.ts
 //
 // Pure planner for the four built-in Notion translation data
 // sources. The planner never calls the `ntn` CLI; it returns a
@@ -980,10 +980,10 @@ export function planNotionTranslationSources(
 }
 ```
 
-Create `packages/create-nextion-app/src/notion-translation-sources/apply.ts`:
+Create `packages/create-notionx-app/src/notion-translation-sources/apply.ts`:
 
 ```ts
-// packages/create-nextion-app/src/notion-translation-sources/apply.ts
+// packages/create-notionx-app/src/notion-translation-sources/apply.ts
 //
 // Applies the planned translation data source changes via the `ntn`
 // CLI. This module owns the only place that shells out to Notion for
@@ -1058,7 +1058,7 @@ function titleFor(modelId: string): string {
 }
 ```
 
-Create `packages/create-nextion-app/src/notion-translation-sources/index.ts`:
+Create `packages/create-notionx-app/src/notion-translation-sources/index.ts`:
 
 ```ts
 export * from "./plan.js";
@@ -1073,8 +1073,8 @@ Expected: PASS
 - [ ] **Step 5: Commit**
 
 ```bash
-git add packages/create-nextion-app/src/notion-translation-sources/ \
-        packages/create-nextion-app/tests/notion-translation-sources/plan.test.ts
+git add packages/create-notionx-app/src/notion-translation-sources/ \
+        packages/create-notionx-app/tests/notion-translation-sources/plan.test.ts
 git commit -m "feat(create-nextion-app): add notion translation source planner + runner"
 ```
 
@@ -1083,12 +1083,12 @@ git commit -m "feat(create-nextion-app): add notion translation source planner +
 ### Task 6: Wire The Notion Planner Into The Locale-Add Runner
 
 **Files:**
-- Modify: `packages/create-nextion-app/src/locale-add/plan.ts`
-- Create: `packages/create-nextion-app/tests/locale-add/with-notion.test.ts`
+- Modify: `packages/create-notionx-app/src/locale-add/plan.ts`
+- Create: `packages/create-notionx-app/tests/locale-add/with-notion.test.ts`
 
 - [ ] **Step 1: Update the planner to take a `notion` plan function**
 
-Edit `packages/create-nextion-app/src/locale-add/plan.ts` to add a `notionPlanner` parameter to `BuildLocaleAddPlanInput` and use it. The signature becomes:
+Edit `packages/create-notionx-app/src/locale-add/plan.ts` to add a `notionPlanner` parameter to `BuildLocaleAddPlanInput` and use it. The signature becomes:
 
 ```ts
 import type { NotionTranslationSourcePlan } from "../notion-translation-sources/plan.js";
@@ -1144,7 +1144,7 @@ if (input.withNotion) {
 
 - [ ] **Step 2: Write the failing test**
 
-Create `packages/create-nextion-app/tests/locale-add/with-notion.test.ts`:
+Create `packages/create-notionx-app/tests/locale-add/with-notion.test.ts`:
 
 ```ts
 import { describe, expect, it } from "vitest";
@@ -1212,8 +1212,8 @@ Expected: PASS
 - [ ] **Step 4: Commit**
 
 ```bash
-git add packages/create-nextion-app/src/locale-add/plan.ts \
-        packages/create-nextion-app/tests/locale-add/with-notion.test.ts
+git add packages/create-notionx-app/src/locale-add/plan.ts \
+        packages/create-notionx-app/tests/locale-add/with-notion.test.ts
 git commit -m "feat(create-nextion-app): wire notion translation planner into locale-add"
 ```
 
@@ -1222,15 +1222,15 @@ git commit -m "feat(create-nextion-app): wire notion translation planner into lo
 ### Task 7: Wire The `nextion locale add` Subcommand Into The CLI
 
 **Files:**
-- Modify: `packages/create-nextion-app/src/cli-nextion.ts`
-- Create: `packages/create-nextion-app/src/locale-add/format.ts`
+- Modify: `packages/create-notionx-app/src/cli-notionx.ts`
+- Create: `packages/create-notionx-app/src/locale-add/format.ts`
 
 - [ ] **Step 1: Add the format module**
 
-Create `packages/create-nextion-app/src/locale-add/format.ts`:
+Create `packages/create-notionx-app/src/locale-add/format.ts`:
 
 ```ts
-// packages/create-nextion-app/src/locale-add/format.ts
+// packages/create-notionx-app/src/locale-add/format.ts
 //
 // Pretty-prints a locale-add summary. The output mirrors the style
 // of `nextion update` so the two commands feel like the same tool.
@@ -1273,9 +1273,9 @@ export function logLocaleAddSummary(summary: LocaleAddSummary): void {
 }
 ```
 
-- [ ] **Step 2: Wire the subcommand into cli-nextion.ts**
+- [ ] **Step 2: Wire the subcommand into cli-notionx.ts**
 
-Edit `packages/create-nextion-app/src/cli-nextion.ts` to add a new branch for `locale add <locale>`. The new code lives inside `main`, before the existing `throw new Error("Unsupported command: ...")` line:
+Edit `packages/create-notionx-app/src/cli-notionx.ts` to add a new branch for `locale add <locale>`. The new code lives inside `main`, before the existing `throw new Error("Unsupported command: ...")` line:
 
 ```ts
 if (command === "locale" && subcommand === "add") {
@@ -1331,8 +1331,8 @@ if (command === "locale" && subcommand === "add") {
 - [ ] **Step 3: Commit**
 
 ```bash
-git add packages/create-nextion-app/src/cli-nextion.ts \
-        packages/create-nextion-app/src/locale-add/format.ts
+git add packages/create-notionx-app/src/cli-notionx.ts \
+        packages/create-notionx-app/src/locale-add/format.ts
 git commit -m "feat(create-nextion-app): wire `nextion locale add` subcommand"
 ```
 
@@ -1341,12 +1341,12 @@ git commit -m "feat(create-nextion-app): wire `nextion locale add` subcommand"
 ### Task 8: Extend The Doctor With Translation-Source Checks
 
 **Files:**
-- Modify: `packages/nextion/src/doctor/doctor.ts`
-- Create: `packages/nextion/tests/doctor/translation-sources.test.ts`
+- Modify: `packages/notionx/src/doctor/doctor.ts`
+- Create: `packages/notionx/tests/doctor/translation-sources.test.ts`
 
 - [ ] **Step 1: Write the failing test**
 
-Create `packages/nextion/tests/doctor/translation-sources.test.ts`:
+Create `packages/notionx/tests/doctor/translation-sources.test.ts`:
 
 ```ts
 import { describe, expect, it } from "vitest";
@@ -1419,7 +1419,7 @@ Expected: FAIL with type errors (the new options are not in `BuildNextionDoctorR
 
 - [ ] **Step 3: Extend the doctor**
 
-Edit `packages/nextion/src/doctor/doctor.ts`:
+Edit `packages/notionx/src/doctor/doctor.ts`:
 
 1. Add new optional `supportedLocales` and `translationSources` fields to `BuildNextionDoctorReportOptions`.
 2. Add a new check builder `translationSourceChecks(env, supportedLocales, translationSources, models)` that, for every model that declares `translationSources` and for every entry in `supportedLocales` beyond the default, emits a `missing` check if the translation source ref is not present in `translationSources`.
@@ -1502,8 +1502,8 @@ Expected: PASS
 - [ ] **Step 5: Commit**
 
 ```bash
-git add packages/nextion/src/doctor/doctor.ts \
-        packages/nextion/tests/doctor/translation-sources.test.ts
+git add packages/notionx/src/doctor/doctor.ts \
+        packages/notionx/tests/doctor/translation-sources.test.ts
 git commit -m "feat(nextion): flag missing translation sources in doctor"
 ```
 
@@ -1512,11 +1512,11 @@ git commit -m "feat(nextion): flag missing translation sources in doctor"
 ### Task 9: Surface The Translation-Source Check In The Update Repair
 
 **Files:**
-- Modify: `packages/create-nextion-app/src/provision/inspect.ts`
+- Modify: `packages/create-notionx-app/src/provision/inspect.ts`
 
 - [ ] **Step 1: Add the translation-sources repair entry to `inspectProvisionRepair`**
 
-Edit `packages/create-nextion-app/src/provision/inspect.ts` to extend the `inspectProvisionRepair` function with translation-source checks. After the existing `addSecretEntry` block, append a new pass:
+Edit `packages/create-notionx-app/src/provision/inspect.ts` to extend the `inspectProvisionRepair` function with translation-source checks. After the existing `addSecretEntry` block, append a new pass:
 
 ```ts
 async function readLocalTranslationSourceState(
@@ -1558,7 +1558,7 @@ for (const [modelId, ref] of Object.entries(localTranslations)) {
 - [ ] **Step 2: Commit**
 
 ```bash
-git add packages/create-nextion-app/src/provision/inspect.ts
+git add packages/create-notionx-app/src/provision/inspect.ts
 git commit -m "feat(create-nextion-app): repair translation source secrets in `nextion update`"
 ```
 
@@ -1567,12 +1567,12 @@ git commit -m "feat(create-nextion-app): repair translation source secrets in `n
 ### Task 10: Document The New Command
 
 **Files:**
-- Modify: `packages/create-nextion-app/src/templates/README.md.tmpl`
-- Modify: `packages/create-nextion-app/README.md`
+- Modify: `packages/create-notionx-app/src/templates/README.md.tmpl`
+- Modify: `packages/create-notionx-app/README.md`
 
 - [ ] **Step 1: Add a "Adding a locale to an existing project" section to the template README**
 
-Edit `packages/create-nextion-app/src/templates/README.md.tmpl`. After the existing "Multilingual foundation" section, append:
+Edit `packages/create-notionx-app/src/templates/README.md.tmpl`. After the existing "Multilingual foundation" section, append:
 
 ````markdown
 ## Adding a locale to an existing project
@@ -1597,7 +1597,7 @@ After adding a locale, edit the translation data sources in Notion to fill in th
 
 - [ ] **Step 2: Document the same flow in the package README**
 
-Edit `packages/create-nextion-app/README.md` to add a `## Adding a locale` section that points to the same flow. The new section lives right after the existing "Notion-backed pages" paragraph:
+Edit `packages/create-notionx-app/README.md` to add a `## Adding a locale` section that points to the same flow. The new section lives right after the existing "Notion-backed pages" paragraph:
 
 ```markdown
 ## Adding a locale
@@ -1612,8 +1612,8 @@ See the `Multilingual foundation` section in the generated project README for th
 - [ ] **Step 3: Commit**
 
 ```bash
-git add packages/create-nextion-app/src/templates/README.md.tmpl \
-        packages/create-nextion-app/README.md
+git add packages/create-notionx-app/src/templates/README.md.tmpl \
+        packages/create-notionx-app/README.md
 git commit -m "docs(create-nextion-app): document the `nextion locale add` flow"
 ```
 

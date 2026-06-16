@@ -5,10 +5,10 @@ on:
   push:
     branches: [main]
     paths:
-      - "packages/nextion/**"
-      - "packages/create-nextion-app/**"
-      - "packages/create-nextion-app-shim/**"
-      - "packages/nextion-skill/**"
+      - "packages/notionx/**"
+      - "packages/create-notionx-app/**"
+      - "packages/create-notionx/**"
+      - "packages/notionx-skill/**"
       - ".changeset/**"
       - "package.json"
       - "pnpm-lock.yaml"
@@ -40,11 +40,11 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
 
-      - name: Build nextion
+      - name: Build notionx
         run: pnpm --filter @notionx/core build
-      - name: Build create-nextion-app
-        run: pnpm --filter @notionx/create-nextion-app build
-      - name: Build nextion-skill
+      - name: Build create-notionx-app
+        run: pnpm --filter @notionx/create-notionx-app build
+      - name: Build notionx-skill
         run: pnpm --filter @notionx/skill build
 
       - name: Detect pending changesets

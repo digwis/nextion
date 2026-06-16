@@ -4,7 +4,7 @@
 
 **Goal:** Extract the reusable platform, authentication, admin framework, and Notion helpers from the current vinext starter into a `@notionx/core` npm package living in a pnpm monorepo. The starter becomes a thin app that consumes the package.
 
-**Architecture:** Single pnpm monorepo. `packages/nextion` is published to GitHub Packages via changesets. `apps/starter` is the current root, moved into `apps/starter/`. The package exposes 14 subpath exports organized into 7 dependency tiers. ESLint `import/no-restricted-paths` enforces the tier rules. The migration happens in 8 phases; each phase ends with a green test suite and a working dev server.
+**Architecture:** Single pnpm monorepo. `packages/notionx` is published to GitHub Packages via changesets. `apps/starter` is the current root, moved into `apps/starter/`. The package exposes 14 subpath exports organized into 7 dependency tiers. ESLint `import/no-restricted-paths` enforces the tier rules. The migration happens in 8 phases; each phase ends with a green test suite and a working dev server.
 
 **Tech Stack:** pnpm workspaces, TypeScript, tsup (ESM + d.ts), ESLint 9, Husky, changesets, Cloudflare Workers, D1, R2, Cloudflare Images, vinext, Notion SDK, Resend, Turnstile, vitest for new package tests, node:test (legacy) for the starter.
 
@@ -15,7 +15,7 @@
 ### New files (created during this plan)
 
 ```
-packages/nextion/
+packages/notionx/
 ├── package.json
 ├── tsconfig.json
 ├── tsup.config.ts
@@ -148,7 +148,7 @@ packages/nextion/
     ├── auth/
     └── admin/
 
-packages/create-nextion-app/             # Phase 7: scaffolder
+packages/create-notionx-app/             # Phase 7: scaffolder
 ├── package.json
 ├── src/
 │   ├── index.ts                    # CLI entry
@@ -316,13 +316,13 @@ git commit -m "chore: initialize pnpm monorepo skeleton"
 ### Task 0.2: Create the nextion package skeleton
 
 **Files:**
-- Create: `packages/nextion/package.json`
-- Create: `packages/nextion/tsconfig.json`
-- Create: `packages/nextion/tsup.config.ts`
-- Create: `packages/nextion/eslint.config.mjs`
-- Create: `packages/nextion/src/index.ts`
+- Create: `packages/notionx/package.json`
+- Create: `packages/notionx/tsconfig.json`
+- Create: `packages/notionx/tsup.config.ts`
+- Create: `packages/notionx/eslint.config.mjs`
+- Create: `packages/notionx/src/index.ts`
 
-- [ ] **Step 1: Create `packages/nextion/package.json`**
+- [ ] **Step 1: Create `packages/notionx/package.json`**
 
 ```json
 {
@@ -376,7 +376,7 @@ git commit -m "chore: initialize pnpm monorepo skeleton"
 }
 ```
 
-- [ ] **Step 2: Create `packages/nextion/tsconfig.json`**
+- [ ] **Step 2: Create `packages/notionx/tsconfig.json`**
 
 ```json
 {
@@ -405,7 +405,7 @@ git commit -m "chore: initialize pnpm monorepo skeleton"
 }
 ```
 
-- [ ] **Step 3: Create `packages/nextion/tsup.config.ts`**
+- [ ] **Step 3: Create `packages/notionx/tsup.config.ts`**
 
 ```typescript
 import { defineConfig } from "tsup";
@@ -442,7 +442,7 @@ export default defineConfig({
 });
 ```
 
-- [ ] **Step 4: Create `packages/nextion/eslint.config.mjs`**
+- [ ] **Step 4: Create `packages/notionx/eslint.config.mjs`**
 
 ```javascript
 import js from "@eslint/js";
@@ -498,7 +498,7 @@ export default [
 ];
 ```
 
-- [ ] **Step 5: Create `packages/nextion/src/index.ts`**
+- [ ] **Step 5: Create `packages/notionx/src/index.ts`**
 
 ```typescript
 // Public top-level entry. Subpath exports carry the bulk of the API.
@@ -519,7 +519,7 @@ export { runNextionDoctor } from "./doctor";
 - [ ] **Step 6: Install and verify the package compiles**
 
 ```bash
-cd packages/nextion
+cd packages/notionx
 pnpm install
 pnpm build
 pnpm lint
@@ -595,7 +595,7 @@ least one blog or movie route. Kill the dev server.
 Add a one-paragraph note near the top:
 
 > This repository is a pnpm workspace. The reusable platform lives in
-> `packages/nextion/` and is published as `@notionx/core`.
+> `packages/notionx/` and is published as `@notionx/core`.
 > Changes to that package are released via changesets; everything in
 > `apps/starter/` is project-local.
 
@@ -611,7 +611,7 @@ git commit -m "docs(starter): note pnpm workspace structure"
 ## Phase 1: Leaf modules
 
 Pattern for every file move in this phase: copy the file from
-`apps/starter/lib/<path>` to `packages/nextion/src/<path>`, then in
+`apps/starter/lib/<path>` to `packages/notionx/src/<path>`, then in
 `apps/starter` re-export it from its original location so existing
 imports keep working. The re-exports come out in Task 2.x once imports
 have been migrated.
@@ -619,12 +619,12 @@ have been migrated.
 ### Task 1.1: Move util modules
 
 **Files:**
-- Create: `packages/nextion/src/util/env.ts`
-- Create: `packages/nextion/src/util/site-url.ts`
-- Create: `packages/nextion/src/util/request-ip.ts`
-- Create: `packages/nextion/src/util/utils.ts`
-- Create: `packages/nextion/src/util/get-env.ts`
-- Create: `packages/nextion/src/util/index.ts`
+- Create: `packages/notionx/src/util/env.ts`
+- Create: `packages/notionx/src/util/site-url.ts`
+- Create: `packages/notionx/src/util/request-ip.ts`
+- Create: `packages/notionx/src/util/utils.ts`
+- Create: `packages/notionx/src/util/get-env.ts`
+- Create: `packages/notionx/src/util/index.ts`
 - Modify: `apps/starter/lib/env.ts` (re-export)
 - Modify: `apps/starter/lib/site-url.ts` (re-export)
 - Modify: `apps/starter/lib/request-ip.ts` (re-export)
@@ -632,7 +632,7 @@ have been migrated.
 
 - [ ] **Step 1: Write failing tests for `getEnv`**
 
-Create `packages/nextion/tests/util/get-env.test.ts`:
+Create `packages/notionx/tests/util/get-env.test.ts`:
 
 ```typescript
 import { describe, it, expect } from "vitest";
@@ -661,7 +661,7 @@ describe("getEnv", () => {
 - [ ] **Step 2: Run the test to confirm it fails**
 
 ```bash
-cd packages/nextion && pnpm test tests/util/get-env.test.ts
+cd packages/notionx && pnpm test tests/util/get-env.test.ts
 ```
 
 Expected: FAIL because `src/util/get-env.ts` does not exist.
@@ -669,8 +669,8 @@ Expected: FAIL because `src/util/get-env.ts` does not exist.
 - [ ] **Step 3: Move and adapt the source files**
 
 Copy each file from `apps/starter/lib/<name>.ts` to
-`packages/nextion/src/util/<name>.ts`. Then create
-`packages/nextion/src/util/get-env.ts`:
+`packages/notionx/src/util/<name>.ts`. Then create
+`packages/notionx/src/util/get-env.ts`:
 
 ```typescript
 export function getEnv(primary: string, ...fallbacks: string[]): string | undefined {
@@ -682,7 +682,7 @@ export function getEnv(primary: string, ...fallbacks: string[]): string | undefi
 }
 ```
 
-Create `packages/nextion/src/util/index.ts`:
+Create `packages/notionx/src/util/index.ts`:
 
 ```typescript
 export { getEnv } from "./get-env";
@@ -729,15 +729,15 @@ git commit -m "feat(foundation): move util modules into package"
 ### Task 1.2: Move i18n modules
 
 **Files:**
-- Create: `packages/nextion/src/i18n/config.ts`
-- Create: `packages/nextion/src/i18n/messages.ts`
-- Create: `packages/nextion/src/i18n/index.ts`
+- Create: `packages/notionx/src/i18n/config.ts`
+- Create: `packages/notionx/src/i18n/messages.ts`
+- Create: `packages/notionx/src/i18n/index.ts`
 - Modify: `apps/starter/lib/i18n/config.ts` (re-export)
 - Modify: `apps/starter/lib/i18n/messages.ts` (re-export)
 
 - [ ] **Step 1: Write failing tests**
 
-Create `packages/nextion/tests/i18n/config.test.ts`:
+Create `packages/notionx/tests/i18n/config.test.ts`:
 
 ```typescript
 import { describe, it, expect } from "vitest";
@@ -758,13 +758,13 @@ describe("i18n config", () => {
 - [ ] **Step 2: Run, expect FAIL**
 
 ```bash
-cd packages/nextion && pnpm test tests/i18n/config.test.ts
+cd packages/notionx && pnpm test tests/i18n/config.test.ts
 ```
 
 - [ ] **Step 3: Move source files and create barrel**
 
 Copy `apps/starter/lib/i18n/config.ts` and `messages.ts` to
-`packages/nextion/src/i18n/`. Create `index.ts`:
+`packages/notionx/src/i18n/`. Create `index.ts`:
 
 ```typescript
 export * from "./config";
@@ -783,18 +783,18 @@ git commit -m "feat(foundation): move i18n modules into package"
 ### Task 1.3: Move platform modules
 
 **Files:**
-- Create: `packages/nextion/src/platform/runtime.ts`
-- Create: `packages/nextion/src/platform/cloudflare-runtime.ts`
-- Create: `packages/nextion/src/platform/capabilities.ts`
-- Create: `packages/nextion/src/platform/current.ts`
-- Create: `packages/nextion/src/platform/selection.ts`
-- Create: `packages/nextion/src/platform/index.ts`
+- Create: `packages/notionx/src/platform/runtime.ts`
+- Create: `packages/notionx/src/platform/cloudflare-runtime.ts`
+- Create: `packages/notionx/src/platform/capabilities.ts`
+- Create: `packages/notionx/src/platform/current.ts`
+- Create: `packages/notionx/src/platform/selection.ts`
+- Create: `packages/notionx/src/platform/index.ts`
 - Modify: `apps/starter/lib/platform/*` (re-export each)
-- Create: `packages/nextion/tests/platform/selection.test.ts`
+- Create: `packages/notionx/tests/platform/selection.test.ts`
 
 - [ ] **Step 1: Write failing test for runtime selection**
 
-Create `packages/nextion/tests/platform/selection.test.ts`:
+Create `packages/notionx/tests/platform/selection.test.ts`:
 
 ```typescript
 import { describe, it, expect } from "vitest";
@@ -817,13 +817,13 @@ describe("selectRuntime", () => {
 - [ ] **Step 3: Move source files**
 
 Copy each `apps/starter/lib/platform/<name>.ts` into
-`packages/nextion/src/platform/`. The original files become:
+`packages/notionx/src/platform/`. The original files become:
 
 ```typescript
 export * from "@notionx/core/platform";
 ```
 
-Create `packages/nextion/src/platform/index.ts`:
+Create `packages/notionx/src/platform/index.ts`:
 
 ```typescript
 export * from "./runtime";
@@ -846,12 +846,12 @@ git commit -m "feat(foundation): move platform modules into package"
 ### Task 1.4: Move doctor module
 
 **Files:**
-- Create: `packages/nextion/src/doctor/doctor.ts`
-- Create: `packages/nextion/src/doctor/cli.ts`
-- Create: `packages/nextion/src/doctor/index.ts`
+- Create: `packages/notionx/src/doctor/doctor.ts`
+- Create: `packages/notionx/src/doctor/cli.ts`
+- Create: `packages/notionx/src/doctor/index.ts`
 - Modify: `apps/starter/lib/foundation/doctor.ts` (re-export)
 - Modify: `apps/starter/scripts/foundation-doctor.mjs` (delegate)
-- Create: `packages/nextion/tests/doctor/doctor.test.ts`
+- Create: `packages/notionx/tests/doctor/doctor.test.ts`
 
 - [ ] **Step 1: Write failing test**
 
@@ -905,14 +905,14 @@ git commit -m "feat(foundation): move doctor module into package"
 ### Task 2.1: Move generic Notion helpers
 
 **Files:**
-- Create: `packages/nextion/src/notion/{client,config,blocks,block-text,content-cache,media,generic-source,property-mappers,types,webhook,mappers}.ts`
-- Create: `packages/nextion/src/notion/index.ts`
+- Create: `packages/notionx/src/notion/{client,config,blocks,block-text,content-cache,media,generic-source,property-mappers,types,webhook,mappers}.ts`
+- Create: `packages/notionx/src/notion/index.ts`
 - Modify: `apps/starter/lib/notion/<name>.ts` for each moved file (re-export)
 - Stay in starter: `apps/starter/lib/notion/{posts,movies,movie-*.ts}`
 
 - [ ] **Step 1: Write failing tests for the generic mapper**
 
-Create `packages/nextion/tests/notion/mappers.test.ts`:
+Create `packages/notionx/tests/notion/mappers.test.ts`:
 
 ```typescript
 import { describe, it, expect } from "vitest";
@@ -937,11 +937,11 @@ describe("mapPageToRecord", () => {
 - [ ] **Step 3: Move source files**
 
 Copy each of the 11 generic files from `apps/starter/lib/notion/` to
-`packages/nextion/src/notion/`. The starter's
+`packages/notionx/src/notion/`. The starter's
 `apps/starter/lib/notion/posts.ts`, `movies.ts`, and
 `movie-*.ts` files stay where they are.
 
-Create `packages/nextion/src/notion/index.ts`:
+Create `packages/notionx/src/notion/index.ts`:
 
 ```typescript
 export * from "./client";
@@ -997,9 +997,9 @@ git commit -m "feat(foundation): move generic Notion helpers into package"
 ### Task 3.1: Define the auth factory and types
 
 **Files:**
-- Create: `packages/nextion/src/auth/auth.ts`
-- Create: `packages/nextion/src/auth/index.ts`
-- Create: `packages/nextion/tests/auth/auth.test.ts`
+- Create: `packages/notionx/src/auth/auth.ts`
+- Create: `packages/notionx/src/auth/index.ts`
+- Create: `packages/notionx/tests/auth/auth.test.ts`
 
 - [ ] **Step 1: Write failing test for the auth factory**
 
@@ -1032,7 +1032,7 @@ describe("createAuth", () => {
 - [ ] **Step 3: Implement `createAuth`**
 
 ```typescript
-// packages/nextion/src/auth/auth.ts
+// packages/notionx/src/auth/auth.ts
 import type { AuthConfig } from "../types";
 import { getCurrentRuntime } from "../platform/current";
 import { getViewer } from "./session";
@@ -1080,9 +1080,9 @@ git commit -m "feat(foundation): add createAuth factory"
 ### Task 3.2: Move auth internals and routes
 
 **Files:**
-- Create: `packages/nextion/src/auth/{session,passwords,users,rate-limit,turnstile}.ts`
-- Create: `packages/nextion/src/auth/routes/{login,register,logout,forgot-password,reset-password,verify-email,google,google-callback,viewer,index}.ts`
-- Create: `packages/nextion/src/auth/auth-pages/{login,register,forgot-password,reset-password,index}.{tsx,ts}`
+- Create: `packages/notionx/src/auth/{session,passwords,users,rate-limit,turnstile}.ts`
+- Create: `packages/notionx/src/auth/routes/{login,register,logout,forgot-password,reset-password,verify-email,google,google-callback,viewer,index}.ts`
+- Create: `packages/notionx/src/auth/auth-pages/{login,register,forgot-password,reset-password,index}.{tsx,ts}`
 - Modify: `apps/starter/lib/auth.ts` (re-export)
 - Modify: `apps/starter/lib/{session,passwords,users,auth-rate-limit,turnstile}.ts` (re-export)
 - Modify: `apps/starter/app/api/auth/*` (delegate to package or remove)
@@ -1093,14 +1093,14 @@ git commit -m "feat(foundation): add createAuth factory"
 - [ ] **Step 1: Move each internal module to the package**
 
 For each of `session.ts`, `passwords.ts`, `users.ts`, `rate-limit.ts`,
-`turnstile.ts`: copy to `packages/nextion/src/auth/<name>.ts`. Each
+`turnstile.ts`: copy to `packages/notionx/src/auth/<name>.ts`. Each
 file's imports change from relative `../platform/current` to
 `../../platform/current`.
 
 - [ ] **Step 2: Move each auth API route to the package**
 
 For each `apps/starter/app/api/auth/<name>/route.ts`, create
-`packages/nextion/src/auth/routes/<name>.ts` exporting
+`packages/notionx/src/auth/routes/<name>.ts` exporting
 `GET`/`POST` handlers. The handler bodies are unchanged; imports are
 updated to use the package's own modules.
 
@@ -1108,7 +1108,7 @@ updated to use the package's own modules.
 
 For each of `login/page.tsx`, `register/page.tsx`,
 `forgot-password/page.tsx`, `reset-password/page.tsx`, move to
-`packages/nextion/src/auth/auth-pages/<name>.tsx`. The page module
+`packages/notionx/src/auth/auth-pages/<name>.tsx`. The page module
 uses `definePage` style export. The page entry is now provided by
 `apps/starter` as a thin re-export:
 
@@ -1188,13 +1188,13 @@ git commit -m "feat(foundation): move auth internals, routes, and pages into pac
 ### Task 4.1: Define the admin shell and nav factory
 
 **Files:**
-- Create: `packages/nextion/src/admin/shell.tsx`
-- Create: `packages/nextion/src/admin/layout.tsx`
-- Create: `packages/nextion/src/admin/sidebar.tsx`
-- Create: `packages/nextion/src/admin/header.tsx`
-- Create: `packages/nextion/src/admin/nav.ts`
-- Create: `packages/nextion/src/admin/index.ts`
-- Create: `packages/nextion/tests/admin/nav.test.ts`
+- Create: `packages/notionx/src/admin/shell.tsx`
+- Create: `packages/notionx/src/admin/layout.tsx`
+- Create: `packages/notionx/src/admin/sidebar.tsx`
+- Create: `packages/notionx/src/admin/header.tsx`
+- Create: `packages/notionx/src/admin/nav.ts`
+- Create: `packages/notionx/src/admin/index.ts`
+- Create: `packages/notionx/tests/admin/nav.test.ts`
 
 - [ ] **Step 1: Write failing test for `createAdminNav`**
 
@@ -1230,7 +1230,7 @@ describe("createAdminNav", () => {
 - [ ] **Step 3: Implement `createAdminNav`**
 
 ```typescript
-// packages/nextion/src/admin/nav.ts
+// packages/notionx/src/admin/nav.ts
 import type { AdminNavItem } from "../types";
 
 export interface AdminNavOptions {
@@ -1270,7 +1270,7 @@ git commit -m "feat(foundation): add admin shell and createAdminNav factory"
 ### Task 4.2: Move generic admin pages
 
 **Files:**
-- Create: `packages/nextion/src/admin/pages/{dashboard,users,settings,account,content-models,delete-button,delete-button-lazy,loading}.{tsx,ts}`
+- Create: `packages/notionx/src/admin/pages/{dashboard,users,settings,account,content-models,delete-button,delete-button-lazy,loading}.{tsx,ts}`
 - Modify: `apps/starter/app/admin/layout.tsx` (use package shell)
 - Modify: `apps/starter/app/admin/page.tsx` (delegate)
 - Modify: `apps/starter/app/admin/users/page.tsx` (delegate)
@@ -1362,13 +1362,13 @@ git commit -m "feat(foundation): move admin framework pages into package"
 ### Task 5.1: Move cache, media, storage, email modules
 
 **Files:**
-- Create: `packages/nextion/src/cache/cache-keys.ts` (+ `index.ts`)
-- Create: `packages/nextion/src/media/public-image.ts` (+ `index.ts`)
-- Create: `packages/nextion/src/storage/r2.ts` (+ `index.ts`)
-- Create: `packages/nextion/src/email/resend.ts` (+ `index.ts`)
+- Create: `packages/notionx/src/cache/cache-keys.ts` (+ `index.ts`)
+- Create: `packages/notionx/src/media/public-image.ts` (+ `index.ts`)
+- Create: `packages/notionx/src/storage/r2.ts` (+ `index.ts`)
+- Create: `packages/notionx/src/email/resend.ts` (+ `index.ts`)
 - Modify: `apps/starter/lib/<name>.ts` (re-export)
-- Create: `packages/nextion/tests/cache/cache-keys.test.ts`
-- Create: `packages/nextion/tests/storage/r2.test.ts`
+- Create: `packages/notionx/tests/cache/cache-keys.test.ts`
+- Create: `packages/notionx/tests/storage/r2.test.ts`
 
 - [ ] **Step 1: Write failing test for `buildCacheKey`**
 
@@ -1410,10 +1410,10 @@ git commit -m "feat(foundation): move cache, media, storage, email modules into 
 ### Task 5.2: Move generic API routes
 
 **Files:**
-- Create: `packages/nextion/src/storage/routes/{files,cdn,index}.ts`
-- Create: `packages/nextion/src/media/routes/{notion-media,index}.ts`
-- Create: `packages/nextion/src/worker/routes/{health,content-revalidate,content-prewarm,index}.ts`
-- Create: `packages/nextion/src/notion/routes/{webhook,index}.ts` (webhook moves from `notion/webhook.ts` and is exposed as an API route)
+- Create: `packages/notionx/src/storage/routes/{files,cdn,index}.ts`
+- Create: `packages/notionx/src/media/routes/{notion-media,index}.ts`
+- Create: `packages/notionx/src/worker/routes/{health,content-revalidate,content-prewarm,index}.ts`
+- Create: `packages/notionx/src/notion/routes/{webhook,index}.ts` (webhook moves from `notion/webhook.ts` and is exposed as an API route)
 - Modify: `apps/starter/app/api/files/[...key]/route.ts` (delegate)
 - Modify: `apps/starter/app/api/cdn/[...key]/route.ts` (delegate)
 - Modify: `apps/starter/app/api/notion/media/[...ref]/route.ts` (delegate)
@@ -1463,10 +1463,10 @@ git commit -m "feat(foundation): move generic API routes into package"
 ### Task 5.3: Move middleware and create worker bootstrap
 
 **Files:**
-- Create: `packages/nextion/src/middleware.ts`
-- Create: `packages/nextion/src/worker/bootstrap.ts`
-- Create: `packages/nextion/src/worker/index.ts`
-- Create: `packages/nextion/tests/worker/bootstrap.test.ts`
+- Create: `packages/notionx/src/middleware.ts`
+- Create: `packages/notionx/src/worker/bootstrap.ts`
+- Create: `packages/notionx/src/worker/index.ts`
+- Create: `packages/notionx/tests/worker/bootstrap.test.ts`
 - Modify: `apps/starter/middleware.ts` (delegate)
 - Modify: `apps/starter/worker/index.ts` (thin call)
 
@@ -1499,7 +1499,7 @@ describe("createNextionWorker", () => {
 - [ ] **Step 3: Implement `createNextionWorker`**
 
 ```typescript
-// packages/nextion/src/worker/bootstrap.ts
+// packages/notionx/src/worker/bootstrap.ts
 import type { WorkerOptions, ContentSource, AdminNavItem, AuthConfig } from "../types";
 import { getCurrentRuntime } from "../platform/current";
 import { registerContentSource } from "../content/models";
@@ -1610,9 +1610,9 @@ git commit -m "feat(foundation): add createNextionWorker and middleware"
 ### Task 6.1: Define `defineContentSource`
 
 **Files:**
-- Create: `packages/nextion/src/content/models.ts`
-- Create: `packages/nextion/src/content/index.ts`
-- Create: `packages/nextion/tests/content/models.test.ts`
+- Create: `packages/notionx/src/content/models.ts`
+- Create: `packages/notionx/src/content/index.ts`
+- Create: `packages/notionx/tests/content/models.test.ts`
 
 - [ ] **Step 1: Write failing test**
 
@@ -1639,7 +1639,7 @@ describe("defineContentSource", () => {
 - [ ] **Step 3: Implement `defineContentSource`**
 
 ```typescript
-// packages/nextion/src/content/models.ts
+// packages/notionx/src/content/models.ts
 import type { ContentSource } from "../types";
 
 const registry: ContentSource[] = [];
@@ -1672,9 +1672,9 @@ git commit -m "feat(content): add defineContentSource factory"
 ### Task 6.2: Move content framework modules
 
 **Files:**
-- Create: `packages/nextion/src/content/{revalidate,prewarm,search,search-index,admin-summary}.ts`
+- Create: `packages/notionx/src/content/{revalidate,prewarm,search,search-index,admin-summary}.ts`
 - Modify: `apps/starter/lib/content/<name>.ts` (re-export)
-- Create: `packages/nextion/tests/content/revalidate.test.ts`
+- Create: `packages/notionx/tests/content/revalidate.test.ts`
 
 - [ ] **Step 1: Write failing test for revalidation**
 
@@ -1818,14 +1818,14 @@ git commit -m "feat(content): convert blog and movies to defineContentSource"
 ### Task 7.1: Build the scaffolder
 
 **Files:**
-- Create: `packages/create-nextion-app/package.json`
-- Create: `packages/create-nextion-app/tsconfig.json`
-- Create: `packages/create-nextion-app/src/index.ts`
-- Create: `packages/create-nextion-app/src/prompt.ts`
-- Create: `packages/create-nextion-app/src/render.ts`
-- Create: `packages/create-nextion-app/src/templates/` (template files)
+- Create: `packages/create-notionx-app/package.json`
+- Create: `packages/create-notionx-app/tsconfig.json`
+- Create: `packages/create-notionx-app/src/index.ts`
+- Create: `packages/create-notionx-app/src/prompt.ts`
+- Create: `packages/create-notionx-app/src/render.ts`
+- Create: `packages/create-notionx-app/src/templates/` (template files)
 
-- [ ] **Step 1: Create `packages/create-nextion-app/package.json`**
+- [ ] **Step 1: Create `packages/create-notionx-app/package.json`**
 
 ```json
 {
@@ -1845,12 +1845,12 @@ git commit -m "feat(content): convert blog and movies to defineContentSource"
 
 - [ ] **Step 2: Implement the prompt**
 
-`packages/create-nextion-app/src/prompt.ts` uses `@clack/prompts` to ask
+`packages/create-notionx-app/src/prompt.ts` uses `@clack/prompts` to ask
 for project name, default locale, and first content source fields.
 
 - [ ] **Step 3: Implement the render**
 
-`packages/create-nextion-app/src/render.ts` writes:
+`packages/create-notionx-app/src/render.ts` writes:
 - `package.json` with `"@notionx/core": "^1.0.0"` dependency
 - `wrangler.jsonc` with binding placeholders
 - `migrations/0001_init.sql` with the auth schema
@@ -1867,7 +1867,7 @@ for project name, default locale, and first content source fields.
 
 ```bash
 pnpm --filter create-nextion-app build
-node packages/create-nextion-app/dist/index.js /tmp/test-vinext
+node packages/create-notionx-app/dist/index.js /tmp/test-vinext
 cd /tmp/test-vinext
 pnpm install
 pnpm test
@@ -1939,7 +1939,7 @@ name: release
 on:
   push:
     branches: [main]
-    paths: ["packages/nextion/**", ".changeset/**"]
+    paths: ["packages/notionx/**", ".changeset/**"]
 jobs:
   release:
     runs-on: ubuntu-latest

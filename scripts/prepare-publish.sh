@@ -104,7 +104,7 @@ echo ""
 echo "9️⃣  包信息检查..."
 echo ""
 echo "📦 @notionx/core"
-cd packages/nextion
+cd packages/notionx
 NOTIONX_VERSION=$(node -p "require('./package.json').version")
 NOTIONX_PRIVATE=$(node -p "require('./package.json').private")
 echo "   版本: $NOTIONX_VERSION"
@@ -116,7 +116,7 @@ cd ../..
 echo ""
 
 echo "📦 @notionx/create-notionx-app"
-cd packages/create-nextion-app
+cd packages/create-notionx-app
 CREATE_VERSION=$(node -p "require('./package.json').version")
 CREATE_PRIVATE=$(node -p "require('./package.json').private || 'false'")
 echo "   版本: $CREATE_VERSION"

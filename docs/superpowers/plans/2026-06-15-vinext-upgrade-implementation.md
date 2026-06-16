@@ -53,7 +53,7 @@ git commit -m "chore(digwis): upgrade vinext baseline"
 ### Task 2: Update Scaffolder Recommended Versions
 
 **Files:**
-- Modify: `/Users/zhao/项目/nextion/packages/create-nextion-app/src/templates/package.json.tmpl`
+- Modify: `/Users/zhao/项目/nextion/packages/create-notionx-app/src/templates/package.json.tmpl`
 
 - [ ] **Step 1: Update the template dev dependency ranges**
 
@@ -70,7 +70,7 @@ Expected: exit code `0`
 - [ ] **Step 3: Commit the template baseline change**
 
 ```bash
-git add /Users/zhao/项目/nextion/packages/create-nextion-app/src/templates/package.json.tmpl
+git add /Users/zhao/项目/nextion/packages/create-notionx-app/src/templates/package.json.tmpl
 git commit -m "chore(create-nextion-app): bump vinext template baseline"
 ```
 

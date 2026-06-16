@@ -4,7 +4,7 @@
 
 **Goal:** Make `nextion update` the only public upgrade command by folding runtime dependency upgrades, scaffold-managed file sync, and Notion / Cloudflare reconciliation into one conflict-aware maintenance flow.
 
-**Architecture:** Keep the CLI thin and move orchestration into `packages/create-nextion-app/src/update/`. The unified flow should first build a full update plan, classify entries into `safe` and `conflict`, auto-apply only safe entries, then ask once whether to apply grouped conflicts. Reuse the current `runUpdate()` template-sync logic and `runProvisionRepair()` provisioning logic by refactoring them into inspectable sub-steps instead of rewriting the provisioner from scratch.
+**Architecture:** Keep the CLI thin and move orchestration into `packages/create-notionx-app/src/update/`. The unified flow should first build a full update plan, classify entries into `safe` and `conflict`, auto-apply only safe entries, then ask once whether to apply grouped conflicts. Reuse the current `runUpdate()` template-sync logic and `runProvisionRepair()` provisioning logic by refactoring them into inspectable sub-steps instead of rewriting the provisioner from scratch.
 
 **Tech Stack:** TypeScript, Vitest, Clack prompts, Nextion scaffold metadata, existing provisioning helpers
 
@@ -12,45 +12,45 @@
 
 ## File Map
 
-- Create: `packages/create-nextion-app/src/update/types.ts`
+- Create: `packages/create-notionx-app/src/update/types.ts`
   Purpose: Shared types for unified update entries, grouped conflicts, and the final summary.
-- Create: `packages/create-nextion-app/src/update/unified.ts`
+- Create: `packages/create-notionx-app/src/update/unified.ts`
   Purpose: Orchestrate scanning, classification, safe application, optional conflict application, and summary generation.
-- Modify: `packages/create-nextion-app/src/update/index.ts`
+- Modify: `packages/create-notionx-app/src/update/index.ts`
   Purpose: Keep a compatibility wrapper or re-export around the new unified update flow so call sites stay simple.
-- Modify: `packages/create-nextion-app/src/update/template-sync.ts`
+- Modify: `packages/create-notionx-app/src/update/template-sync.ts`
   Purpose: Return richer file diff information that lets the unified flow classify scaffold-managed changes.
-- Modify: `packages/create-nextion-app/src/update/update.test.ts`
+- Modify: `packages/create-notionx-app/src/update/update.test.ts`
   Purpose: Cover the new unified summary, file classification, and compatibility preservation behavior.
-- Create: `packages/create-nextion-app/src/provision/inspect.ts`
+- Create: `packages/create-notionx-app/src/provision/inspect.ts`
   Purpose: Inspect Notion / Cloudflare repair actions without applying them, and classify each action as safe or conflict.
-- Modify: `packages/create-nextion-app/src/provision/repair.ts`
+- Modify: `packages/create-notionx-app/src/provision/repair.ts`
   Purpose: Expose a reusable non-interactive repair plan builder that unified update can call internally.
-- Modify: `packages/create-nextion-app/src/provision/index.ts`
+- Modify: `packages/create-notionx-app/src/provision/index.ts`
   Purpose: Support selective application of inspected repair actions instead of only all-or-nothing repair execution.
-- Modify: `packages/create-nextion-app/src/provision/repair.test.ts`
+- Modify: `packages/create-notionx-app/src/provision/repair.test.ts`
   Purpose: Lock the inspectable repair workflow and selective safe-only execution.
-- Modify: `packages/create-nextion-app/src/cli-nextion.ts`
+- Modify: `packages/create-notionx-app/src/cli-notionx.ts`
   Purpose: Route `nextion update` into the unified flow, ask once about grouped conflicts, and remove public `provision repair` support.
-- Create: `packages/create-nextion-app/src/cli-nextion.test.ts`
+- Create: `packages/create-notionx-app/src/cli-notionx.test.ts`
   Purpose: Verify CLI behavior, including unsupported `provision repair` and grouped confirmation messaging.
 - Modify: `docs/architecture/upgrading-nextion.md`
   Purpose: Update operator docs to a single-command upgrade workflow.
-- Modify: `packages/create-nextion-app/src/templates/README.md.tmpl`
+- Modify: `packages/create-notionx-app/src/templates/README.md.tmpl`
   Purpose: Update generated project docs so new projects tell users to run only `nextion update`.
 
 ### Task 1: Build The Unified Update Plan For Files And Summary
 
 **Files:**
-- Create: `packages/create-nextion-app/src/update/types.ts`
-- Create: `packages/create-nextion-app/src/update/unified.ts`
-- Modify: `packages/create-nextion-app/src/update/template-sync.ts`
-- Modify: `packages/create-nextion-app/src/update/index.ts`
-- Modify: `packages/create-nextion-app/src/update/update.test.ts`
+- Create: `packages/create-notionx-app/src/update/types.ts`
+- Create: `packages/create-notionx-app/src/update/unified.ts`
+- Modify: `packages/create-notionx-app/src/update/template-sync.ts`
+- Modify: `packages/create-notionx-app/src/update/index.ts`
+- Modify: `packages/create-notionx-app/src/update/update.test.ts`
 
 - [ ] **Step 1: Write the failing tests**
 
-Add these tests to `packages/create-nextion-app/src/update/update.test.ts`:
+Add these tests to `packages/create-notionx-app/src/update/update.test.ts`:
 
 ```ts
 const context: ProjectContext = {
@@ -158,7 +158,7 @@ FAIL because buildUnifiedUpdatePlan, runUnifiedUpdate, and formatUnifiedUpdateSu
 
 - [ ] **Step 3: Write the minimal shared types**
 
-Create `packages/create-nextion-app/src/update/types.ts`:
+Create `packages/create-notionx-app/src/update/types.ts`:
 
 ```ts
 export type UnifiedUpdateRisk = "safe" | "conflict";
@@ -194,7 +194,7 @@ export interface UnifiedUpdateSummary {
 
 - [ ] **Step 4: Write the minimal unified planner and summary formatter**
 
-Create `packages/create-nextion-app/src/update/unified.ts`:
+Create `packages/create-notionx-app/src/update/unified.ts`:
 
 ```ts
 import { mkdir, writeFile } from "node:fs/promises";
@@ -327,7 +327,7 @@ export function formatUnifiedUpdateSummary(
 
 - [ ] **Step 5: Connect the existing update entrypoint to the new summary type**
 
-Update `packages/create-nextion-app/src/update/index.ts` to re-export the new
+Update `packages/create-notionx-app/src/update/index.ts` to re-export the new
 flow while preserving a stable import path:
 
 ```ts
@@ -344,7 +344,7 @@ export type {
 } from "./types.js";
 ```
 
-And extend `packages/create-nextion-app/src/update/template-sync.ts` only
+And extend `packages/create-notionx-app/src/update/template-sync.ts` only
 enough to keep the current `UpdatePlanEntry` shape exported:
 
 ```ts
@@ -372,25 +372,25 @@ PASS for unified file planning and summary formatting.
 - [ ] **Step 7: Commit**
 
 ```bash
-git add packages/create-nextion-app/src/update/types.ts \
-  packages/create-nextion-app/src/update/unified.ts \
-  packages/create-nextion-app/src/update/index.ts \
-  packages/create-nextion-app/src/update/template-sync.ts \
-  packages/create-nextion-app/src/update/update.test.ts
+git add packages/create-notionx-app/src/update/types.ts \
+  packages/create-notionx-app/src/update/unified.ts \
+  packages/create-notionx-app/src/update/index.ts \
+  packages/create-notionx-app/src/update/template-sync.ts \
+  packages/create-notionx-app/src/update/update.test.ts
 git commit -m "feat: add unified update planning"
 ```
 
 ### Task 2: Expose Provision Inspection And Safe-Only Repair Application
 
 **Files:**
-- Create: `packages/create-nextion-app/src/provision/inspect.ts`
-- Modify: `packages/create-nextion-app/src/provision/index.ts`
-- Modify: `packages/create-nextion-app/src/provision/repair.ts`
-- Modify: `packages/create-nextion-app/src/provision/repair.test.ts`
+- Create: `packages/create-notionx-app/src/provision/inspect.ts`
+- Modify: `packages/create-notionx-app/src/provision/index.ts`
+- Modify: `packages/create-notionx-app/src/provision/repair.ts`
+- Modify: `packages/create-notionx-app/src/provision/repair.test.ts`
 
 - [ ] **Step 1: Write the failing tests**
 
-Add these tests to `packages/create-nextion-app/src/provision/repair.test.ts`:
+Add these tests to `packages/create-notionx-app/src/provision/repair.test.ts`:
 
 ```ts
 const inspectProvisionMock = vi.hoisted(() => vi.fn());
@@ -483,7 +483,7 @@ FAIL because inspectProvisionRepair and selective safe-only repair execution do 
 
 - [ ] **Step 3: Create the inspection module**
 
-Create `packages/create-nextion-app/src/provision/inspect.ts`:
+Create `packages/create-notionx-app/src/provision/inspect.ts`:
 
 ```ts
 import type { ProjectContext } from "../project-context.js";
@@ -511,7 +511,7 @@ export async function inspectProvisionRepair(
 
 - [ ] **Step 4: Refactor repair execution to consume inspected entries**
 
-Update `packages/create-nextion-app/src/provision/repair.ts` to accept a
+Update `packages/create-notionx-app/src/provision/repair.ts` to accept a
 conflict choice and to delegate action enumeration:
 
 ```ts
@@ -561,7 +561,7 @@ export async function runProvisionRepair(
 
 - [ ] **Step 5: Keep the existing provisioner reusable for real apply callbacks**
 
-Update `packages/create-nextion-app/src/provision/index.ts` by extracting small
+Update `packages/create-notionx-app/src/provision/index.ts` by extracting small
 apply helpers that `inspect.ts` can wrap into `UnifiedUpdateEntry.apply()`:
 
 ```ts
@@ -590,23 +590,23 @@ PASS for inspectable repair entries and safe-only repair application.
 - [ ] **Step 7: Commit**
 
 ```bash
-git add packages/create-nextion-app/src/provision/inspect.ts \
-  packages/create-nextion-app/src/provision/index.ts \
-  packages/create-nextion-app/src/provision/repair.ts \
-  packages/create-nextion-app/src/provision/repair.test.ts
+git add packages/create-notionx-app/src/provision/inspect.ts \
+  packages/create-notionx-app/src/provision/index.ts \
+  packages/create-notionx-app/src/provision/repair.ts \
+  packages/create-notionx-app/src/provision/repair.test.ts
 git commit -m "feat: inspect repair actions during update"
 ```
 
 ### Task 3: Route The CLI Through One Conflict-Aware Update Command
 
 **Files:**
-- Modify: `packages/create-nextion-app/src/cli-nextion.ts`
-- Modify: `packages/create-nextion-app/src/update/index.ts`
-- Create: `packages/create-nextion-app/src/cli-nextion.test.ts`
+- Modify: `packages/create-notionx-app/src/cli-notionx.ts`
+- Modify: `packages/create-notionx-app/src/update/index.ts`
+- Create: `packages/create-notionx-app/src/cli-notionx.test.ts`
 
 - [ ] **Step 1: Write the failing tests**
 
-Create `packages/create-nextion-app/src/cli-nextion.test.ts`:
+Create `packages/create-notionx-app/src/cli-notionx.test.ts`:
 
 ```ts
 import { describe, expect, it, vi } from "vitest";
@@ -678,7 +678,7 @@ describe("cli nextion update", () => {
 Run:
 
 ```bash
-pnpm --filter @notionx/create-nextion-app exec vitest run src/cli-nextion.test.ts
+pnpm --filter @notionx/create-nextion-app exec vitest run src/cli-notionx.test.ts
 ```
 
 Expected:
@@ -689,7 +689,7 @@ FAIL because main() is not exported for test use, the CLI does not inspect repai
 
 - [ ] **Step 3: Export a testable CLI main and wire unified update**
 
-Update `packages/create-nextion-app/src/cli-nextion.ts`:
+Update `packages/create-notionx-app/src/cli-notionx.ts`:
 
 ```ts
 #!/usr/bin/env node
@@ -762,7 +762,7 @@ if (fileURLToPath(import.meta.url) === path.resolve(process.argv[1] ?? "")) {
 Run:
 
 ```bash
-pnpm --filter @notionx/create-nextion-app exec vitest run src/cli-nextion.test.ts src/update/update.test.ts src/provision/repair.test.ts
+pnpm --filter @notionx/create-nextion-app exec vitest run src/cli-notionx.test.ts src/update/update.test.ts src/provision/repair.test.ts
 ```
 
 Expected:
@@ -774,9 +774,9 @@ PASS for unified CLI routing, grouped conflict confirmation, and hidden provisio
 - [ ] **Step 5: Commit**
 
 ```bash
-git add packages/create-nextion-app/src/cli-nextion.ts \
-  packages/create-nextion-app/src/cli-nextion.test.ts \
-  packages/create-nextion-app/src/update/index.ts
+git add packages/create-notionx-app/src/cli-notionx.ts \
+  packages/create-notionx-app/src/cli-notionx.test.ts \
+  packages/create-notionx-app/src/update/index.ts
 git commit -m "feat: route update through unified maintenance flow"
 ```
 
@@ -784,11 +784,11 @@ git commit -m "feat: route update through unified maintenance flow"
 
 **Files:**
 - Modify: `docs/architecture/upgrading-nextion.md`
-- Modify: `packages/create-nextion-app/src/templates/README.md.tmpl`
+- Modify: `packages/create-notionx-app/src/templates/README.md.tmpl`
 
 - [ ] **Step 1: Write the failing doc assertions**
 
-Add this test to `packages/create-nextion-app/src/update/update.test.ts`:
+Add this test to `packages/create-notionx-app/src/update/update.test.ts`:
 
 ```ts
 it("documents update as the only public upgrade command", async () => {
@@ -837,7 +837,7 @@ Replace the old “高频迭代期推荐流程” with:
 5. 只有需要验证线上环境时，再手动 deploy
 ```
 
-Update `packages/create-nextion-app/src/templates/README.md.tmpl` to include a
+Update `packages/create-notionx-app/src/templates/README.md.tmpl` to include a
 single maintenance note:
 
 ~~~md
@@ -874,7 +874,7 @@ PASS for the updated operator documentation assertions.
 Run:
 
 ```bash
-pnpm --filter @notionx/create-nextion-app exec vitest run src/cli-nextion.test.ts src/update/update.test.ts src/provision/repair.test.ts
+pnpm --filter @notionx/create-nextion-app exec vitest run src/cli-notionx.test.ts src/update/update.test.ts src/provision/repair.test.ts
 pnpm --filter @notionx/create-nextion-app exec tsc --noEmit
 ```
 
@@ -889,8 +889,8 @@ PASS for package typecheck.
 
 ```bash
 git add docs/architecture/upgrading-nextion.md \
-  packages/create-nextion-app/src/templates/README.md.tmpl \
-  packages/create-nextion-app/src/update/update.test.ts
+  packages/create-notionx-app/src/templates/README.md.tmpl \
+  packages/create-notionx-app/src/update/update.test.ts
 git commit -m "docs: document unified nextion update flow"
 ```
 

@@ -12,19 +12,19 @@ const repoRoot = path.resolve(scriptsDir, "..");
 export const RELEASE_PACKAGES = [
   {
     name: "@notionx/core",
-    directory: "packages/nextion",
+    directory: "packages/notionx",
   },
   {
     name: "@notionx/create-notionx-app",
-    directory: "packages/create-nextion-app",
+    directory: "packages/create-notionx-app",
   },
   {
     name: "create-notionx",
-    directory: "packages/create-nextion-app-shim",
+    directory: "packages/create-notionx",
   },
   {
     name: "@notionx/skill",
-    directory: "packages/nextion-skill",
+    directory: "packages/notionx-skill",
   },
 ];
 

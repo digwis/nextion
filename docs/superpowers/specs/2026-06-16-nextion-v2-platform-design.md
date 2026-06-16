@@ -651,7 +651,7 @@ parts it does not own.`
 The existing repository already contains the rough outline of this end state,
 but responsibilities are still grouped around historical package boundaries.
 
-### Current `packages/nextion`
+### Current `packages/notionx`
 
 Recommended target role:
 
@@ -662,7 +662,7 @@ Reason:
 - it already contains runtime primitives, Notion integration, auth, worker
   bootstrap, cache, admin, and content logic
 
-### Current `packages/create-nextion-app`
+### Current `packages/create-notionx-app`
 
 Recommended target role:
 
@@ -674,7 +674,7 @@ Reason:
 - it currently mixes project creation, template rendering, provisioning,
   updating, and repair concerns
 
-### Current `packages/create-nextion-app-shim`
+### Current `packages/create-notionx`
 
 Recommended target role:
 

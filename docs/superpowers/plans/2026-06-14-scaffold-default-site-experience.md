@@ -12,37 +12,37 @@
 
 ## File Map
 
-- Modify: `packages/create-nextion-app/src/provision/notion.ts`
+- Modify: `packages/create-notionx-app/src/provision/notion.ts`
   Purpose: Change seeded pages, blocks, posts, and Site Settings defaults.
-- Modify: `packages/create-nextion-app/src/provision/notion.test.ts`
+- Modify: `packages/create-notionx-app/src/provision/notion.test.ts`
   Purpose: Lock semantic naming, homepage block set, post count, and seeded Site Settings defaults.
-- Modify: `packages/create-nextion-app/src/render.test.ts`
+- Modify: `packages/create-notionx-app/src/render.test.ts`
   Purpose: Lock generated homepage/blog/template output for the new default site experience.
-- Modify: `packages/create-nextion-app/src/templates/lib/pages/source.ts.tmpl`
+- Modify: `packages/create-notionx-app/src/templates/lib/pages/source.ts.tmpl`
   Purpose: Update fallback pages/blocks, add homepage latest-posts runtime type, and align semantic names.
-- Modify: `packages/create-nextion-app/src/templates/components/page-blocks.tsx.tmpl`
+- Modify: `packages/create-notionx-app/src/templates/components/page-blocks.tsx.tmpl`
   Purpose: Dispatch the new homepage latest-posts block type.
-- Create: `packages/create-nextion-app/src/templates/components/page-blocks/latest-posts-block.tsx.tmpl`
+- Create: `packages/create-notionx-app/src/templates/components/page-blocks/latest-posts-block.tsx.tmpl`
   Purpose: Render the homepage latest-posts block through reusable post cards.
-- Modify: `packages/create-nextion-app/src/templates/app/page.tsx.tmpl`
+- Modify: `packages/create-notionx-app/src/templates/app/page.tsx.tmpl`
   Purpose: Remove the extra hard-coded homepage marketing section and leave the homepage content to structured blocks.
-- Modify: `packages/create-nextion-app/src/templates/app/{{contentSourceListPath}}/page.tsx.tmpl`
+- Modify: `packages/create-notionx-app/src/templates/app/{{contentSourceListPath}}/page.tsx.tmpl`
   Purpose: Render the blog index as a responsive card grid and keep a real empty state only for true zero-post cases.
-- Create: `packages/create-nextion-app/src/templates/components/content/post-card.tsx.tmpl`
+- Create: `packages/create-notionx-app/src/templates/components/content/post-card.tsx.tmpl`
   Purpose: Share the same post card UI between the homepage latest-posts block and the blog index.
-- Modify: `packages/create-nextion-app/src/templates/lib/site/config.ts.tmpl`
-- Modify: `packages/create-nextion-app/src/templates/lib/site/settings.ts.tmpl`
+- Modify: `packages/create-notionx-app/src/templates/lib/site/config.ts.tmpl`
+- Modify: `packages/create-notionx-app/src/templates/lib/site/settings.ts.tmpl`
   Purpose: Align fallback navigation and Site Settings precedence with seeded Home/About/Blog defaults and seeded icon/image values.
 
 ### Task 1: Lock The Seeded Default Site Contract
 
 **Files:**
-- Modify: `packages/create-nextion-app/src/provision/notion.test.ts`
-- Modify: `packages/create-nextion-app/src/provision/notion.ts`
+- Modify: `packages/create-notionx-app/src/provision/notion.test.ts`
+- Modify: `packages/create-notionx-app/src/provision/notion.ts`
 
 - [ ] **Step 1: Write the failing tests**
 
-Add these tests to `packages/create-nextion-app/src/provision/notion.test.ts`:
+Add these tests to `packages/create-notionx-app/src/provision/notion.test.ts`:
 
 ```ts
 it("seeds a semantic homepage and three homepage blocks", () => {
@@ -112,7 +112,7 @@ and Site Settings defaults are sparse.
 
 - [ ] **Step 3: Write the minimal provisioning changes**
 
-Update `packages/create-nextion-app/src/provision/notion.ts` with this shape:
+Update `packages/create-notionx-app/src/provision/notion.ts` with this shape:
 
 ```ts
 const ENGLISH_SAMPLE_POSTS: SamplePost[] = [
@@ -207,22 +207,22 @@ PASS for the new homepage naming, homepage block set, six-post seed, and Site Se
 - [ ] **Step 5: Commit**
 
 ```bash
-git add packages/create-nextion-app/src/provision/notion.ts packages/create-nextion-app/src/provision/notion.test.ts
+git add packages/create-notionx-app/src/provision/notion.ts packages/create-notionx-app/src/provision/notion.test.ts
 git commit -m "feat: seed a richer default site experience"
 ```
 
 ### Task 2: Replace The Homepage Hybrid With Three Structured Blocks
 
 **Files:**
-- Modify: `packages/create-nextion-app/src/render.test.ts`
-- Modify: `packages/create-nextion-app/src/templates/lib/pages/source.ts.tmpl`
-- Modify: `packages/create-nextion-app/src/templates/components/page-blocks.tsx.tmpl`
-- Create: `packages/create-nextion-app/src/templates/components/page-blocks/latest-posts-block.tsx.tmpl`
-- Modify: `packages/create-nextion-app/src/templates/app/page.tsx.tmpl`
+- Modify: `packages/create-notionx-app/src/render.test.ts`
+- Modify: `packages/create-notionx-app/src/templates/lib/pages/source.ts.tmpl`
+- Modify: `packages/create-notionx-app/src/templates/components/page-blocks.tsx.tmpl`
+- Create: `packages/create-notionx-app/src/templates/components/page-blocks/latest-posts-block.tsx.tmpl`
+- Modify: `packages/create-notionx-app/src/templates/app/page.tsx.tmpl`
 
 - [ ] **Step 1: Write the failing tests**
 
-Add these tests to `packages/create-nextion-app/src/render.test.ts`:
+Add these tests to `packages/create-notionx-app/src/render.test.ts`:
 
 ```ts
 it("renders three homepage fallback structured blocks with semantic names", async () => {
@@ -265,7 +265,7 @@ FAIL because the generated homepage still has only two fallback blocks, still co
 
 - [ ] **Step 3: Write the minimal template/runtime implementation**
 
-Update `packages/create-nextion-app/src/templates/lib/pages/source.ts.tmpl` with a new typed block:
+Update `packages/create-notionx-app/src/templates/lib/pages/source.ts.tmpl` with a new typed block:
 
 ```ts
 export type StructuredLatestPostsBlock = {
@@ -286,7 +286,7 @@ type StructuredPageBlock =
   | LegacyStructuredPageBlock;
 ```
 
-Create `packages/create-nextion-app/src/templates/components/page-blocks/latest-posts-block.tsx.tmpl`:
+Create `packages/create-notionx-app/src/templates/components/page-blocks/latest-posts-block.tsx.tmpl`:
 
 ```tsx
 import Link from "next/link";
@@ -321,7 +321,7 @@ export async function LatestPostsBlock({ block }: { block: StructuredLatestPosts
 }
 ```
 
-Reduce `packages/create-nextion-app/src/templates/app/page.tsx.tmpl` to:
+Reduce `packages/create-notionx-app/src/templates/app/page.tsx.tmpl` to:
 
 ```tsx
 export default async function Home() {
@@ -354,24 +354,24 @@ PASS for the new homepage fallback block names, three-block homepage structure, 
 - [ ] **Step 5: Commit**
 
 ```bash
-git add packages/create-nextion-app/src/render.test.ts \
-  packages/create-nextion-app/src/templates/lib/pages/source.ts.tmpl \
-  packages/create-nextion-app/src/templates/components/page-blocks.tsx.tmpl \
-  packages/create-nextion-app/src/templates/components/page-blocks/latest-posts-block.tsx.tmpl \
-  packages/create-nextion-app/src/templates/app/page.tsx.tmpl
+git add packages/create-notionx-app/src/render.test.ts \
+  packages/create-notionx-app/src/templates/lib/pages/source.ts.tmpl \
+  packages/create-notionx-app/src/templates/components/page-blocks.tsx.tmpl \
+  packages/create-notionx-app/src/templates/components/page-blocks/latest-posts-block.tsx.tmpl \
+  packages/create-notionx-app/src/templates/app/page.tsx.tmpl
 git commit -m "feat: move homepage defaults into structured blocks"
 ```
 
 ### Task 3: Make Blog Content Visible And Rendered As Cards
 
 **Files:**
-- Modify: `packages/create-nextion-app/src/render.test.ts`
-- Modify: `packages/create-nextion-app/src/templates/app/{{contentSourceListPath}}/page.tsx.tmpl`
-- Create: `packages/create-nextion-app/src/templates/components/content/post-card.tsx.tmpl`
+- Modify: `packages/create-notionx-app/src/render.test.ts`
+- Modify: `packages/create-notionx-app/src/templates/app/{{contentSourceListPath}}/page.tsx.tmpl`
+- Create: `packages/create-notionx-app/src/templates/components/content/post-card.tsx.tmpl`
 
 - [ ] **Step 1: Write the failing tests**
 
-Add these tests to `packages/create-nextion-app/src/render.test.ts`:
+Add these tests to `packages/create-notionx-app/src/render.test.ts`:
 
 ```ts
 it("renders the blog index as a card grid", async () => {
@@ -411,7 +411,7 @@ FAIL because the generated blog index still uses a simple vertical list and does
 
 - [ ] **Step 3: Write the minimal implementation**
 
-Create `packages/create-nextion-app/src/templates/components/content/post-card.tsx.tmpl`:
+Create `packages/create-notionx-app/src/templates/components/content/post-card.tsx.tmpl`:
 
 ```tsx
 import Link from "next/link";
@@ -436,7 +436,7 @@ export function PostCard({ item }: { item: { slug: string; title: string; descri
 }
 ```
 
-Change `packages/create-nextion-app/src/templates/app/{{contentSourceListPath}}/page.tsx.tmpl` list body to:
+Change `packages/create-notionx-app/src/templates/app/{{contentSourceListPath}}/page.tsx.tmpl` list body to:
 
 ```tsx
 {!items.length ? (
@@ -471,22 +471,22 @@ PASS for the blog index grid/card assertions while preserving the true empty-sta
 - [ ] **Step 5: Commit**
 
 ```bash
-git add packages/create-nextion-app/src/render.test.ts \
-  packages/create-nextion-app/src/templates/app/{{contentSourceListPath}}/page.tsx.tmpl \
-  packages/create-nextion-app/src/templates/components/content/post-card.tsx.tmpl
+git add packages/create-notionx-app/src/render.test.ts \
+  packages/create-notionx-app/src/templates/app/{{contentSourceListPath}}/page.tsx.tmpl \
+  packages/create-notionx-app/src/templates/components/content/post-card.tsx.tmpl
 git commit -m "feat: render blog defaults as a card grid"
 ```
 
 ### Task 4: Align Site Settings And Navigation Defaults
 
 **Files:**
-- Modify: `packages/create-nextion-app/src/render.test.ts`
-- Modify: `packages/create-nextion-app/src/templates/lib/site/config.ts.tmpl`
-- Modify: `packages/create-nextion-app/src/templates/lib/site/settings.ts.tmpl`
+- Modify: `packages/create-notionx-app/src/render.test.ts`
+- Modify: `packages/create-notionx-app/src/templates/lib/site/config.ts.tmpl`
+- Modify: `packages/create-notionx-app/src/templates/lib/site/settings.ts.tmpl`
 
 - [ ] **Step 1: Write the failing tests**
 
-Add these tests to `packages/create-nextion-app/src/render.test.ts`:
+Add these tests to `packages/create-notionx-app/src/render.test.ts`:
 
 ```ts
 it("renders fallback navigation with home, about, and blog", async () => {
@@ -524,7 +524,7 @@ FAIL because the current fallback site navigation only includes the blog route a
 
 - [ ] **Step 3: Write the minimal implementation**
 
-Update `packages/create-nextion-app/src/templates/lib/site/config.ts.tmpl` to:
+Update `packages/create-notionx-app/src/templates/lib/site/config.ts.tmpl` to:
 
 ```ts
 navigation: {
@@ -538,7 +538,7 @@ navigation: {
 },
 ```
 
-Keep `packages/create-nextion-app/src/templates/lib/site/settings.ts.tmpl` precedence as:
+Keep `packages/create-notionx-app/src/templates/lib/site/settings.ts.tmpl` precedence as:
 
 ```ts
 navigation: {
@@ -572,9 +572,9 @@ PASS for package typecheck.
 - [ ] **Step 5: Commit**
 
 ```bash
-git add packages/create-nextion-app/src/render.test.ts \
-  packages/create-nextion-app/src/templates/lib/site/config.ts.tmpl \
-  packages/create-nextion-app/src/templates/lib/site/settings.ts.tmpl
+git add packages/create-notionx-app/src/render.test.ts \
+  packages/create-notionx-app/src/templates/lib/site/config.ts.tmpl \
+  packages/create-notionx-app/src/templates/lib/site/settings.ts.tmpl
 git commit -m "feat: align starter navigation and site settings"
 ```
 

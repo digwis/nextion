@@ -33,7 +33,13 @@ importers:
         specifier: ^8
         version: 8.61.0(eslint@9.39.4(jiti@2.7.0))(typescript@5.9.3)
 
-  packages/create-nextion-app:
+  packages/create-notionx:
+    dependencies:
+      '@notionx/create-notionx-app':
+        specifier: ^0.9.0
+        version: link:../create-notionx-app
+
+  packages/create-notionx-app:
     dependencies:
       '@clack/prompts':
         specifier: ^0.7
@@ -52,13 +58,7 @@ importers:
         specifier: ^3.2.4
         version: 3.2.6(@types/node@22.19.20)(lightningcss@1.32.0)(terser@5.48.0)
 
-  packages/create-nextion-app-shim:
-    dependencies:
-      '@notionx/create-nextion-app':
-        specifier: ^0.8.0
-        version: link:../create-nextion-app
-
-  packages/nextion:
+  packages/notionx:
     dependencies:
       '@notionhq/client':
         specifier: ^5.22.0
@@ -110,7 +110,7 @@ importers:
         specifier: ^2
         version: 2.1.9(@types/node@20.19.42)(lightningcss@1.32.0)(terser@5.48.0)
 
-  packages/nextion-skill:
+  packages/notionx-skill:
     devDependencies:
       '@types/node':
         specifier: ^22

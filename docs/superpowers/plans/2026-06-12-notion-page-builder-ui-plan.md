@@ -12,8 +12,8 @@
 
 The current scaffold already has the right foundation:
 
-- `packages/nextion/src/notion/blocks.ts` can recursively fetch Notion page blocks.
-- `packages/create-nextion-app/src/templates/components/notion-blocks.tsx.tmpl` renders a lightweight article-oriented subset of blocks.
+- `packages/notionx/src/notion/blocks.ts` can recursively fetch Notion page blocks.
+- `packages/create-notionx-app/src/templates/components/notion-blocks.tsx.tmpl` renders a lightweight article-oriented subset of blocks.
 - `components.json` is already configured for shadcn/ui.
 - The template ships with a small set of primitives: `Button`, `Card`, `Input`, `Label`, `Badge`, `Separator`, and `Skeleton`.
 
@@ -322,11 +322,11 @@ Rendering meaning:
 
 Files likely to modify:
 
-- `packages/create-nextion-app/src/answers.ts`
-- `packages/create-nextion-app/src/prompt.ts`
-- `packages/create-nextion-app/src/render.ts`
-- `packages/create-nextion-app/src/templates/package.json.tmpl`
-- `packages/create-nextion-app/src/templates/README.md.tmpl`
+- `packages/create-notionx-app/src/answers.ts`
+- `packages/create-notionx-app/src/prompt.ts`
+- `packages/create-notionx-app/src/render.ts`
+- `packages/create-notionx-app/src/templates/package.json.tmpl`
+- `packages/create-notionx-app/src/templates/README.md.tmpl`
 
 Tasks:
 
@@ -341,15 +341,15 @@ Tasks:
 
 Files likely to create:
 
-- `packages/create-nextion-app/src/templates/components/ui/accordion.tsx.tmpl`
-- `packages/create-nextion-app/src/templates/components/ui/alert.tsx.tmpl`
-- `packages/create-nextion-app/src/templates/components/ui/table.tsx.tmpl`
-- `packages/create-nextion-app/src/templates/components/ui/aspect-ratio.tsx.tmpl`
-- `packages/create-nextion-app/src/templates/components/ui/tabs.tsx.tmpl`
-- `packages/create-nextion-app/src/templates/components/ui/tooltip.tsx.tmpl`
-- `packages/create-nextion-app/src/templates/components/ui/dropdown-menu.tsx.tmpl`
-- `packages/create-nextion-app/src/templates/components/ui/sheet.tsx.tmpl`
-- `packages/create-nextion-app/src/templates/components/ui/dialog.tsx.tmpl`
+- `packages/create-notionx-app/src/templates/components/ui/accordion.tsx.tmpl`
+- `packages/create-notionx-app/src/templates/components/ui/alert.tsx.tmpl`
+- `packages/create-notionx-app/src/templates/components/ui/table.tsx.tmpl`
+- `packages/create-notionx-app/src/templates/components/ui/aspect-ratio.tsx.tmpl`
+- `packages/create-notionx-app/src/templates/components/ui/tabs.tsx.tmpl`
+- `packages/create-notionx-app/src/templates/components/ui/tooltip.tsx.tmpl`
+- `packages/create-notionx-app/src/templates/components/ui/dropdown-menu.tsx.tmpl`
+- `packages/create-notionx-app/src/templates/components/ui/sheet.tsx.tmpl`
+- `packages/create-notionx-app/src/templates/components/ui/dialog.tsx.tmpl`
 
 Tasks:
 
@@ -363,9 +363,9 @@ Tasks:
 
 Files likely to modify or create:
 
-- `packages/create-nextion-app/src/templates/components/notion-blocks.tsx.tmpl`
-- `packages/create-nextion-app/src/templates/components/notion/*.tsx.tmpl`
-- `packages/create-nextion-app/src/templates/components/notion/renderers/*.tsx.tmpl`
+- `packages/create-notionx-app/src/templates/components/notion-blocks.tsx.tmpl`
+- `packages/create-notionx-app/src/templates/components/notion/*.tsx.tmpl`
+- `packages/create-notionx-app/src/templates/components/notion/renderers/*.tsx.tmpl`
 
 Tasks:
 
@@ -381,8 +381,8 @@ Tasks:
 
 Files likely to create:
 
-- `packages/create-nextion-app/src/templates/components/notion/custom-components.tsx.tmpl`
-- `packages/create-nextion-app/src/templates/components/site/sections/*.tsx.tmpl`
+- `packages/create-notionx-app/src/templates/components/notion/custom-components.tsx.tmpl`
+- `packages/create-notionx-app/src/templates/components/site/sections/*.tsx.tmpl`
 
 Tasks:
 
@@ -396,10 +396,10 @@ Tasks:
 
 Files likely to modify:
 
-- `packages/create-nextion-app/src/templates/lib/pages/model.ts.tmpl`
-- `packages/create-nextion-app/src/templates/lib/pages/source.ts.tmpl`
-- `packages/create-nextion-app/src/templates/app/[slug]/page.tsx.tmpl`
-- `packages/create-nextion-app/src/provision/notion.ts`
+- `packages/create-notionx-app/src/templates/lib/pages/model.ts.tmpl`
+- `packages/create-notionx-app/src/templates/lib/pages/source.ts.tmpl`
+- `packages/create-notionx-app/src/templates/app/[slug]/page.tsx.tmpl`
+- `packages/create-notionx-app/src/provision/notion.ts`
 
 Tasks:
 

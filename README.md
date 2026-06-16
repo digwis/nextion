@@ -20,10 +20,10 @@ framework and release work.
 ## Repository Layout
 
 ```text
-packages/nextion/                 # Published as @notionx/core
-packages/create-nextion-app/      # Published scaffolder + `notionx` CLI
-packages/create-nextion-app-shim/ # Published `npm create notionx-app` shim
-packages/nextion-skill/           # Published skill installer
+packages/notionx/                 # Published as @notionx/core
+packages/create-notionx-app/      # Published scaffolder + `notionx` CLI
+packages/create-notionx/ # Published `npm create notionx-app` shim
+packages/notionx-skill/           # Published skill installer
 scripts/                          # Release and repository automation
 docs/                             # Architecture, publishing, and design docs
 skills/                           # Skill source material bundled by the installer

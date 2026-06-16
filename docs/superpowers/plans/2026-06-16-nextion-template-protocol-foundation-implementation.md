@@ -4,7 +4,7 @@
 
 **Goal:** Build the first `Nextion v2` template protocol foundation inside `@notionx/create-nextion-app` by adding machine-readable template installation metadata and ownership-aware update planning.
 
-**Architecture:** Keep the current package layout intact, but introduce a small protocol layer inside `packages/create-nextion-app`. Rendering writes `.nextion/installations.json` and `.nextion/managed-files.json`, project loading reads them back, and update planning starts using ownership classes instead of inferring everything from file status alone.
+**Architecture:** Keep the current package layout intact, but introduce a small protocol layer inside `packages/create-notionx-app`. Rendering writes `.nextion/installations.json` and `.nextion/managed-files.json`, project loading reads them back, and update planning starts using ownership classes instead of inferring everything from file status alone.
 
 **Tech Stack:** TypeScript, Vitest, Node.js fs/path APIs, existing `create-nextion-app` scaffolder and unified update flow
 
@@ -12,25 +12,25 @@
 
 ## File Map
 
-- Create: `packages/create-nextion-app/src/template-contracts.ts`
-- Create: `packages/create-nextion-app/src/template-contracts.test.ts`
-- Modify: `packages/create-nextion-app/src/metadata.ts`
-- Modify: `packages/create-nextion-app/src/render.ts`
-- Modify: `packages/create-nextion-app/src/render.test.ts`
-- Modify: `packages/create-nextion-app/src/project-context.ts`
-- Create: `packages/create-nextion-app/src/project-context.test.ts`
-- Create: `packages/create-nextion-app/src/update/ownership.ts`
-- Create: `packages/create-nextion-app/src/update/ownership.test.ts`
-- Modify: `packages/create-nextion-app/src/update/types.ts`
-- Modify: `packages/create-nextion-app/src/update/unified.ts`
-- Modify: `packages/create-nextion-app/src/cli-nextion.ts`
-- Modify: `packages/create-nextion-app/src/cli-nextion.test.ts`
+- Create: `packages/create-notionx-app/src/template-contracts.ts`
+- Create: `packages/create-notionx-app/src/template-contracts.test.ts`
+- Modify: `packages/create-notionx-app/src/metadata.ts`
+- Modify: `packages/create-notionx-app/src/render.ts`
+- Modify: `packages/create-notionx-app/src/render.test.ts`
+- Modify: `packages/create-notionx-app/src/project-context.ts`
+- Create: `packages/create-notionx-app/src/project-context.test.ts`
+- Create: `packages/create-notionx-app/src/update/ownership.ts`
+- Create: `packages/create-notionx-app/src/update/ownership.test.ts`
+- Modify: `packages/create-notionx-app/src/update/types.ts`
+- Modify: `packages/create-notionx-app/src/update/unified.ts`
+- Modify: `packages/create-notionx-app/src/cli-notionx.ts`
+- Modify: `packages/create-notionx-app/src/cli-notionx.test.ts`
 
 ## Task 1: Add Template Protocol Types
 
 **Files:**
-- Create: `packages/create-nextion-app/src/template-contracts.ts`
-- Test: `packages/create-nextion-app/src/template-contracts.test.ts`
+- Create: `packages/create-notionx-app/src/template-contracts.ts`
+- Test: `packages/create-notionx-app/src/template-contracts.test.ts`
 
 - [ ] **Step 1: Write the failing test**
 
@@ -87,7 +87,7 @@ Expected: FAIL with a module resolution error for `./template-contracts.js`.
 
 - [ ] **Step 3: Write minimal implementation**
 
-Create `packages/create-nextion-app/src/template-contracts.ts`:
+Create `packages/create-notionx-app/src/template-contracts.ts`:
 
 ```ts
 export const INSTALLATIONS_FILE = ".nextion/installations.json";
@@ -174,20 +174,20 @@ Expected: PASS with 2 tests passing.
 - [ ] **Step 5: Commit**
 
 ```bash
-git add packages/create-nextion-app/src/template-contracts.ts packages/create-nextion-app/src/template-contracts.test.ts
+git add packages/create-notionx-app/src/template-contracts.ts packages/create-notionx-app/src/template-contracts.test.ts
 git commit -m "feat(scaffold): add template protocol foundations"
 ```
 
 ## Task 2: Emit Installation And Ownership Metadata During Render
 
 **Files:**
-- Modify: `packages/create-nextion-app/src/render.ts`
-- Modify: `packages/create-nextion-app/src/render.test.ts`
-- Modify: `packages/create-nextion-app/src/metadata.ts`
+- Modify: `packages/create-notionx-app/src/render.ts`
+- Modify: `packages/create-notionx-app/src/render.test.ts`
+- Modify: `packages/create-notionx-app/src/metadata.ts`
 
 - [ ] **Step 1: Write the failing test**
 
-Add this test to `packages/create-nextion-app/src/render.test.ts`:
+Add this test to `packages/create-notionx-app/src/render.test.ts`:
 
 ```ts
 it("writes installation and managed-files manifests into .nextion", async () => {
@@ -247,7 +247,7 @@ Expected: FAIL with `ENOENT` for `.nextion/installations.json`.
 
 - [ ] **Step 3: Write minimal implementation**
 
-Update the imports at the top of `packages/create-nextion-app/src/render.ts`:
+Update the imports at the top of `packages/create-notionx-app/src/render.ts`:
 
 ```ts
 import { buildScaffoldMetadata, SCAFFOLD_METADATA_FILE } from "./metadata.js";
@@ -295,7 +295,7 @@ Replace the metadata write block inside `render()`:
   );
 ```
 
-Add the optional metadata extension to `packages/create-nextion-app/src/metadata.ts`:
+Add the optional metadata extension to `packages/create-notionx-app/src/metadata.ts`:
 
 ```ts
   siteTemplate?: string;
@@ -320,19 +320,19 @@ Expected: PASS, including the new manifest test.
 - [ ] **Step 5: Commit**
 
 ```bash
-git add packages/create-nextion-app/src/render.ts packages/create-nextion-app/src/render.test.ts packages/create-nextion-app/src/metadata.ts
+git add packages/create-notionx-app/src/render.ts packages/create-notionx-app/src/render.test.ts packages/create-notionx-app/src/metadata.ts
 git commit -m "feat(scaffold): write template installation manifests"
 ```
 
 ## Task 3: Load New Metadata Into Project Context
 
 **Files:**
-- Modify: `packages/create-nextion-app/src/project-context.ts`
-- Create: `packages/create-nextion-app/src/project-context.test.ts`
+- Modify: `packages/create-notionx-app/src/project-context.ts`
+- Create: `packages/create-notionx-app/src/project-context.test.ts`
 
 - [ ] **Step 1: Write the failing test**
 
-Create `packages/create-nextion-app/src/project-context.test.ts`:
+Create `packages/create-notionx-app/src/project-context.test.ts`:
 
 ```ts
 import { mkdir, mkdtemp, writeFile } from "node:fs/promises";
@@ -408,7 +408,7 @@ Expected: FAIL because `context.installations` and `context.managedFiles` do not
 
 - [ ] **Step 3: Write minimal implementation**
 
-Update `packages/create-nextion-app/src/project-context.ts` imports:
+Update `packages/create-notionx-app/src/project-context.ts` imports:
 
 ```ts
 import { readFile } from "node:fs/promises";
@@ -493,21 +493,21 @@ Expected: PASS with the new context test green.
 - [ ] **Step 5: Commit**
 
 ```bash
-git add packages/create-nextion-app/src/project-context.ts packages/create-nextion-app/src/project-context.test.ts
+git add packages/create-notionx-app/src/project-context.ts packages/create-notionx-app/src/project-context.test.ts
 git commit -m "feat(update): load template installation context"
 ```
 
 ## Task 4: Make Unified Update Ownership-Aware
 
 **Files:**
-- Create: `packages/create-nextion-app/src/update/ownership.ts`
-- Create: `packages/create-nextion-app/src/update/ownership.test.ts`
-- Modify: `packages/create-nextion-app/src/update/types.ts`
-- Modify: `packages/create-nextion-app/src/update/unified.ts`
+- Create: `packages/create-notionx-app/src/update/ownership.ts`
+- Create: `packages/create-notionx-app/src/update/ownership.test.ts`
+- Modify: `packages/create-notionx-app/src/update/types.ts`
+- Modify: `packages/create-notionx-app/src/update/unified.ts`
 
 - [ ] **Step 1: Write the failing test**
 
-Create `packages/create-nextion-app/src/update/ownership.test.ts`:
+Create `packages/create-notionx-app/src/update/ownership.test.ts`:
 
 ```ts
 import { describe, expect, it } from "vitest";
@@ -564,7 +564,7 @@ Expected: FAIL because `./ownership.js` does not exist.
 
 - [ ] **Step 3: Write minimal implementation**
 
-Create `packages/create-nextion-app/src/update/ownership.ts`:
+Create `packages/create-notionx-app/src/update/ownership.ts`:
 
 ```ts
 import type { ManagedFilesManifest, OwnershipKind } from "../template-contracts.js";
@@ -598,19 +598,19 @@ export function toUnifiedUpdateRisk(input: {
 }
 ```
 
-Update `packages/create-nextion-app/src/update/types.ts`:
+Update `packages/create-notionx-app/src/update/types.ts`:
 
 ```ts
 export type UnifiedUpdateRisk = "safe" | "review" | "conflict";
 ```
 
-Update `packages/create-nextion-app/src/update/unified.ts` imports:
+Update `packages/create-notionx-app/src/update/unified.ts` imports:
 
 ```ts
 import { toUnifiedUpdateRisk } from "./ownership.js";
 ```
 
-Update `toFileEntry()` in `packages/create-nextion-app/src/update/unified.ts`:
+Update `toFileEntry()` in `packages/create-notionx-app/src/update/unified.ts`:
 
 ```ts
   const risk = toUnifiedUpdateRisk({
@@ -632,7 +632,7 @@ Update `toFileEntry()` in `packages/create-nextion-app/src/update/unified.ts`:
   };
 ```
 
-Update plan construction and summaries in `packages/create-nextion-app/src/update/unified.ts`:
+Update plan construction and summaries in `packages/create-notionx-app/src/update/unified.ts`:
 
 ```ts
   const safe = allEntries.filter((entry) => entry.risk === "safe");
@@ -671,7 +671,7 @@ export interface UnifiedUpdatePlan {
 Run:
 
 ```bash
-pnpm --filter @notionx/create-nextion-app test -- src/update/ownership.test.ts src/cli-nextion.test.ts
+pnpm --filter @notionx/create-nextion-app test -- src/update/ownership.test.ts src/cli-notionx.test.ts
 ```
 
 Expected: PASS for the new ownership test, with any summary-format expectation updates applied in the CLI tests.
@@ -679,19 +679,19 @@ Expected: PASS for the new ownership test, with any summary-format expectation u
 - [ ] **Step 5: Commit**
 
 ```bash
-git add packages/create-nextion-app/src/update/ownership.ts packages/create-nextion-app/src/update/ownership.test.ts packages/create-nextion-app/src/update/types.ts packages/create-nextion-app/src/update/unified.ts
+git add packages/create-notionx-app/src/update/ownership.ts packages/create-notionx-app/src/update/ownership.test.ts packages/create-notionx-app/src/update/types.ts packages/create-notionx-app/src/update/unified.ts
 git commit -m "feat(update): classify scaffold updates by ownership"
 ```
 
 ## Task 5: Surface Template Metadata In The CLI
 
 **Files:**
-- Modify: `packages/create-nextion-app/src/cli-nextion.ts`
-- Modify: `packages/create-nextion-app/src/cli-nextion.test.ts`
+- Modify: `packages/create-notionx-app/src/cli-notionx.ts`
+- Modify: `packages/create-notionx-app/src/cli-notionx.test.ts`
 
 - [ ] **Step 1: Write the failing test**
 
-Append this test to `packages/create-nextion-app/src/cli-nextion.test.ts`:
+Append this test to `packages/create-notionx-app/src/cli-notionx.test.ts`:
 
 ```ts
   it("prints installed templates before running update", async () => {
@@ -737,14 +737,14 @@ Append this test to `packages/create-nextion-app/src/cli-nextion.test.ts`:
 Run:
 
 ```bash
-pnpm --filter @notionx/create-nextion-app test -- src/cli-nextion.test.ts
+pnpm --filter @notionx/create-nextion-app test -- src/cli-notionx.test.ts
 ```
 
 Expected: FAIL because the CLI never logs installed templates.
 
 - [ ] **Step 3: Write minimal implementation**
 
-Add this helper to `packages/create-nextion-app/src/cli-nextion.ts`:
+Add this helper to `packages/create-notionx-app/src/cli-notionx.ts`:
 
 ```ts
 function formatInstalledTemplates(templates: Array<{ name: string; version: number }>): string[] {
@@ -761,7 +761,7 @@ Log the installed templates at the start of the `update` branch:
     }
 ```
 
-Update the mocked summary contract in `packages/create-nextion-app/src/cli-nextion.test.ts`:
+Update the mocked summary contract in `packages/create-notionx-app/src/cli-notionx.test.ts`:
 
 ```ts
   formatUnifiedUpdateSummary: (summary: {
@@ -804,7 +804,7 @@ Expected: PASS for the full package test suite.
 - [ ] **Step 5: Commit**
 
 ```bash
-git add packages/create-nextion-app/src/cli-nextion.ts packages/create-nextion-app/src/cli-nextion.test.ts
+git add packages/create-notionx-app/src/cli-notionx.ts packages/create-notionx-app/src/cli-notionx.test.ts
 git commit -m "feat(cli): surface template protocol metadata"
 ```
 
@@ -838,7 +838,7 @@ Expected: PASS with no type errors.
 Run:
 
 ```bash
-pnpm --filter @notionx/create-nextion-app test -- src/render.test.ts src/project-context.test.ts src/update/ownership.test.ts src/cli-nextion.test.ts
+pnpm --filter @notionx/create-nextion-app test -- src/render.test.ts src/project-context.test.ts src/update/ownership.test.ts src/cli-notionx.test.ts
 ```
 
 Expected: PASS for rendering, metadata loading, ownership classification, and CLI update flows.

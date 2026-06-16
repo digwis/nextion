@@ -14,24 +14,24 @@
 
 ### Modify
 
-- `packages/create-nextion-app/src/prompt.ts`
+- `packages/create-notionx-app/src/prompt.ts`
   - Change the interactive defaults for the blog preset to the minimal blog schema.
-- `packages/create-nextion-app/src/answers.ts`
+- `packages/create-notionx-app/src/answers.ts`
   - Align non-interactive defaults and help text with the blog preset.
-- `packages/create-nextion-app/src/render.ts`
+- `packages/create-notionx-app/src/render.ts`
   - Emit blog-specific UI metadata and capability flags that match page-body blog content.
-- `packages/create-nextion-app/src/templates/lib/content/models.ts.tmpl`
+- `packages/create-notionx-app/src/templates/lib/content/models.ts.tmpl`
   - Ensure the generated content source expects rich blocks, cover images, and blog metadata fields.
-- `packages/create-nextion-app/src/templates/README.md.tmpl`
+- `packages/create-notionx-app/src/templates/README.md.tmpl`
   - Document the new default blog schema and explain that article body content lives in page blocks.
-- `packages/create-nextion-app/src/provision/index.ts`
+- `packages/create-notionx-app/src/provision/index.ts`
   - Pass `<projectName> Blog` into provisioning while keeping the content source id `blog`.
-- `packages/create-nextion-app/src/provision/notion.ts`
+- `packages/create-notionx-app/src/provision/notion.ts`
   - Fix title property resolution, add blog field typing, seed richer blog metadata, and append page body blocks.
 
 ### Create
 
-- `packages/create-nextion-app/src/provision/notion.test.ts`
+- `packages/create-notionx-app/src/provision/notion.test.ts`
   - Unit tests for property typing, title-property resolution, metadata seeding, and body block payload building.
 
 ### Verify
@@ -43,9 +43,9 @@
 ### Task 1: Add coverage for blog provisioning helpers
 
 **Files:**
-- Modify: `packages/create-nextion-app/package.json`
-- Create: `packages/create-nextion-app/src/provision/notion.test.ts`
-- Verify: `packages/create-nextion-app/src/provision/notion.ts`
+- Modify: `packages/create-notionx-app/package.json`
+- Create: `packages/create-notionx-app/src/provision/notion.test.ts`
+- Verify: `packages/create-notionx-app/src/provision/notion.ts`
 
 - [ ] **Step 1: Add a failing test file for blog schema and seed payload helpers**
 
@@ -141,18 +141,18 @@ Expected: FAIL with missing `_internal` exports or wrong property types.
 - [ ] **Step 5: Commit**
 
 ```bash
-git add packages/create-nextion-app/package.json packages/create-nextion-app/src/provision/notion.test.ts
+git add packages/create-notionx-app/package.json packages/create-notionx-app/src/provision/notion.test.ts
 git commit -m "test: add blog scaffold provisioning coverage"
 ```
 
 ### Task 2: Update the default blog preset used by the scaffolder
 
 **Files:**
-- Modify: `packages/create-nextion-app/src/prompt.ts`
-- Modify: `packages/create-nextion-app/src/answers.ts`
-- Modify: `packages/create-nextion-app/src/render.ts`
-- Modify: `packages/create-nextion-app/src/templates/lib/content/models.ts.tmpl`
-- Modify: `packages/create-nextion-app/src/templates/README.md.tmpl`
+- Modify: `packages/create-notionx-app/src/prompt.ts`
+- Modify: `packages/create-notionx-app/src/answers.ts`
+- Modify: `packages/create-notionx-app/src/render.ts`
+- Modify: `packages/create-notionx-app/src/templates/lib/content/models.ts.tmpl`
+- Modify: `packages/create-notionx-app/src/templates/README.md.tmpl`
 
 - [ ] **Step 1: Change the interactive default fields to the minimal blog schema**
 
@@ -231,16 +231,16 @@ Expected: FAIL only on provisioning-helper expectations until Task 3 lands.
 - [ ] **Step 7: Commit**
 
 ```bash
-git add packages/create-nextion-app/src/prompt.ts packages/create-nextion-app/src/answers.ts packages/create-nextion-app/src/render.ts packages/create-nextion-app/src/templates/lib/content/models.ts.tmpl packages/create-nextion-app/src/templates/README.md.tmpl
+git add packages/create-notionx-app/src/prompt.ts packages/create-notionx-app/src/answers.ts packages/create-notionx-app/src/render.ts packages/create-notionx-app/src/templates/lib/content/models.ts.tmpl packages/create-notionx-app/src/templates/README.md.tmpl
 git commit -m "feat: switch default scaffold to minimal blog schema"
 ```
 
 ### Task 3: Fix Notion provisioning and seed rich sample posts
 
 **Files:**
-- Modify: `packages/create-nextion-app/src/provision/index.ts`
-- Modify: `packages/create-nextion-app/src/provision/notion.ts`
-- Test: `packages/create-nextion-app/src/provision/notion.test.ts`
+- Modify: `packages/create-notionx-app/src/provision/index.ts`
+- Modify: `packages/create-notionx-app/src/provision/notion.ts`
+- Test: `packages/create-notionx-app/src/provision/notion.test.ts`
 
 - [ ] **Step 1: Pass `<projectName> Blog` into the Notion database creation call**
 
@@ -403,7 +403,7 @@ Expected: PASS.
 - [ ] **Step 7: Commit**
 
 ```bash
-git add packages/create-nextion-app/src/provision/index.ts packages/create-nextion-app/src/provision/notion.ts packages/create-nextion-app/src/provision/notion.test.ts
+git add packages/create-notionx-app/src/provision/index.ts packages/create-notionx-app/src/provision/notion.ts packages/create-notionx-app/src/provision/notion.test.ts
 git commit -m "feat: seed minimal blog posts into notion"
 ```
 
@@ -429,8 +429,8 @@ Run:
 ```bash
 set +H
 node --input-type=module <<'EOF'
-import { readNtnToken } from './packages/create-nextion-app/dist/provision/ntn-credentials.js'
-import { ensureNotionDatabase } from './packages/create-nextion-app/dist/provision/notion.js'
+import { readNtnToken } from './packages/create-notionx-app/dist/provision/ntn-credentials.js'
+import { ensureNotionDatabase } from './packages/create-notionx-app/dist/provision/notion.js'
 
 const credential = await readNtnToken()
 if (!credential) throw new Error('No Notion credential available')
@@ -469,10 +469,10 @@ Run:
 ```bash
 set +H
 node --input-type=module <<'EOF'
-import { readNtnToken } from './packages/create-nextion-app/dist/provision/ntn-credentials.js'
+import { readNtnToken } from './packages/create-notionx-app/dist/provision/ntn-credentials.js'
 const credential = await readNtnToken()
 process.env.NOTION_API_TOKEN = credential.token
-const { runNtn } = await import('./packages/create-nextion-app/dist/provision/shell.js')
+const { runNtn } = await import('./packages/create-notionx-app/dist/provision/shell.js')
 
 const ds = process.argv[1]
 const schema = await runNtn(['api', `v1/data_sources/${ds}`])
@@ -487,20 +487,20 @@ Expected: properties include `Name`, `Slug`, `Description`, `Published`, `Date`,
 
 Run VS Code diagnostics for:
 
-- `packages/create-nextion-app/src/prompt.ts`
-- `packages/create-nextion-app/src/answers.ts`
-- `packages/create-nextion-app/src/render.ts`
-- `packages/create-nextion-app/src/templates/lib/content/models.ts.tmpl`
-- `packages/create-nextion-app/src/provision/index.ts`
-- `packages/create-nextion-app/src/provision/notion.ts`
-- `packages/create-nextion-app/src/provision/notion.test.ts`
+- `packages/create-notionx-app/src/prompt.ts`
+- `packages/create-notionx-app/src/answers.ts`
+- `packages/create-notionx-app/src/render.ts`
+- `packages/create-notionx-app/src/templates/lib/content/models.ts.tmpl`
+- `packages/create-notionx-app/src/provision/index.ts`
+- `packages/create-notionx-app/src/provision/notion.ts`
+- `packages/create-notionx-app/src/provision/notion.test.ts`
 
 Expected: no new errors.
 
 - [ ] **Step 5: Commit**
 
 ```bash
-git add packages/create-nextion-app/src packages/create-nextion-app/dist
+git add packages/create-notionx-app/src packages/create-notionx-app/dist
 git commit -m "fix: align blog scaffold provisioning with notion schema"
 ```
 

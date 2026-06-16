@@ -12,43 +12,43 @@
 
 ## File Map
 
-- Modify: `packages/nextion/src/pages/types.ts`
+- Modify: `packages/notionx/src/pages/types.ts`
   Purpose: Extend the page/runtime block model to support strongly-typed structured block payloads.
-- Modify: `packages/nextion/src/pages/source.ts`
+- Modify: `packages/notionx/src/pages/source.ts`
   Purpose: Parse page-level block refs and expose normalized structured block metadata.
-- Modify: `packages/nextion/src/pages/source.test.ts`
+- Modify: `packages/notionx/src/pages/source.test.ts`
   Purpose: Lock in JSON parsing and normalization behavior for structured block references.
-- Modify: `packages/create-nextion-app/src/provision/notion.test.ts`
+- Modify: `packages/create-notionx-app/src/provision/notion.test.ts`
   Purpose: Add RED coverage for expanded `Blocks` schema and typed seed payloads.
-- Modify: `packages/create-nextion-app/src/provision/notion.ts`
+- Modify: `packages/create-notionx-app/src/provision/notion.ts`
   Purpose: Expand block schema, seed typed records, and keep compatibility-safe provisioning behavior.
-- Modify: `packages/create-nextion-app/src/render.test.ts`
+- Modify: `packages/create-notionx-app/src/render.test.ts`
   Purpose: Lock in generated runtime/component output for typed blocks.
-- Modify: `packages/create-nextion-app/src/templates/lib/content/models.ts.tmpl`
+- Modify: `packages/create-notionx-app/src/templates/lib/content/models.ts.tmpl`
   Purpose: Expose the additional type-specific fields in the generated `blocksSource`.
-- Modify: `packages/create-nextion-app/src/templates/lib/pages/source.ts.tmpl`
+- Modify: `packages/create-notionx-app/src/templates/lib/pages/source.ts.tmpl`
   Purpose: Resolve `blocksSource` rows into typed runtime records and compatibility fallbacks.
-- Modify: `packages/create-nextion-app/src/templates/lib/pages/model.ts.tmpl`
+- Modify: `packages/create-notionx-app/src/templates/lib/pages/model.ts.tmpl`
   Purpose: Keep the generated `Pages` model aligned with `Blocks` references.
-- Modify: `packages/create-nextion-app/src/templates/components/page-blocks.tsx.tmpl`
+- Modify: `packages/create-notionx-app/src/templates/components/page-blocks.tsx.tmpl`
   Purpose: Turn the current shell renderer into a real typed dispatcher.
-- Create: `packages/create-nextion-app/src/templates/components/page-blocks/hero-block.tsx.tmpl`
+- Create: `packages/create-notionx-app/src/templates/components/page-blocks/hero-block.tsx.tmpl`
   Purpose: Render `hero` with shadcn `Badge` and `Button`.
-- Create: `packages/create-nextion-app/src/templates/components/page-blocks/feature-grid-block.tsx.tmpl`
+- Create: `packages/create-notionx-app/src/templates/components/page-blocks/feature-grid-block.tsx.tmpl`
   Purpose: Render `feature-grid` with shadcn `Card`.
-- Create: `packages/create-nextion-app/src/templates/components/page-blocks/story-block.tsx.tmpl`
+- Create: `packages/create-notionx-app/src/templates/components/page-blocks/story-block.tsx.tmpl`
   Purpose: Render `story` with fixed layout variants.
-- Modify: `packages/create-nextion-app/src/templates/app/page.tsx.tmpl`
+- Modify: `packages/create-notionx-app/src/templates/app/page.tsx.tmpl`
   Purpose: Keep homepage preferring structured blocks over generic `NotionBlocks`.
-- Modify: `packages/create-nextion-app/src/templates/app/[slug]/page.tsx.tmpl`
+- Modify: `packages/create-notionx-app/src/templates/app/[slug]/page.tsx.tmpl`
   Purpose: Keep inner pages preferring structured blocks over generic `NotionBlocks`.
 
 ### Task 1: Core Structured Block Types
 
 **Files:**
-- Modify: `packages/nextion/src/pages/types.ts`
-- Modify: `packages/nextion/src/pages/source.ts`
-- Test: `packages/nextion/src/pages/source.test.ts`
+- Modify: `packages/notionx/src/pages/types.ts`
+- Modify: `packages/notionx/src/pages/source.ts`
+- Test: `packages/notionx/src/pages/source.test.ts`
 
 - [ ] **Step 1: Write the failing test**
 
@@ -139,15 +139,15 @@ Expected: PASS for the new structured block ref parsing case and PASS for the ex
 - [ ] **Step 5: Commit**
 
 ```bash
-git add packages/nextion/src/pages/types.ts packages/nextion/src/pages/source.ts packages/nextion/src/pages/source.test.ts
+git add packages/notionx/src/pages/types.ts packages/notionx/src/pages/source.ts packages/notionx/src/pages/source.test.ts
 git commit -m "feat: add structured page block refs"
 ```
 
 ### Task 2: Blocks Schema And Seed Data
 
 **Files:**
-- Modify: `packages/create-nextion-app/src/provision/notion.test.ts`
-- Modify: `packages/create-nextion-app/src/provision/notion.ts`
+- Modify: `packages/create-notionx-app/src/provision/notion.test.ts`
+- Modify: `packages/create-notionx-app/src/provision/notion.ts`
 
 - [ ] **Step 1: Write the failing test**
 
@@ -233,17 +233,17 @@ Expected: PASS for the new schema/seed tests and PASS for the existing provision
 - [ ] **Step 5: Commit**
 
 ```bash
-git add packages/create-nextion-app/src/provision/notion.test.ts packages/create-nextion-app/src/provision/notion.ts
+git add packages/create-notionx-app/src/provision/notion.test.ts packages/create-notionx-app/src/provision/notion.ts
 git commit -m "feat: add structured block schema and seed data"
 ```
 
 ### Task 3: Generated Runtime Mapping
 
 **Files:**
-- Modify: `packages/create-nextion-app/src/render.test.ts`
-- Modify: `packages/create-nextion-app/src/templates/lib/content/models.ts.tmpl`
-- Modify: `packages/create-nextion-app/src/templates/lib/pages/source.ts.tmpl`
-- Modify: `packages/create-nextion-app/src/templates/lib/pages/model.ts.tmpl`
+- Modify: `packages/create-notionx-app/src/render.test.ts`
+- Modify: `packages/create-notionx-app/src/templates/lib/content/models.ts.tmpl`
+- Modify: `packages/create-notionx-app/src/templates/lib/pages/source.ts.tmpl`
+- Modify: `packages/create-notionx-app/src/templates/lib/pages/model.ts.tmpl`
 
 - [ ] **Step 1: Write the failing test**
 
@@ -342,20 +342,20 @@ Expected: PASS for the new generated-source assertions and PASS for the earlier 
 - [ ] **Step 5: Commit**
 
 ```bash
-git add packages/create-nextion-app/src/render.test.ts packages/create-nextion-app/src/templates/lib/content/models.ts.tmpl packages/create-nextion-app/src/templates/lib/pages/source.ts.tmpl packages/create-nextion-app/src/templates/lib/pages/model.ts.tmpl
+git add packages/create-notionx-app/src/render.test.ts packages/create-notionx-app/src/templates/lib/content/models.ts.tmpl packages/create-notionx-app/src/templates/lib/pages/source.ts.tmpl packages/create-notionx-app/src/templates/lib/pages/model.ts.tmpl
 git commit -m "feat: generate typed structured block runtime"
 ```
 
 ### Task 4: Structured Block Components And Page Rendering
 
 **Files:**
-- Modify: `packages/create-nextion-app/src/templates/components/page-blocks.tsx.tmpl`
-- Create: `packages/create-nextion-app/src/templates/components/page-blocks/hero-block.tsx.tmpl`
-- Create: `packages/create-nextion-app/src/templates/components/page-blocks/feature-grid-block.tsx.tmpl`
-- Create: `packages/create-nextion-app/src/templates/components/page-blocks/story-block.tsx.tmpl`
-- Modify: `packages/create-nextion-app/src/templates/app/page.tsx.tmpl`
-- Modify: `packages/create-nextion-app/src/templates/app/[slug]/page.tsx.tmpl`
-- Test: `packages/create-nextion-app/src/render.test.ts`
+- Modify: `packages/create-notionx-app/src/templates/components/page-blocks.tsx.tmpl`
+- Create: `packages/create-notionx-app/src/templates/components/page-blocks/hero-block.tsx.tmpl`
+- Create: `packages/create-notionx-app/src/templates/components/page-blocks/feature-grid-block.tsx.tmpl`
+- Create: `packages/create-notionx-app/src/templates/components/page-blocks/story-block.tsx.tmpl`
+- Modify: `packages/create-notionx-app/src/templates/app/page.tsx.tmpl`
+- Modify: `packages/create-notionx-app/src/templates/app/[slug]/page.tsx.tmpl`
+- Test: `packages/create-notionx-app/src/render.test.ts`
 
 - [ ] **Step 1: Write the failing test**
 
@@ -430,16 +430,16 @@ Expected: PASS for the new component-file assertions and PASS for the earlier ty
 - [ ] **Step 5: Commit**
 
 ```bash
-git add packages/create-nextion-app/src/templates/components/page-blocks.tsx.tmpl packages/create-nextion-app/src/templates/components/page-blocks/hero-block.tsx.tmpl packages/create-nextion-app/src/templates/components/page-blocks/feature-grid-block.tsx.tmpl packages/create-nextion-app/src/templates/components/page-blocks/story-block.tsx.tmpl packages/create-nextion-app/src/templates/app/page.tsx.tmpl packages/create-nextion-app/src/templates/app/[slug]/page.tsx.tmpl packages/create-nextion-app/src/render.test.ts
+git add packages/create-notionx-app/src/templates/components/page-blocks.tsx.tmpl packages/create-notionx-app/src/templates/components/page-blocks/hero-block.tsx.tmpl packages/create-notionx-app/src/templates/components/page-blocks/feature-grid-block.tsx.tmpl packages/create-notionx-app/src/templates/components/page-blocks/story-block.tsx.tmpl packages/create-notionx-app/src/templates/app/page.tsx.tmpl packages/create-notionx-app/src/templates/app/[slug]/page.tsx.tmpl packages/create-notionx-app/src/render.test.ts
 git commit -m "feat: render structured page blocks with typed components"
 ```
 
 ### Task 5: Final Verification
 
 **Files:**
-- Test: `packages/nextion/src/pages/source.test.ts`
-- Test: `packages/create-nextion-app/src/provision/notion.test.ts`
-- Test: `packages/create-nextion-app/src/render.test.ts`
+- Test: `packages/notionx/src/pages/source.test.ts`
+- Test: `packages/create-notionx-app/src/provision/notion.test.ts`
+- Test: `packages/create-notionx-app/src/render.test.ts`
 
 - [ ] **Step 1: Run the core page parsing tests**
 
@@ -461,14 +461,14 @@ Expected: PASS with generated typed-block runtime and component files present.
 Run the IDE diagnostics tool for:
 
 ```txt
-packages/nextion/src/pages/types.ts
-packages/nextion/src/pages/source.ts
-packages/create-nextion-app/src/provision/notion.ts
-packages/create-nextion-app/src/templates/lib/pages/source.ts.tmpl
-packages/create-nextion-app/src/templates/components/page-blocks.tsx.tmpl
-packages/create-nextion-app/src/templates/components/page-blocks/hero-block.tsx.tmpl
-packages/create-nextion-app/src/templates/components/page-blocks/feature-grid-block.tsx.tmpl
-packages/create-nextion-app/src/templates/components/page-blocks/story-block.tsx.tmpl
+packages/notionx/src/pages/types.ts
+packages/notionx/src/pages/source.ts
+packages/create-notionx-app/src/provision/notion.ts
+packages/create-notionx-app/src/templates/lib/pages/source.ts.tmpl
+packages/create-notionx-app/src/templates/components/page-blocks.tsx.tmpl
+packages/create-notionx-app/src/templates/components/page-blocks/hero-block.tsx.tmpl
+packages/create-notionx-app/src/templates/components/page-blocks/feature-grid-block.tsx.tmpl
+packages/create-notionx-app/src/templates/components/page-blocks/story-block.tsx.tmpl
 ```
 
 Expected: no new TypeScript or template diagnostics.
@@ -476,7 +476,7 @@ Expected: no new TypeScript or template diagnostics.
 - [ ] **Step 5: Commit**
 
 ```bash
-git add packages/nextion/src/pages/source.test.ts packages/create-nextion-app/src/provision/notion.test.ts packages/create-nextion-app/src/render.test.ts
+git add packages/notionx/src/pages/source.test.ts packages/create-notionx-app/src/provision/notion.test.ts packages/create-notionx-app/src/render.test.ts
 git commit -m "test: verify structured page blocks flow"
 ```
 

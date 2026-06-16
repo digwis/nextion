@@ -4,7 +4,7 @@
 
 **Goal:** Add the first real `nextion add` write path by supporting `nextion add docs` and `nextion add search` in an existing scaffolded blog project.
 
-**Architecture:** Keep the work inside `packages/create-nextion-app`. Add a small install-engine layer that resolves install targets from the template registry, builds an install plan, applies safe file writes and metadata updates, and exposes the result through new CLI `add` subcommands. First-party docs and search installs intentionally stay minimal and docs-scoped.
+**Architecture:** Keep the work inside `packages/create-notionx-app`. Add a small install-engine layer that resolves install targets from the template registry, builds an install plan, applies safe file writes and metadata updates, and exposes the result through new CLI `add` subcommands. First-party docs and search installs intentionally stay minimal and docs-scoped.
 
 **Tech Stack:** TypeScript, Vitest, Node.js fs/path APIs, existing `create-nextion-app` CLI, protocol metadata in `.nextion/*`, template registry, ownership-aware update utilities
 
@@ -12,21 +12,21 @@
 
 ## File Map
 
-- Create: `packages/create-nextion-app/src/add/types.ts`
-- Create: `packages/create-nextion-app/src/add/targets.ts`
-- Create: `packages/create-nextion-app/src/add/targets.test.ts`
-- Create: `packages/create-nextion-app/src/add/files.ts`
-- Create: `packages/create-nextion-app/src/add/files.test.ts`
-- Create: `packages/create-nextion-app/src/add/install.ts`
-- Create: `packages/create-nextion-app/src/add/install.test.ts`
-- Create: `packages/create-nextion-app/src/add/format.ts`
-- Create: `packages/create-nextion-app/src/add/format.test.ts`
-- Modify: `packages/create-nextion-app/src/template-contracts.ts`
-- Modify: `packages/create-nextion-app/src/template-registry.ts`
-- Modify: `packages/create-nextion-app/src/cli-nextion.ts`
-- Modify: `packages/create-nextion-app/src/cli-nextion.test.ts`
-- Modify: `packages/create-nextion-app/src/diff.ts`
-- Modify: `packages/create-nextion-app/src/diff.test.ts`
+- Create: `packages/create-notionx-app/src/add/types.ts`
+- Create: `packages/create-notionx-app/src/add/targets.ts`
+- Create: `packages/create-notionx-app/src/add/targets.test.ts`
+- Create: `packages/create-notionx-app/src/add/files.ts`
+- Create: `packages/create-notionx-app/src/add/files.test.ts`
+- Create: `packages/create-notionx-app/src/add/install.ts`
+- Create: `packages/create-notionx-app/src/add/install.test.ts`
+- Create: `packages/create-notionx-app/src/add/format.ts`
+- Create: `packages/create-notionx-app/src/add/format.test.ts`
+- Modify: `packages/create-notionx-app/src/template-contracts.ts`
+- Modify: `packages/create-notionx-app/src/template-registry.ts`
+- Modify: `packages/create-notionx-app/src/cli-notionx.ts`
+- Modify: `packages/create-notionx-app/src/cli-notionx.test.ts`
+- Modify: `packages/create-notionx-app/src/diff.ts`
+- Modify: `packages/create-notionx-app/src/diff.test.ts`
 - Test fixture writes in temp dirs only; do not touch the existing `src/templates/` tree in this phase
 
 ## Implementation Notes
@@ -40,14 +40,14 @@
 ### Task 1: Extend Template Contracts And Registry For Docs/Search
 
 **Files:**
-- Modify: `packages/create-nextion-app/src/template-contracts.ts`
-- Modify: `packages/create-nextion-app/src/template-registry.ts`
-- Create: `packages/create-nextion-app/src/add/targets.ts`
-- Test: `packages/create-nextion-app/src/add/targets.test.ts`
+- Modify: `packages/create-notionx-app/src/template-contracts.ts`
+- Modify: `packages/create-notionx-app/src/template-registry.ts`
+- Create: `packages/create-notionx-app/src/add/targets.ts`
+- Test: `packages/create-notionx-app/src/add/targets.test.ts`
 
 - [ ] **Step 1: Write the failing test**
 
-Create `packages/create-nextion-app/src/add/targets.test.ts`:
+Create `packages/create-notionx-app/src/add/targets.test.ts`:
 
 ```ts
 import { describe, expect, it } from "vitest";
@@ -115,7 +115,7 @@ Expected: FAIL because `src/add/targets.ts` does not exist.
 
 - [ ] **Step 3: Write minimal implementation**
 
-Add these types to `packages/create-nextion-app/src/template-contracts.ts`:
+Add these types to `packages/create-notionx-app/src/template-contracts.ts`:
 
 ```ts
 export interface AddTargetDefinition {
@@ -126,7 +126,7 @@ export interface AddTargetDefinition {
 }
 ```
 
-Update `packages/create-nextion-app/src/template-registry.ts` so the built-in template list includes docs:
+Update `packages/create-notionx-app/src/template-registry.ts` so the built-in template list includes docs:
 
 ```ts
 const docsManagedFiles = {
@@ -161,7 +161,7 @@ const builtInTemplates: TemplateDefinition[] = [
 ];
 ```
 
-Create `packages/create-nextion-app/src/add/targets.ts`:
+Create `packages/create-notionx-app/src/add/targets.ts`:
 
 ```ts
 import type { AddTargetDefinition, TemplateInstallationRecord } from "../template-contracts.js";
@@ -221,19 +221,19 @@ Expected: PASS with 4 tests passing.
 - [ ] **Step 5: Commit**
 
 ```bash
-git add packages/create-nextion-app/src/template-contracts.ts packages/create-nextion-app/src/template-registry.ts packages/create-nextion-app/src/add/targets.ts packages/create-nextion-app/src/add/targets.test.ts
+git add packages/create-notionx-app/src/template-contracts.ts packages/create-notionx-app/src/template-registry.ts packages/create-notionx-app/src/add/targets.ts packages/create-notionx-app/src/add/targets.test.ts
 git commit -m "feat(add): register docs and search targets"
 ```
 
 ### Task 2: Add Install File Blueprints
 
 **Files:**
-- Create: `packages/create-nextion-app/src/add/files.ts`
-- Test: `packages/create-nextion-app/src/add/files.test.ts`
+- Create: `packages/create-notionx-app/src/add/files.ts`
+- Test: `packages/create-notionx-app/src/add/files.test.ts`
 
 - [ ] **Step 1: Write the failing test**
 
-Create `packages/create-nextion-app/src/add/files.test.ts`:
+Create `packages/create-notionx-app/src/add/files.test.ts`:
 
 ```ts
 import { describe, expect, it } from "vitest";
@@ -285,7 +285,7 @@ Expected: FAIL because `src/add/files.ts` does not exist.
 
 - [ ] **Step 3: Write minimal implementation**
 
-Create `packages/create-nextion-app/src/add/files.ts`:
+Create `packages/create-notionx-app/src/add/files.ts`:
 
 ```ts
 import type { OwnershipKind } from "../template-contracts.js";
@@ -367,20 +367,20 @@ Expected: PASS with 2 tests passing.
 - [ ] **Step 5: Commit**
 
 ```bash
-git add packages/create-nextion-app/src/add/files.ts packages/create-nextion-app/src/add/files.test.ts
+git add packages/create-notionx-app/src/add/files.ts packages/create-notionx-app/src/add/files.test.ts
 git commit -m "feat(add): add docs and search file blueprints"
 ```
 
 ### Task 3: Build The Install Engine
 
 **Files:**
-- Create: `packages/create-nextion-app/src/add/types.ts`
-- Create: `packages/create-nextion-app/src/add/install.ts`
-- Test: `packages/create-nextion-app/src/add/install.test.ts`
+- Create: `packages/create-notionx-app/src/add/types.ts`
+- Create: `packages/create-notionx-app/src/add/install.ts`
+- Test: `packages/create-notionx-app/src/add/install.test.ts`
 
 - [ ] **Step 1: Write the failing test**
 
-Create `packages/create-nextion-app/src/add/install.test.ts`:
+Create `packages/create-notionx-app/src/add/install.test.ts`:
 
 ```ts
 import { mkdir, mkdtemp, readFile, writeFile } from "node:fs/promises";
@@ -526,7 +526,7 @@ Expected: FAIL because `src/add/install.ts` does not exist.
 
 - [ ] **Step 3: Write minimal implementation**
 
-Create `packages/create-nextion-app/src/add/types.ts`:
+Create `packages/create-notionx-app/src/add/types.ts`:
 
 ```ts
 import type { OwnershipKind, TemplateInstallationRecord } from "../template-contracts.js";
@@ -551,7 +551,7 @@ export interface InstallMetadataUpdate {
 }
 ```
 
-Create `packages/create-nextion-app/src/add/install.ts`:
+Create `packages/create-notionx-app/src/add/install.ts`:
 
 ```ts
 import { mkdir, readFile, writeFile } from "node:fs/promises";
@@ -666,19 +666,19 @@ Expected: PASS with 2 tests passing.
 - [ ] **Step 5: Commit**
 
 ```bash
-git add packages/create-nextion-app/src/add/types.ts packages/create-nextion-app/src/add/install.ts packages/create-nextion-app/src/add/install.test.ts
+git add packages/create-notionx-app/src/add/types.ts packages/create-notionx-app/src/add/install.ts packages/create-notionx-app/src/add/install.test.ts
 git commit -m "feat(add): add minimal install engine"
 ```
 
 ### Task 4: Format Add Summaries
 
 **Files:**
-- Create: `packages/create-nextion-app/src/add/format.ts`
-- Test: `packages/create-nextion-app/src/add/format.test.ts`
+- Create: `packages/create-notionx-app/src/add/format.ts`
+- Test: `packages/create-notionx-app/src/add/format.test.ts`
 
 - [ ] **Step 1: Write the failing test**
 
-Create `packages/create-nextion-app/src/add/format.test.ts`:
+Create `packages/create-notionx-app/src/add/format.test.ts`:
 
 ```ts
 import { describe, expect, it } from "vitest";
@@ -728,7 +728,7 @@ Expected: FAIL because `src/add/format.ts` does not exist.
 
 - [ ] **Step 3: Write minimal implementation**
 
-Create `packages/create-nextion-app/src/add/format.ts`:
+Create `packages/create-notionx-app/src/add/format.ts`:
 
 ```ts
 import type { InstallSummary } from "./types.js";
@@ -774,21 +774,21 @@ Expected: PASS with 1 test passing.
 - [ ] **Step 5: Commit**
 
 ```bash
-git add packages/create-nextion-app/src/add/format.ts packages/create-nextion-app/src/add/format.test.ts
+git add packages/create-notionx-app/src/add/format.ts packages/create-notionx-app/src/add/format.test.ts
 git commit -m "feat(add): format install summaries"
 ```
 
 ### Task 5: Wire CLI `add docs` And `add search`
 
 **Files:**
-- Modify: `packages/create-nextion-app/src/cli-nextion.ts`
-- Modify: `packages/create-nextion-app/src/cli-nextion.test.ts`
-- Modify: `packages/create-nextion-app/src/diff.ts`
-- Modify: `packages/create-nextion-app/src/diff.test.ts`
+- Modify: `packages/create-notionx-app/src/cli-notionx.ts`
+- Modify: `packages/create-notionx-app/src/cli-notionx.test.ts`
+- Modify: `packages/create-notionx-app/src/diff.ts`
+- Modify: `packages/create-notionx-app/src/diff.test.ts`
 
 - [ ] **Step 1: Write the failing tests**
 
-Append these tests to `packages/create-nextion-app/src/cli-nextion.test.ts`:
+Append these tests to `packages/create-notionx-app/src/cli-notionx.test.ts`:
 
 ```ts
 const installTargetMock = vi.hoisted(() => vi.fn());
@@ -837,7 +837,7 @@ Append these tests:
   });
 ```
 
-Append this test to `packages/create-nextion-app/src/diff.test.ts`:
+Append this test to `packages/create-notionx-app/src/diff.test.ts`:
 
 ```ts
   it("includes modules in diff summary", () => {
@@ -883,14 +883,14 @@ Append this test to `packages/create-nextion-app/src/diff.test.ts`:
 Run:
 
 ```bash
-pnpm --filter @notionx/create-nextion-app exec vitest run src/cli-nextion.test.ts src/diff.test.ts
+pnpm --filter @notionx/create-nextion-app exec vitest run src/cli-notionx.test.ts src/diff.test.ts
 ```
 
 Expected: FAIL because `add` is not wired and diff summary does not include modules.
 
 - [ ] **Step 3: Write minimal implementation**
 
-Update `packages/create-nextion-app/src/diff.ts`:
+Update `packages/create-notionx-app/src/diff.ts`:
 
 ```ts
 export interface DiffSummary {
@@ -919,7 +919,7 @@ Update `formatDiffSummary()`:
     ...summary.modules.map((module) => `  - ${module}`),
 ```
 
-Update `packages/create-nextion-app/src/cli-nextion.ts` imports:
+Update `packages/create-notionx-app/src/cli-notionx.ts` imports:
 
 ```ts
 import { formatInstallSummary } from "./add/format.js";
@@ -938,14 +938,14 @@ Add this branch before `diff`:
   }
 ```
 
-Create the shared formatter import in `packages/create-nextion-app/src/cli-nextion.test.ts` by mocking the real install summary output through CLI logging only; keep the rest of the mocks unchanged.
+Create the shared formatter import in `packages/create-notionx-app/src/cli-notionx.test.ts` by mocking the real install summary output through CLI logging only; keep the rest of the mocks unchanged.
 
 - [ ] **Step 4: Run the package-level targeted suite**
 
 Run:
 
 ```bash
-pnpm --filter @notionx/create-nextion-app exec vitest run src/add/format.test.ts src/add/install.test.ts src/cli-nextion.test.ts src/diff.test.ts
+pnpm --filter @notionx/create-nextion-app exec vitest run src/add/format.test.ts src/add/install.test.ts src/cli-notionx.test.ts src/diff.test.ts
 ```
 
 Expected: PASS.
@@ -953,7 +953,7 @@ Expected: PASS.
 - [ ] **Step 5: Commit**
 
 ```bash
-git add packages/create-nextion-app/src/cli-nextion.ts packages/create-nextion-app/src/cli-nextion.test.ts packages/create-nextion-app/src/diff.ts packages/create-nextion-app/src/diff.test.ts
+git add packages/create-notionx-app/src/cli-notionx.ts packages/create-notionx-app/src/cli-notionx.test.ts packages/create-notionx-app/src/diff.ts packages/create-notionx-app/src/diff.test.ts
 git commit -m "feat(cli): add docs and search install commands"
 ```
 
@@ -967,7 +967,7 @@ git commit -m "feat(cli): add docs and search install commands"
 Run:
 
 ```bash
-pnpm --filter @notionx/create-nextion-app exec vitest run src/add/targets.test.ts src/add/files.test.ts src/add/install.test.ts src/add/format.test.ts src/cli-nextion.test.ts src/diff.test.ts
+pnpm --filter @notionx/create-nextion-app exec vitest run src/add/targets.test.ts src/add/files.test.ts src/add/install.test.ts src/add/format.test.ts src/cli-notionx.test.ts src/diff.test.ts
 ```
 
 Expected: PASS.
@@ -1005,7 +1005,7 @@ Expected: only planned files plus any pre-existing unrelated user changes.
 - [ ] **Step 5: Commit**
 
 ```bash
-git add packages/create-nextion-app/src/add/types.ts packages/create-nextion-app/src/add/targets.ts packages/create-nextion-app/src/add/targets.test.ts packages/create-nextion-app/src/add/files.ts packages/create-nextion-app/src/add/files.test.ts packages/create-nextion-app/src/add/install.ts packages/create-nextion-app/src/add/install.test.ts packages/create-nextion-app/src/add/format.ts packages/create-nextion-app/src/add/format.test.ts packages/create-nextion-app/src/cli-nextion.ts packages/create-nextion-app/src/cli-nextion.test.ts packages/create-nextion-app/src/diff.ts packages/create-nextion-app/src/diff.test.ts packages/create-nextion-app/src/template-contracts.ts packages/create-nextion-app/src/template-registry.ts
+git add packages/create-notionx-app/src/add/types.ts packages/create-notionx-app/src/add/targets.ts packages/create-notionx-app/src/add/targets.test.ts packages/create-notionx-app/src/add/files.ts packages/create-notionx-app/src/add/files.test.ts packages/create-notionx-app/src/add/install.ts packages/create-notionx-app/src/add/install.test.ts packages/create-notionx-app/src/add/format.ts packages/create-notionx-app/src/add/format.test.ts packages/create-notionx-app/src/cli-notionx.ts packages/create-notionx-app/src/cli-notionx.test.ts packages/create-notionx-app/src/diff.ts packages/create-notionx-app/src/diff.test.ts packages/create-notionx-app/src/template-contracts.ts packages/create-notionx-app/src/template-registry.ts
 git commit -m "chore(add): verify docs and search install flow"
 ```
 

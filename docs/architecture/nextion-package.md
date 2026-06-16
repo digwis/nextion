@@ -81,7 +81,7 @@ vinext-monorepo/
 ```
 
 `apps/moviebluebook` 是脚手架的"参考实现"——它示范如何用本包搭一个真实的 vinext 项目。
-新建项目时它会被 `packages/create-nextion-app` 重新生成。
+新建项目时它会被 `packages/create-notionx-app` 重新生成。
 
 ## 七层依赖分层
 
@@ -132,10 +132,10 @@ vinext-monorepo/
 
 包发布到 **GitHub Packages**，scope 为 `@notionx`。
 
-- **版本管理**：changesets。任何影响 `packages/nextion/**` 的 PR 都必须携带
+- **版本管理**：changesets。任何影响 `packages/notionx/**` 的 PR 都必须携带
   一个 changeset 文件，描述变更内容与 semver bump 类型。
 - **发布流程** (`.github/workflows/release.yml`)：推 main 时，如果
-  `packages/nextion/**` 有变化，执行 `pnpm changeset version` →
+  `packages/notionx/**` 有变化，执行 `pnpm changeset version` →
   `pnpm --filter @notionx/core build` → `pnpm changeset publish`。
   凭据使用具备 `packages: write` 权限的 `GITHUB_TOKEN`。
 - **消费方升级**：每个消费项目（脚手架新建的独立项目）的
@@ -150,7 +150,7 @@ vinext-monorepo/
 
 ## 测试与 CI 保障
 
-- **单元测试**：包用 vitest（`packages/nextion/vitest.config.ts`），覆盖
+- **单元测试**：包用 vitest（`packages/notionx/vitest.config.ts`），覆盖
   `getEnv`、runtime 探测、`createAdminNav`、`mapPageToRecord`、
   `buildCacheKey`、`getRevalidationPaths`、`runNotionxDoctor`、
   `createNotionxWorker` 等关键边界。
@@ -185,7 +185,7 @@ vinext-monorepo/
 | `tsconfig.json` paths | 每项目 TS 配置 |
 | `lib/notion/{posts,movies,movie-*}.ts` | 领域知识 |
 
-进入包的内容集中在 `packages/nextion/src/` 下；包内子模块的归属可参考
+进入包的内容集中在 `packages/notionx/src/` 下；包内子模块的归属可参考
 [依赖分层](#七层依赖分层)那张表。
 
 ## 下一步

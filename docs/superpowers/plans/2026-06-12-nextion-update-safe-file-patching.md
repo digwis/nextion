@@ -14,39 +14,39 @@
 
 ### Existing files to modify
 
-- `packages/create-nextion-app/src/render.ts`
+- `packages/create-notionx-app/src/render.ts`
   - Export a reusable templates-dir resolver or helper needed by update re-rendering without duplicating create-path logic.
-- `packages/create-nextion-app/src/update/scaffold-files.ts`
+- `packages/create-notionx-app/src/update/scaffold-files.ts`
   - Keep the authoritative allowlist for full-file updates.
-- `packages/create-nextion-app/src/update/template-sync.ts`
+- `packages/create-notionx-app/src/update/template-sync.ts`
   - Replace the placeholder plan builder with temp render, compare, and write logic.
-- `packages/create-nextion-app/src/update/index.ts`
+- `packages/create-notionx-app/src/update/index.ts`
   - Orchestrate update execution and return grouped status results.
-- `packages/create-nextion-app/src/cli-nextion.ts`
+- `packages/create-notionx-app/src/cli-notionx.ts`
   - Print grouped summary output for update results and `pnpm install` hint.
 - `docs/architecture/upgrading-nextion.md`
   - Clarify that `nextion update` now performs safe full-file replacement for scaffold-owned files.
 
 ### New files to create
 
-- `packages/create-nextion-app/src/update/update-answers.ts`
+- `packages/create-notionx-app/src/update/update-answers.ts`
   - Convert scaffold metadata into a renderable `Answers` object for update flows.
 
 ### Existing tests to modify
 
-- `packages/create-nextion-app/src/update/update.test.ts`
+- `packages/create-notionx-app/src/update/update.test.ts`
   - Expand from allowlist smoke tests into temp render, compare, overwrite, and summary tests.
 
 ## Task 1: Build update answers from scaffold metadata
 
 **Files:**
-- Create: `packages/create-nextion-app/src/update/update-answers.ts`
-- Modify: `packages/create-nextion-app/src/update/update.test.ts`
-- Test: `packages/create-nextion-app/src/update/update.test.ts`
+- Create: `packages/create-notionx-app/src/update/update-answers.ts`
+- Modify: `packages/create-notionx-app/src/update/update.test.ts`
+- Test: `packages/create-notionx-app/src/update/update.test.ts`
 
 - [ ] **Step 1: Write the failing test for metadata-to-answers conversion**
 
-Append this block to `packages/create-nextion-app/src/update/update.test.ts`:
+Append this block to `packages/create-notionx-app/src/update/update.test.ts`:
 
 ```ts
 import { buildUpdateAnswers } from "./update-answers.js";
@@ -93,7 +93,7 @@ Expected: FAIL because `update-answers.ts` does not exist.
 
 - [ ] **Step 3: Implement the minimal answer builder**
 
-Create `packages/create-nextion-app/src/update/update-answers.ts`:
+Create `packages/create-notionx-app/src/update/update-answers.ts`:
 
 ```ts
 import { DEFAULT_ANSWERS, type Answers } from "../prompt.js";
@@ -136,20 +136,20 @@ Expected: PASS.
 - [ ] **Step 5: Commit**
 
 ```bash
-git add packages/create-nextion-app/src/update/update-answers.ts packages/create-nextion-app/src/update/update.test.ts
+git add packages/create-notionx-app/src/update/update-answers.ts packages/create-notionx-app/src/update/update.test.ts
 git commit -m "feat: reconstruct update answers from scaffold metadata"
 ```
 
 ## Task 2: Add reusable template resolution for update rendering
 
 **Files:**
-- Modify: `packages/create-nextion-app/src/render.ts`
-- Modify: `packages/create-nextion-app/src/update/update.test.ts`
-- Test: `packages/create-nextion-app/src/update/update.test.ts`
+- Modify: `packages/create-notionx-app/src/render.ts`
+- Modify: `packages/create-notionx-app/src/update/update.test.ts`
+- Test: `packages/create-notionx-app/src/update/update.test.ts`
 
 - [ ] **Step 1: Write the failing helper test**
 
-Append this block to `packages/create-nextion-app/src/update/update.test.ts`:
+Append this block to `packages/create-notionx-app/src/update/update.test.ts`:
 
 ```ts
 import { resolveTemplatesDir } from "../render.js";
@@ -174,7 +174,7 @@ Expected: FAIL because `resolveTemplatesDir` is not exported.
 
 - [ ] **Step 3: Export the reusable templates-dir helper**
 
-Add this export to `packages/create-nextion-app/src/render.ts`:
+Add this export to `packages/create-notionx-app/src/render.ts`:
 
 ```ts
 export async function resolveTemplatesDir(): Promise<string> {
@@ -199,21 +199,21 @@ Expected: PASS.
 - [ ] **Step 5: Commit**
 
 ```bash
-git add packages/create-nextion-app/src/render.ts packages/create-nextion-app/src/update/update.test.ts
+git add packages/create-notionx-app/src/render.ts packages/create-notionx-app/src/update/update.test.ts
 git commit -m "refactor: expose reusable template resolution for update"
 ```
 
 ## Task 3: Generate and compare allowlisted files from a temp render
 
 **Files:**
-- Modify: `packages/create-nextion-app/src/update/template-sync.ts`
-- Modify: `packages/create-nextion-app/src/update/update.test.ts`
-- Create: `packages/create-nextion-app/src/update/update-answers.ts`
-- Test: `packages/create-nextion-app/src/update/update.test.ts`
+- Modify: `packages/create-notionx-app/src/update/template-sync.ts`
+- Modify: `packages/create-notionx-app/src/update/update.test.ts`
+- Create: `packages/create-notionx-app/src/update/update-answers.ts`
+- Test: `packages/create-notionx-app/src/update/update.test.ts`
 
 - [ ] **Step 1: Write the failing temp-render comparison test**
 
-Append this block to `packages/create-nextion-app/src/update/update.test.ts`:
+Append this block to `packages/create-notionx-app/src/update/update.test.ts`:
 
 ```ts
 import { mkdtemp, mkdir, readFile, writeFile } from "node:fs/promises";
@@ -287,7 +287,7 @@ Expected: FAIL because `buildUpdatePlan` does not yet render templates or produc
 
 - [ ] **Step 3: Replace placeholder plan logic with temp render + compare**
 
-Replace `packages/create-nextion-app/src/update/template-sync.ts` with:
+Replace `packages/create-notionx-app/src/update/template-sync.ts` with:
 
 ```ts
 import { mkdtemp, readFile, rm } from "node:fs/promises";
@@ -359,21 +359,21 @@ Expected: PASS.
 - [ ] **Step 5: Commit**
 
 ```bash
-git add packages/create-nextion-app/src/update/template-sync.ts packages/create-nextion-app/src/update/update.test.ts packages/create-nextion-app/src/update/update-answers.ts
+git add packages/create-notionx-app/src/update/template-sync.ts packages/create-notionx-app/src/update/update.test.ts packages/create-notionx-app/src/update/update-answers.ts
 git commit -m "feat: generate update plan from temp scaffold render"
 ```
 
 ## Task 4: Apply changed and missing scaffold-owned files
 
 **Files:**
-- Modify: `packages/create-nextion-app/src/update/index.ts`
-- Modify: `packages/create-nextion-app/src/update/template-sync.ts`
-- Modify: `packages/create-nextion-app/src/update/update.test.ts`
-- Test: `packages/create-nextion-app/src/update/update.test.ts`
+- Modify: `packages/create-notionx-app/src/update/index.ts`
+- Modify: `packages/create-notionx-app/src/update/template-sync.ts`
+- Modify: `packages/create-notionx-app/src/update/update.test.ts`
+- Test: `packages/create-notionx-app/src/update/update.test.ts`
 
 - [ ] **Step 1: Write the failing apply-update test**
 
-Append this block to `packages/create-nextion-app/src/update/update.test.ts`:
+Append this block to `packages/create-notionx-app/src/update/update.test.ts`:
 
 ```ts
 import { runUpdate } from "./index.js";
@@ -425,7 +425,7 @@ Expected: FAIL because `runUpdate` only returns a plan and does not write files.
 
 - [ ] **Step 3: Implement file writes and grouped summary output**
 
-Replace `packages/create-nextion-app/src/update/index.ts` with:
+Replace `packages/create-notionx-app/src/update/index.ts` with:
 
 ```ts
 import { mkdir, writeFile } from "node:fs/promises";
@@ -488,23 +488,23 @@ Expected: PASS.
 - [ ] **Step 5: Commit**
 
 ```bash
-git add packages/create-nextion-app/src/update/index.ts packages/create-nextion-app/src/update/update.test.ts
+git add packages/create-notionx-app/src/update/index.ts packages/create-notionx-app/src/update/update.test.ts
 git commit -m "feat: apply safe scaffold-owned update writes"
 ```
 
 ## Task 5: Print grouped CLI summary and install hint
 
 **Files:**
-- Modify: `packages/create-nextion-app/src/cli-nextion.ts`
-- Modify: `packages/create-nextion-app/src/update/update.test.ts`
-- Test: `packages/create-nextion-app/src/update/update.test.ts`
+- Modify: `packages/create-notionx-app/src/cli-notionx.ts`
+- Modify: `packages/create-notionx-app/src/update/update.test.ts`
+- Test: `packages/create-notionx-app/src/update/update.test.ts`
 
 - [ ] **Step 1: Write the failing CLI summary test**
 
-Append this block to `packages/create-nextion-app/src/update/update.test.ts`:
+Append this block to `packages/create-notionx-app/src/update/update.test.ts`:
 
 ```ts
-import { formatUpdateSummary } from "../cli-nextion.js";
+import { formatUpdateSummary } from "../cli-notionx.js";
 
 describe("formatUpdateSummary", () => {
   it("includes grouped statuses and install hint", () => {
@@ -535,7 +535,7 @@ Expected: FAIL because `formatUpdateSummary` does not exist.
 
 - [ ] **Step 3: Add CLI summary formatting**
 
-Replace the update branch in `packages/create-nextion-app/src/cli-nextion.ts` with:
+Replace the update branch in `packages/create-notionx-app/src/cli-notionx.ts` with:
 
 ```ts
 import type { UpdateSummary } from "./update/index.js";
@@ -593,7 +593,7 @@ Expected: PASS.
 - [ ] **Step 5: Commit**
 
 ```bash
-git add packages/create-nextion-app/src/cli-nextion.ts packages/create-nextion-app/src/update/update.test.ts
+git add packages/create-notionx-app/src/cli-notionx.ts packages/create-notionx-app/src/update/update.test.ts
 git commit -m "feat: print grouped update summary"
 ```
 
@@ -623,10 +623,10 @@ git commit -m "docs: describe safe file patching for nextion update"
 ## Task 7: Final verification
 
 **Files:**
-- Test: `packages/create-nextion-app/src/update/update.test.ts`
-- Test: `packages/create-nextion-app/src/__tests__/metadata.test.ts`
-- Test: `packages/create-nextion-app/src/provision/repair.test.ts`
-- Test: `packages/create-nextion-app/src/provision/notion.test.ts`
+- Test: `packages/create-notionx-app/src/update/update.test.ts`
+- Test: `packages/create-notionx-app/src/__tests__/metadata.test.ts`
+- Test: `packages/create-notionx-app/src/provision/repair.test.ts`
+- Test: `packages/create-notionx-app/src/provision/notion.test.ts`
 
 - [ ] **Step 1: Run focused tests**
 
@@ -643,7 +643,7 @@ Expected: PASS.
 Run:
 
 ```bash
-cd packages/create-nextion-app && npx tsc -p tsconfig.json --noEmit
+cd packages/create-notionx-app && npx tsc -p tsconfig.json --noEmit
 ```
 
 Expected: PASS.
@@ -652,19 +652,19 @@ Expected: PASS.
 
 Run diagnostics on:
 
-- `packages/create-nextion-app/src/update/update-answers.ts`
-- `packages/create-nextion-app/src/update/template-sync.ts`
-- `packages/create-nextion-app/src/update/index.ts`
-- `packages/create-nextion-app/src/cli-nextion.ts`
-- `packages/create-nextion-app/src/render.ts`
-- `packages/create-nextion-app/src/update/update.test.ts`
+- `packages/create-notionx-app/src/update/update-answers.ts`
+- `packages/create-notionx-app/src/update/template-sync.ts`
+- `packages/create-notionx-app/src/update/index.ts`
+- `packages/create-notionx-app/src/cli-notionx.ts`
+- `packages/create-notionx-app/src/render.ts`
+- `packages/create-notionx-app/src/update/update.test.ts`
 
 Expected: no new diagnostics.
 
 - [ ] **Step 4: Commit**
 
 ```bash
-git add packages/create-nextion-app docs/architecture/upgrading-nextion.md
+git add packages/create-notionx-app docs/architecture/upgrading-nextion.md
 git commit -m "feat: apply safe scaffold-owned updates"
 ```
 

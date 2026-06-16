@@ -321,15 +321,15 @@ a brand-new project effectively unconfigured.
 
 The eventual implementation is expected to touch at least these areas:
 
-- `packages/create-nextion-app/src/provision/notion.ts`
-- `packages/create-nextion-app/src/provision/notion.test.ts`
-- `packages/create-nextion-app/src/templates/lib/pages/source.ts.tmpl`
-- `packages/create-nextion-app/src/templates/app/page.tsx.tmpl`
-- `packages/create-nextion-app/src/templates/app/{{contentSourceListPath}}/page.tsx.tmpl`
-- `packages/create-nextion-app/src/templates/lib/site/config.ts.tmpl`
-- `packages/create-nextion-app/src/templates/lib/site/settings.ts.tmpl`
-- `packages/create-nextion-app/src/templates/components/page-blocks/*`
-- `packages/create-nextion-app/src/render.test.ts`
+- `packages/create-notionx-app/src/provision/notion.ts`
+- `packages/create-notionx-app/src/provision/notion.test.ts`
+- `packages/create-notionx-app/src/templates/lib/pages/source.ts.tmpl`
+- `packages/create-notionx-app/src/templates/app/page.tsx.tmpl`
+- `packages/create-notionx-app/src/templates/app/{{contentSourceListPath}}/page.tsx.tmpl`
+- `packages/create-notionx-app/src/templates/lib/site/config.ts.tmpl`
+- `packages/create-notionx-app/src/templates/lib/site/settings.ts.tmpl`
+- `packages/create-notionx-app/src/templates/components/page-blocks/*`
+- `packages/create-notionx-app/src/render.test.ts`
 
 The implementation may also require a new typed homepage latest-posts block
 component and supporting runtime mapping.

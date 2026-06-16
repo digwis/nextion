@@ -4,7 +4,7 @@
 
 **Goal:** Build the next visible `Nextion v2` protocol layer by making upgrade planning read protocol-owned file targets and by adding a user-facing `nextion diff` command with optional upgrade preview.
 
-**Architecture:** Keep all work inside `packages/create-nextion-app` for now. Introduce a small template registry for installed template resolution, replace hard-coded scaffold sync targets with protocol-derived managed files, and add a dedicated diff planner that the CLI can surface as `nextion diff` and `nextion diff --upgrade`.
+**Architecture:** Keep all work inside `packages/create-notionx-app` for now. Introduce a small template registry for installed template resolution, replace hard-coded scaffold sync targets with protocol-derived managed files, and add a dedicated diff planner that the CLI can surface as `nextion diff` and `nextion diff --upgrade`.
 
 **Tech Stack:** TypeScript, Vitest, Node.js fs/path APIs, existing `create-nextion-app` CLI, protocol metadata in `.nextion/*`, unified update planner
 
@@ -29,27 +29,27 @@ Those belong in the next plan after this one lands, because they require a real 
 
 ## File Map
 
-- Create: `packages/create-nextion-app/src/template-registry.ts`
-- Create: `packages/create-nextion-app/src/template-registry.test.ts`
-- Create: `packages/create-nextion-app/src/update/protocol-targets.ts`
-- Create: `packages/create-nextion-app/src/update/protocol-targets.test.ts`
-- Create: `packages/create-nextion-app/src/diff.ts`
-- Create: `packages/create-nextion-app/src/diff.test.ts`
-- Modify: `packages/create-nextion-app/src/template-contracts.ts`
-- Modify: `packages/create-nextion-app/src/update/template-sync.ts`
-- Modify: `packages/create-nextion-app/src/cli-nextion.ts`
-- Modify: `packages/create-nextion-app/src/cli-nextion.test.ts`
+- Create: `packages/create-notionx-app/src/template-registry.ts`
+- Create: `packages/create-notionx-app/src/template-registry.test.ts`
+- Create: `packages/create-notionx-app/src/update/protocol-targets.ts`
+- Create: `packages/create-notionx-app/src/update/protocol-targets.test.ts`
+- Create: `packages/create-notionx-app/src/diff.ts`
+- Create: `packages/create-notionx-app/src/diff.test.ts`
+- Modify: `packages/create-notionx-app/src/template-contracts.ts`
+- Modify: `packages/create-notionx-app/src/update/template-sync.ts`
+- Modify: `packages/create-notionx-app/src/cli-notionx.ts`
+- Modify: `packages/create-notionx-app/src/cli-notionx.test.ts`
 
 ## Task 1: Add A Template Registry
 
 **Files:**
-- Create: `packages/create-nextion-app/src/template-registry.ts`
-- Test: `packages/create-nextion-app/src/template-registry.test.ts`
-- Modify: `packages/create-nextion-app/src/template-contracts.ts`
+- Create: `packages/create-notionx-app/src/template-registry.ts`
+- Test: `packages/create-notionx-app/src/template-registry.test.ts`
+- Modify: `packages/create-notionx-app/src/template-contracts.ts`
 
 - [ ] **Step 1: Write the failing test**
 
-Create `packages/create-nextion-app/src/template-registry.test.ts`:
+Create `packages/create-notionx-app/src/template-registry.test.ts`:
 
 ```ts
 import { describe, expect, it } from "vitest";
@@ -122,7 +122,7 @@ Expected: FAIL with a module resolution error for `./template-registry.js`.
 
 - [ ] **Step 3: Write minimal implementation**
 
-Update `packages/create-nextion-app/src/template-contracts.ts` to add a reusable definition type:
+Update `packages/create-notionx-app/src/template-contracts.ts` to add a reusable definition type:
 
 ```ts
 export interface TemplateDefinition {
@@ -135,7 +135,7 @@ export interface TemplateDefinition {
 }
 ```
 
-Create `packages/create-nextion-app/src/template-registry.ts`:
+Create `packages/create-notionx-app/src/template-registry.ts`:
 
 ```ts
 import type {
@@ -196,20 +196,20 @@ Expected: PASS with 3 tests passing.
 - [ ] **Step 5: Commit**
 
 ```bash
-git add packages/create-nextion-app/src/template-contracts.ts packages/create-nextion-app/src/template-registry.ts packages/create-nextion-app/src/template-registry.test.ts
+git add packages/create-notionx-app/src/template-contracts.ts packages/create-notionx-app/src/template-registry.ts packages/create-notionx-app/src/template-registry.test.ts
 git commit -m "feat(protocol): add template registry"
 ```
 
 ## Task 2: Drive Upgrade Targets From Protocol Metadata
 
 **Files:**
-- Create: `packages/create-nextion-app/src/update/protocol-targets.ts`
-- Test: `packages/create-nextion-app/src/update/protocol-targets.test.ts`
-- Modify: `packages/create-nextion-app/src/update/template-sync.ts`
+- Create: `packages/create-notionx-app/src/update/protocol-targets.ts`
+- Test: `packages/create-notionx-app/src/update/protocol-targets.test.ts`
+- Modify: `packages/create-notionx-app/src/update/template-sync.ts`
 
 - [ ] **Step 1: Write the failing test**
 
-Create `packages/create-nextion-app/src/update/protocol-targets.test.ts`:
+Create `packages/create-notionx-app/src/update/protocol-targets.test.ts`:
 
 ```ts
 import { describe, expect, it } from "vitest";
@@ -241,7 +241,7 @@ Expected: FAIL because `./protocol-targets.js` does not exist.
 
 - [ ] **Step 3: Write minimal implementation**
 
-Create `packages/create-nextion-app/src/update/protocol-targets.ts`:
+Create `packages/create-notionx-app/src/update/protocol-targets.ts`:
 
 ```ts
 import type { ManagedFilesManifest } from "../template-contracts.js";
@@ -253,7 +253,7 @@ export function listProtocolUpgradeTargets(
 }
 ```
 
-Update `packages/create-nextion-app/src/update/template-sync.ts`:
+Update `packages/create-notionx-app/src/update/template-sync.ts`:
 
 ```ts
 import { listProtocolUpgradeTargets } from "./protocol-targets.js";
@@ -295,7 +295,7 @@ export async function buildUpdatePlan(
 
 - [ ] **Step 4: Add a regression assertion for bridge files**
 
-Append this test to `packages/create-nextion-app/src/update/update.test.ts`:
+Append this test to `packages/create-notionx-app/src/update/update.test.ts`:
 
 ```ts
   it("includes bridge files from protocol metadata in the update plan", async () => {
@@ -316,19 +316,19 @@ Expected: PASS for the new protocol target test and the new bridge-file regressi
 - [ ] **Step 5: Commit**
 
 ```bash
-git add packages/create-nextion-app/src/update/protocol-targets.ts packages/create-nextion-app/src/update/protocol-targets.test.ts packages/create-nextion-app/src/update/template-sync.ts packages/create-nextion-app/src/update/update.test.ts
+git add packages/create-notionx-app/src/update/protocol-targets.ts packages/create-notionx-app/src/update/protocol-targets.test.ts packages/create-notionx-app/src/update/template-sync.ts packages/create-notionx-app/src/update/update.test.ts
 git commit -m "feat(update): derive upgrade targets from protocol metadata"
 ```
 
 ## Task 3: Add A Diff Planner
 
 **Files:**
-- Create: `packages/create-nextion-app/src/diff.ts`
-- Test: `packages/create-nextion-app/src/diff.test.ts`
+- Create: `packages/create-notionx-app/src/diff.ts`
+- Test: `packages/create-notionx-app/src/diff.test.ts`
 
 - [ ] **Step 1: Write the failing test**
 
-Create `packages/create-nextion-app/src/diff.test.ts`:
+Create `packages/create-notionx-app/src/diff.test.ts`:
 
 ```ts
 import { describe, expect, it } from "vitest";
@@ -398,7 +398,7 @@ Expected: FAIL because `./diff.js` does not exist.
 
 - [ ] **Step 3: Write minimal implementation**
 
-Create `packages/create-nextion-app/src/diff.ts`:
+Create `packages/create-notionx-app/src/diff.ts`:
 
 ```ts
 import type {
@@ -456,19 +456,19 @@ Expected: PASS with 2 tests passing.
 - [ ] **Step 5: Commit**
 
 ```bash
-git add packages/create-nextion-app/src/diff.ts packages/create-nextion-app/src/diff.test.ts
+git add packages/create-notionx-app/src/diff.ts packages/create-notionx-app/src/diff.test.ts
 git commit -m "feat(cli): add diff summary planner"
 ```
 
 ## Task 4: Add Upgrade Preview Formatting
 
 **Files:**
-- Modify: `packages/create-nextion-app/src/diff.ts`
-- Test: `packages/create-nextion-app/src/diff.test.ts`
+- Modify: `packages/create-notionx-app/src/diff.ts`
+- Test: `packages/create-notionx-app/src/diff.test.ts`
 
 - [ ] **Step 1: Write the failing test**
 
-Append this test to `packages/create-nextion-app/src/diff.test.ts`:
+Append this test to `packages/create-notionx-app/src/diff.test.ts`:
 
 ```ts
   it("formats an upgrade preview grouped by risk", () => {
@@ -502,7 +502,7 @@ Expected: FAIL because `formatUpgradePreview` is not exported.
 
 - [ ] **Step 3: Write minimal implementation**
 
-Extend `packages/create-nextion-app/src/diff.ts`:
+Extend `packages/create-notionx-app/src/diff.ts`:
 
 ```ts
 export interface UpgradePreviewSummary {
@@ -537,19 +537,19 @@ Expected: PASS with 3 tests passing.
 - [ ] **Step 5: Commit**
 
 ```bash
-git add packages/create-nextion-app/src/diff.ts packages/create-nextion-app/src/diff.test.ts
+git add packages/create-notionx-app/src/diff.ts packages/create-notionx-app/src/diff.test.ts
 git commit -m "feat(diff): add upgrade preview formatting"
 ```
 
 ## Task 5: Wire `nextion diff` And `nextion diff --upgrade`
 
 **Files:**
-- Modify: `packages/create-nextion-app/src/cli-nextion.ts`
-- Modify: `packages/create-nextion-app/src/cli-nextion.test.ts`
+- Modify: `packages/create-notionx-app/src/cli-notionx.ts`
+- Modify: `packages/create-notionx-app/src/cli-notionx.test.ts`
 
 - [ ] **Step 1: Write the failing tests**
 
-Append these tests to `packages/create-nextion-app/src/cli-nextion.test.ts`:
+Append these tests to `packages/create-notionx-app/src/cli-notionx.test.ts`:
 
 ```ts
   it("prints template and ownership summary for diff", async () => {
@@ -594,14 +594,14 @@ Append these tests to `packages/create-nextion-app/src/cli-nextion.test.ts`:
 Run:
 
 ```bash
-pnpm --filter @notionx/create-nextion-app exec vitest run src/cli-nextion.test.ts
+pnpm --filter @notionx/create-nextion-app exec vitest run src/cli-notionx.test.ts
 ```
 
 Expected: FAIL because the CLI does not implement `diff`.
 
 - [ ] **Step 3: Write minimal implementation**
 
-Update the imports in `packages/create-nextion-app/src/cli-nextion.ts`:
+Update the imports in `packages/create-notionx-app/src/cli-notionx.ts`:
 
 ```ts
 import { buildDiffSummary, formatDiffSummary, formatUpgradePreview } from "./diff.js";
@@ -651,7 +651,7 @@ Add this second branch for upgrade preview:
   }
 ```
 
-Update the shared `context` fixture in `packages/create-nextion-app/src/cli-nextion.test.ts` so it already includes:
+Update the shared `context` fixture in `packages/create-notionx-app/src/cli-notionx.test.ts` so it already includes:
 
 ```ts
   installations: {
@@ -677,7 +677,7 @@ Update the shared `context` fixture in `packages/create-nextion-app/src/cli-next
 Run:
 
 ```bash
-pnpm --filter @notionx/create-nextion-app exec vitest run src/cli-nextion.test.ts src/diff.test.ts src/update/update.test.ts
+pnpm --filter @notionx/create-nextion-app exec vitest run src/cli-notionx.test.ts src/diff.test.ts src/update/update.test.ts
 ```
 
 Expected: PASS for diff summary, upgrade preview, and update regressions.
@@ -685,7 +685,7 @@ Expected: PASS for diff summary, upgrade preview, and update regressions.
 - [ ] **Step 5: Commit**
 
 ```bash
-git add packages/create-nextion-app/src/cli-nextion.ts packages/create-nextion-app/src/cli-nextion.test.ts packages/create-nextion-app/src/diff.ts packages/create-nextion-app/src/diff.test.ts
+git add packages/create-notionx-app/src/cli-notionx.ts packages/create-notionx-app/src/cli-notionx.test.ts packages/create-notionx-app/src/diff.ts packages/create-notionx-app/src/diff.test.ts
 git commit -m "feat(cli): add diff and upgrade preview commands"
 ```
 
@@ -699,7 +699,7 @@ git commit -m "feat(cli): add diff and upgrade preview commands"
 Run:
 
 ```bash
-pnpm --filter @notionx/create-nextion-app exec vitest run src/template-registry.test.ts src/update/protocol-targets.test.ts src/diff.test.ts src/cli-nextion.test.ts src/update/update.test.ts
+pnpm --filter @notionx/create-nextion-app exec vitest run src/template-registry.test.ts src/update/protocol-targets.test.ts src/diff.test.ts src/cli-notionx.test.ts src/update/update.test.ts
 ```
 
 Expected: PASS.
@@ -737,7 +737,7 @@ Expected: only the planned files are modified or created.
 - [ ] **Step 5: Commit**
 
 ```bash
-git add packages/create-nextion-app/src/template-registry.ts packages/create-nextion-app/src/template-registry.test.ts packages/create-nextion-app/src/update/protocol-targets.ts packages/create-nextion-app/src/update/protocol-targets.test.ts packages/create-nextion-app/src/diff.ts packages/create-nextion-app/src/diff.test.ts packages/create-nextion-app/src/update/template-sync.ts packages/create-nextion-app/src/cli-nextion.ts packages/create-nextion-app/src/cli-nextion.test.ts packages/create-nextion-app/src/template-contracts.ts packages/create-nextion-app/src/update/update.test.ts
+git add packages/create-notionx-app/src/template-registry.ts packages/create-notionx-app/src/template-registry.test.ts packages/create-notionx-app/src/update/protocol-targets.ts packages/create-notionx-app/src/update/protocol-targets.test.ts packages/create-notionx-app/src/diff.ts packages/create-notionx-app/src/diff.test.ts packages/create-notionx-app/src/update/template-sync.ts packages/create-notionx-app/src/cli-notionx.ts packages/create-notionx-app/src/cli-notionx.test.ts packages/create-notionx-app/src/template-contracts.ts packages/create-notionx-app/src/update/update.test.ts
 git commit -m "chore(cli): verify protocol-driven diff foundations"
 ```
 

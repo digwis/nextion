@@ -12,20 +12,20 @@
 
 ## File Map
 
-- Modify: `packages/create-nextion-app/src/provision/notion.ts`
+- Modify: `packages/create-notionx-app/src/provision/notion.ts`
   - Add stable marker helpers, description parsing/merging, stable-key lookup, and legacy upgrade path.
-- Modify: `packages/create-nextion-app/src/provision/notion.test.ts`
+- Modify: `packages/create-notionx-app/src/provision/notion.test.ts`
   - Add pure helper tests and mocked provisioning lookup tests.
-- Modify: `packages/create-nextion-app/src/provision/index.ts`
+- Modify: `packages/create-notionx-app/src/provision/index.ts`
   - Pass stable keys from content/Pages provisioning call sites.
-- Create if needed: `packages/create-nextion-app/src/provision/notion.fixtures.ts`
+- Create if needed: `packages/create-notionx-app/src/provision/notion.fixtures.ts`
   - Only create if `notion.test.ts` becomes noisy; store shared fake Notion API payloads there.
 
 ## Task 1: Lock The Metadata Contract
 
 **Files:**
-- Modify: `packages/create-nextion-app/src/provision/notion.test.ts`
-- Modify: `packages/create-nextion-app/src/provision/notion.ts`
+- Modify: `packages/create-notionx-app/src/provision/notion.test.ts`
+- Modify: `packages/create-notionx-app/src/provision/notion.ts`
 
 - [ ] **Step 1: Add failing tests that codify the scaffold marker format and description merge behavior**
 
@@ -130,15 +130,15 @@ Expected: PASS for the new helper tests and all existing `notion.test.ts` cases.
 - [ ] **Step 5: Commit the helper contract**
 
 ```bash
-git add packages/create-nextion-app/src/provision/notion.ts packages/create-nextion-app/src/provision/notion.test.ts
+git add packages/create-notionx-app/src/provision/notion.ts packages/create-notionx-app/src/provision/notion.test.ts
 git commit -m "test: lock notion scaffold marker helpers"
 ```
 
 ## Task 2: Teach Lookup To Read And Write Stable Markers
 
 **Files:**
-- Modify: `packages/create-nextion-app/src/provision/notion.ts`
-- Modify: `packages/create-nextion-app/src/provision/notion.test.ts`
+- Modify: `packages/create-notionx-app/src/provision/notion.ts`
+- Modify: `packages/create-notionx-app/src/provision/notion.test.ts`
 
 - [ ] **Step 1: Add failing tests for stable-key lookup and legacy upgrade behavior**
 
@@ -427,20 +427,20 @@ Expected: PASS for the new stable reuse tests plus the existing schema/sample pa
 - [ ] **Step 6: Commit the lookup behavior**
 
 ```bash
-git add packages/create-nextion-app/src/provision/notion.ts packages/create-nextion-app/src/provision/notion.test.ts
+git add packages/create-notionx-app/src/provision/notion.ts packages/create-notionx-app/src/provision/notion.test.ts
 git commit -m "feat: reuse notion databases by stable scaffold key"
 ```
 
 ## Task 3: Thread Stable Keys From Provision Call Sites
 
 **Files:**
-- Modify: `packages/create-nextion-app/src/provision/index.ts`
-- Modify: `packages/create-nextion-app/src/provision/notion.ts`
-- Modify: `packages/create-nextion-app/src/provision/notion.test.ts`
+- Modify: `packages/create-notionx-app/src/provision/index.ts`
+- Modify: `packages/create-notionx-app/src/provision/notion.ts`
+- Modify: `packages/create-notionx-app/src/provision/notion.test.ts`
 
 - [ ] **Step 1: Add a failing test that the content provisioning path passes a stable key**
 
-If `notion.test.ts` is already too dense, create `packages/create-nextion-app/src/provision/index.test.ts`; otherwise keep the test close to `notion.ts` and mock the exported function call shape.
+If `notion.test.ts` is already too dense, create `packages/create-notionx-app/src/provision/index.test.ts`; otherwise keep the test close to `notion.ts` and mock the exported function call shape.
 
 Minimal test shape:
 
@@ -493,7 +493,7 @@ Expected: FAIL because `provisionNotionContentAndPages(...)` still calls `ensure
 
 - [ ] **Step 3: Update the provision call sites**
 
-In `packages/create-nextion-app/src/provision/index.ts`, change the content call to:
+In `packages/create-notionx-app/src/provision/index.ts`, change the content call to:
 
 ```ts
 const content = await ensureNotionDatabase({
@@ -548,15 +548,15 @@ Expected: PASS with stable key call shapes covered.
 - [ ] **Step 5: Commit the wiring**
 
 ```bash
-git add packages/create-nextion-app/src/provision/index.ts packages/create-nextion-app/src/provision/notion.ts packages/create-nextion-app/src/provision/notion.test.ts
+git add packages/create-notionx-app/src/provision/index.ts packages/create-notionx-app/src/provision/notion.ts packages/create-notionx-app/src/provision/notion.test.ts
 git commit -m "feat: thread notion stable keys through provision flow"
 ```
 
 ## Task 4: Guard Additive-Only Schema Patching And Duplicate Matches
 
 **Files:**
-- Modify: `packages/create-nextion-app/src/provision/notion.test.ts`
-- Modify: `packages/create-nextion-app/src/provision/notion.ts`
+- Modify: `packages/create-notionx-app/src/provision/notion.test.ts`
+- Modify: `packages/create-notionx-app/src/provision/notion.ts`
 
 - [ ] **Step 1: Add failing tests for duplicate marker matches and additive-only schema behavior**
 
@@ -669,16 +669,16 @@ Expected: PASS with duplicate selection and additive-only schema patch behavior 
 - [ ] **Step 5: Commit the guardrails**
 
 ```bash
-git add packages/create-nextion-app/src/provision/notion.ts packages/create-nextion-app/src/provision/notion.test.ts
+git add packages/create-notionx-app/src/provision/notion.ts packages/create-notionx-app/src/provision/notion.test.ts
 git commit -m "test: cover notion stable reuse edge cases"
 ```
 
 ## Task 5: Full Package Verification
 
 **Files:**
-- Modify: `packages/create-nextion-app/src/provision/notion.ts`
-- Modify: `packages/create-nextion-app/src/provision/notion.test.ts`
-- Modify: `packages/create-nextion-app/src/provision/index.ts`
+- Modify: `packages/create-notionx-app/src/provision/notion.ts`
+- Modify: `packages/create-notionx-app/src/provision/notion.test.ts`
+- Modify: `packages/create-notionx-app/src/provision/index.ts`
 
 - [ ] **Step 1: Run the focused Notion provision tests**
 
@@ -715,7 +715,7 @@ Expected: PASS and templates copied into `dist/templates`.
 Run:
 
 ```bash
-git diff -- packages/create-nextion-app/src/provision/notion.ts packages/create-nextion-app/src/provision/notion.test.ts packages/create-nextion-app/src/provision/index.ts
+git diff -- packages/create-notionx-app/src/provision/notion.ts packages/create-notionx-app/src/provision/notion.test.ts packages/create-notionx-app/src/provision/index.ts
 ```
 
 Expected: Only stable marker helpers, lookup flow, and related tests are changed.
@@ -723,7 +723,7 @@ Expected: Only stable marker helpers, lookup flow, and related tests are changed
 - [ ] **Step 5: Commit the finished feature**
 
 ```bash
-git add packages/create-nextion-app/src/provision/notion.ts packages/create-nextion-app/src/provision/notion.test.ts packages/create-nextion-app/src/provision/index.ts
+git add packages/create-notionx-app/src/provision/notion.ts packages/create-notionx-app/src/provision/notion.test.ts packages/create-notionx-app/src/provision/index.ts
 git commit -m "feat: preserve notion database identity across reprovisioning"
 ```
 

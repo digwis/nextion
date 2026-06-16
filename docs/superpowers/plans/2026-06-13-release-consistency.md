@@ -184,9 +184,9 @@ on:
   push:
     branches: [main]
     paths:
-      - "packages/nextion/**"
-      - "packages/create-nextion-app/**"
-      - "packages/nextion-skill/**"
+      - "packages/notionx/**"
+      - "packages/create-notionx-app/**"
+      - "packages/notionx-skill/**"
       - ".changeset/**"
       - ".github/workflows/release.yml"
 ```
@@ -246,7 +246,7 @@ Ensure the workflow no longer contains `changesets/action@v1`, and publish now h
 Run:
 
 ```bash
-grep -n 'packages/nextion-skill/\*\*' .github/workflows/release.yml
+grep -n 'packages/notionx-skill/\*\*' .github/workflows/release.yml
 grep -n 'changesets/action@v1' .github/workflows/release.yml || true
 grep -n 'name: Publish packages' .github/workflows/release.yml
 grep -n 'name: Push version commit back to main' .github/workflows/release.yml
@@ -255,7 +255,7 @@ grep -n 'name: Push version commit back to main' .github/workflows/release.yml
 Expected:
 
 ```text
-`packages/nextion-skill/**` is present
+`packages/notionx-skill/**` is present
 no match for `changesets/action@v1`
 both `Push version commit back to main` and `Publish packages` exist
 ```

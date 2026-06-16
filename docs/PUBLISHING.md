@@ -6,10 +6,10 @@
 
 | 包 | 作用 | 当前版本 |
 |---|---|---|
-| `@notionx/core` | 核心运行时 / 框架底座 | 查看 `packages/nextion/package.json` |
-| `@notionx/create-notionx-app` | 脚手架和 `notionx` 维护 CLI | 查看 `packages/create-nextion-app/package.json` |
-| `create-notionx` | `npm create notionx` 入口 shim | 查看 `packages/create-nextion-app-shim/package.json` |
-| `@notionx/skill` | notionx skill 安装器 | 查看 `packages/nextion-skill/package.json` |
+| `@notionx/core` | 核心运行时 / 框架底座 | 查看 `packages/notionx/package.json` |
+| `@notionx/create-notionx-app` | 脚手架和 `notionx` 维护 CLI | 查看 `packages/create-notionx-app/package.json` |
+| `create-notionx` | `npm create notionx` 入口 shim | 查看 `packages/create-notionx/package.json` |
+| `@notionx/skill` | notionx skill 安装器 | 查看 `packages/notionx-skill/package.json` |
 
 **所有包都发布到 npmjs.com**（不是 GitHub Packages）。
 

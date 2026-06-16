@@ -28,7 +28,7 @@
 - Admin 外壳 + 用户管理 + 设置 + content-models 状态页 + account 页。
 - Notion 工具链：client、mappers、block 渲染、媒体代理、webhook、内容缓存。
 - `notionx:doctor` 离线诊断 CLI。
-- `pnpm create notionx-app` 脚手架（位于 `packages/create-nextion-app/`）。
+- `pnpm create notionx-app` 脚手架（位于 `packages/create-notionx-app/`）。
 
 ### 升级指引
 

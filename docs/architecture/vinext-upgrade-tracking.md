@@ -6,8 +6,8 @@
 
 | 包 | 版本 | 声明位置 |
 |----|------|--------|
-| `vinext` | `^0.1.4` | [packages/nextion/package.json](../../packages/nextion/package.json)、[packages/create-nextion-app/src/templates/package.json.tmpl](../../packages/create-nextion-app/src/templates/package.json.tmpl) |
-| `@vinext/cloudflare` | `^0.1.2` | [packages/create-nextion-app/src/templates/package.json.tmpl](../../packages/create-nextion-app/src/templates/package.json.tmpl) |
+| `vinext` | `^0.1.4` | [packages/notionx/package.json](../../packages/notionx/package.json)、[packages/create-notionx-app/src/templates/package.json.tmpl](../../packages/create-notionx-app/src/templates/package.json.tmpl) |
+| `@vinext/cloudflare` | `^0.1.2` | [packages/create-notionx-app/src/templates/package.json.tmpl](../../packages/create-notionx-app/src/templates/package.json.tmpl) |
 
 ## 升级历史
 
@@ -34,23 +34,23 @@
 3. **识别受影响的代码位置**
    ```bash
    # 搜索 vinext 在项目中的所有引用点
-   grep -rn "vinext" packages/nextion/src packages/create-nextion-app/src
+   grep -rn "vinext" packages/notionx/src packages/create-notionx-app/src
    ```
    关键文件：
-   - [packages/nextion/package.json](../../packages/nextion/package.json) — 运行时依赖
-   - [packages/create-nextion-app/src/templates/package.json.tmpl](../../packages/create-nextion-app/src/templates/package.json.tmpl) — 用户项目模板
-   - [packages/create-nextion-app/src/templates/worker/index.ts.tmpl](../../packages/create-nextion-app/src/templates/worker/index.ts.tmpl) — `vinext/server/app-router-entry` 入口
-   - [packages/nextion/src/platform/capabilities.ts](../../packages/nextion/src/platform/capabilities.ts) — adapter 描述里引用 vinext
+   - [packages/notionx/package.json](../../packages/notionx/package.json) — 运行时依赖
+   - [packages/create-notionx-app/src/templates/package.json.tmpl](../../packages/create-notionx-app/src/templates/package.json.tmpl) — 用户项目模板
+   - [packages/create-notionx-app/src/templates/worker/index.ts.tmpl](../../packages/create-notionx-app/src/templates/worker/index.ts.tmpl) — `vinext/server/app-router-entry` 入口
+   - [packages/notionx/src/platform/capabilities.ts](../../packages/notionx/src/platform/capabilities.ts) — adapter 描述里引用 vinext
 
 ## 升级步骤
 
 1. **更新版本声明**
-   - `packages/nextion/package.json` 的 `dependencies.vinext`
-   - `packages/create-nextion-app/src/templates/package.json.tmpl` 的 `devDependencies.vinext`
+   - `packages/notionx/package.json` 的 `dependencies.vinext`
+   - `packages/create-notionx-app/src/templates/package.json.tmpl` 的 `devDependencies.vinext`
    - 如 `@vinext/cloudflare` 也有新版，同步更新模板里的 `devDependencies.@vinext/cloudflare`
 
 2. **更新测试断言**
-   - [packages/create-nextion-app/src/render.test.ts](../../packages/create-nextion-app/src/render.test.ts) 中有一处硬编码版本断言，搜索 `vinext").toBe("^` 并更新
+   - [packages/create-notionx-app/src/render.test.ts](../../packages/create-notionx-app/src/render.test.ts) 中有一处硬编码版本断言，搜索 `vinext").toBe("^` 并更新
 
 3. **安装依赖**
    ```bash
@@ -60,7 +60,7 @@
 
 4. **检查 peer dependency 警告**
    - vinext 0.1.4 要求 vite `^7.0.0 || ^8.0.0`
-   - `packages/nextion` 本身用 tsup 构建，不直接依赖 vite，peer 警告可忽略
+   - `packages/notionx` 本身用 tsup 构建，不直接依赖 vite，peer 警告可忽略
    - 若 vinext 新版引入新的 peer 要求，需评估是否影响模板
 
 ## 升级后验证
@@ -89,9 +89,9 @@ pnpm --filter @notionx/core build
 ## 风险点
 
 - **vinext 仍处于 0.x 阶段**：minor 版本可能引入破坏性变更，每次升级都要跑完整验证
-- **`vinext/server/app-router-entry` 是关键 API**：worker 入口直接 import 它，若该模块路径或签名变更，需同步修改 [worker/index.ts.tmpl](../../packages/create-nextion-app/src/templates/worker/index.ts.tmpl)
+- **`vinext/server/app-router-entry` 是关键 API**：worker 入口直接 import 它，若该模块路径或签名变更，需同步修改 [worker/index.ts.tmpl](../../packages/create-notionx-app/src/templates/worker/index.ts.tmpl)
 - **Vite 版本耦合**：vinext 对 vite 有 peer 要求，模板里固定 `vite: ^8`，若 vinext 未来要求 vite 9+，需同步升级模板
-- **Cloudflare Workers 运行时行为**：vinext 升级可能改变 RSC、streaming、edge cache 的行为，需关注 [packages/nextion/src/worker/bootstrap.ts](../../packages/nextion/src/worker/bootstrap.ts) 和 [packages/nextion/src/platform/cloudflare-runtime.ts](../../packages/nextion/src/platform/cloudflare-runtime.ts) 的交互
+- **Cloudflare Workers 运行时行为**：vinext 升级可能改变 RSC、streaming、edge cache 的行为，需关注 [packages/notionx/src/worker/bootstrap.ts](../../packages/notionx/src/worker/bootstrap.ts) 和 [packages/notionx/src/platform/cloudflare-runtime.ts](../../packages/notionx/src/platform/cloudflare-runtime.ts) 的交互
 
 ## 回滚
 
@@ -99,5 +99,5 @@ pnpm --filter @notionx/core build
 
 1. 将 `package.json` 和模板里的 vinext 版本改回上一个已知可用版本
 2. `pnpm install --no-frozen-lockfile`
-3. 恢复 [render.test.ts](../../packages/create-nextion-app/src/render.test.ts) 中的版本断言
+3. 恢复 [render.test.ts](../../packages/create-notionx-app/src/render.test.ts) 中的版本断言
 4. 在本文件的"升级历史"表格里标注该版本为"已回滚"

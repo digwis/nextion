@@ -16,23 +16,23 @@
 
 ## File Map
 
-- Modify: `packages/nextion/src/locale-contract/define.ts`
+- Modify: `packages/notionx/src/locale-contract/define.ts`
   Purpose: Add a `defineLocaleContract` helper that lets user code register a custom contract with field maps, fallback rule, and list path. Re-uses the existing registry.
-- Modify: `packages/nextion/src/locale-contract/index.ts`
+- Modify: `packages/notionx/src/locale-contract/index.ts`
   Purpose: Re-export the new helper.
-- Create: `packages/nextion/tests/locale-contract/define-custom.test.ts`
+- Create: `packages/notionx/tests/locale-contract/define-custom.test.ts`
   Purpose: Test the custom-contract helper.
 - Create: `docs/locale-contract-extension-example.md`
   Purpose: End-to-end worked example: "add a `products` content source to a starter, declare a `products` translation contract, wire it into the i18n module". Lives in the repo root docs folder so it can be linked from README and from generated starter docs.
-- Create: `packages/create-nextion-app/src/locale-add/list.ts`
+- Create: `packages/create-notionx-app/src/locale-add/list.ts`
   Purpose: Pure helper that returns a printable table of the current supported locales + translation source status.
-- Create: `packages/create-nextion-app/src/locale-add/list.test.ts`
+- Create: `packages/create-notionx-app/src/locale-add/list.test.ts`
   Purpose: Test the list helper.
-- Modify: `packages/create-nextion-app/src/cli-nextion.ts`
+- Modify: `packages/create-notionx-app/src/cli-notionx.ts`
   Purpose: Add a `nextion locale list` subcommand (and a `nextion locale` help message) without breaking the existing `nextion locale add` flow.
-- Modify: `packages/create-nextion-app/src/templates/lib/locale-contract/index.ts.tmpl`
+- Modify: `packages/create-notionx-app/src/templates/lib/locale-contract/index.ts.tmpl`
   Purpose: Add a stub `defineLocaleContract` re-export so generated projects can build their own custom contracts.
-- Modify: `packages/create-nextion-app/src/templates/README.md.tmpl`
+- Modify: `packages/create-notionx-app/src/templates/README.md.tmpl`
   Purpose: Reference the new extension-example doc and the new `npx nextion locale list` command.
 - Create: `.changeset/multilingual-starter-foundation-phase-3.md`
   Purpose: Changeset for the Phase 3 minor.
@@ -42,16 +42,16 @@
 ### Task 1: Add The `defineLocaleContract` Helper
 
 **Files:**
-- Modify: `packages/nextion/src/locale-contract/define.ts`
-- Modify: `packages/nextion/src/locale-contract/index.ts`
-- Create: `packages/nextion/tests/locale-contract/define-custom.test.ts`
+- Modify: `packages/notionx/src/locale-contract/define.ts`
+- Modify: `packages/notionx/src/locale-contract/index.ts`
+- Create: `packages/notionx/tests/locale-contract/define-custom.test.ts`
 
 - [ ] **Step 1: Write the failing test**
 
-Create `packages/nextion/tests/locale-contract/define-custom.test.ts`:
+Create `packages/notionx/tests/locale-contract/define-custom.test.ts`:
 
 ```ts
-// packages/nextion/tests/locale-contract/define-custom.test.ts
+// packages/notionx/tests/locale-contract/define-custom.test.ts
 import { describe, expect, it } from "vitest";
 import {
   clearLocalizedRegistryForTests,
@@ -95,7 +95,7 @@ Expected: FAIL with "defineLocaleContract is not a function"
 
 - [ ] **Step 3: Add the helper**
 
-Edit `packages/nextion/src/locale-contract/define.ts` and append a new helper after the existing exports. It must work for any string id, so it widens the type at the boundary:
+Edit `packages/notionx/src/locale-contract/define.ts` and append a new helper after the existing exports. It must work for any string id, so it widens the type at the boundary:
 
 ```ts
 import type { FieldMap, LocaleContract, LocaleFallbackRule } from "./contract";
@@ -124,7 +124,7 @@ export function defineLocaleContract(input: {
 }
 ```
 
-Edit `packages/nextion/src/locale-contract/index.ts` to re-export the new helper. Replace the `export * from "./define"` line with:
+Edit `packages/notionx/src/locale-contract/index.ts` to re-export the new helper. Replace the `export * from "./define"` line with:
 
 ```ts
 export * from "./define";
@@ -139,9 +139,9 @@ Expected: PASS
 - [ ] **Step 5: Commit**
 
 ```bash
-git add packages/nextion/src/locale-contract/define.ts \
-        packages/nextion/src/locale-contract/index.ts \
-        packages/nextion/tests/locale-contract/define-custom.test.ts
+git add packages/notionx/src/locale-contract/define.ts \
+        packages/notionx/src/locale-contract/index.ts \
+        packages/notionx/tests/locale-contract/define-custom.test.ts
 git commit -m "feat(nextion): add defineLocaleContract helper for custom content models"
 ```
 
@@ -284,16 +284,16 @@ git commit -m "docs: add locale-contract extension example for custom content mo
 ### Task 3: Add The `nextion locale list` Subcommand
 
 **Files:**
-- Create: `packages/create-nextion-app/src/locale-add/list.ts`
-- Create: `packages/create-nextion-app/src/locale-add/list.test.ts`
-- Modify: `packages/create-nextion-app/src/cli-nextion.ts`
+- Create: `packages/create-notionx-app/src/locale-add/list.ts`
+- Create: `packages/create-notionx-app/src/locale-add/list.test.ts`
+- Modify: `packages/create-notionx-app/src/cli-notionx.ts`
 
 - [ ] **Step 1: Write the failing test**
 
-Create `packages/create-nextion-app/src/locale-add/list.test.ts`:
+Create `packages/create-notionx-app/src/locale-add/list.test.ts`:
 
 ```ts
-// packages/create-nextion-app/src/locale-add/list.test.ts
+// packages/create-notionx-app/src/locale-add/list.test.ts
 import { describe, expect, it } from "vitest";
 import { buildLocaleListView } from "../../src/locale-add/list";
 import type { ScaffoldMetadata } from "../../src/metadata";
@@ -344,10 +344,10 @@ Expected: FAIL with "Cannot find module '../../src/locale-add/list'"
 
 - [ ] **Step 3: Implement the helper**
 
-Create `packages/create-nextion-app/src/locale-add/list.ts`:
+Create `packages/create-notionx-app/src/locale-add/list.ts`:
 
 ```ts
-// packages/create-nextion-app/src/locale-add/list.ts
+// packages/create-notionx-app/src/locale-add/list.ts
 //
 // Read-only helper that turns the scaffold metadata into a printable
 // `nextion locale list` view. The view is plain data so it can be
@@ -404,7 +404,7 @@ Expected: PASS
 
 - [ ] **Step 5: Wire the subcommand into the CLI**
 
-Edit `packages/create-nextion-app/src/cli-nextion.ts`. Inside `main`, before the existing `throw new Error("Unsupported command: ...")` line, add a new branch for `locale list` (and a `locale` help message):
+Edit `packages/create-notionx-app/src/cli-notionx.ts`. Inside `main`, before the existing `throw new Error("Unsupported command: ...")` line, add a new branch for `locale list` (and a `locale` help message):
 
 ```ts
 if (command === "locale" && subcommand === "list") {
@@ -435,9 +435,9 @@ if (command === "locale" && !subcommand) {
 - [ ] **Step 6: Commit**
 
 ```bash
-git add packages/create-nextion-app/src/locale-add/list.ts \
-        packages/create-nextion-app/src/locale-add/list.test.ts \
-        packages/create-nextion-app/src/cli-nextion.ts
+git add packages/create-notionx-app/src/locale-add/list.ts \
+        packages/create-notionx-app/src/locale-add/list.test.ts \
+        packages/create-notionx-app/src/cli-notionx.ts
 git commit -m "feat(create-nextion-app): add `nextion locale list` subcommand"
 ```
 
@@ -446,12 +446,12 @@ git commit -m "feat(create-nextion-app): add `nextion locale list` subcommand"
 ### Task 4: Surface The Extension Helper In The Generated Project
 
 **Files:**
-- Modify: `packages/create-nextion-app/src/templates/lib/locale-contract/index.ts.tmpl`
-- Modify: `packages/create-nextion-app/src/templates/README.md.tmpl`
+- Modify: `packages/create-notionx-app/src/templates/lib/locale-contract/index.ts.tmpl`
+- Modify: `packages/create-notionx-app/src/templates/README.md.tmpl`
 
 - [ ] **Step 1: Re-export the helper from the generated project**
 
-Edit `packages/create-nextion-app/src/templates/lib/locale-contract/index.ts.tmpl` to add a `defineLocaleContract` re-export:
+Edit `packages/create-notionx-app/src/templates/lib/locale-contract/index.ts.tmpl` to add a `defineLocaleContract` re-export:
 
 ```ts
 export * from "./built-in";
@@ -461,7 +461,7 @@ export { defineLocaleContract } from "@notionx/core";
 
 - [ ] **Step 2: Reference the new doc and command from the template README**
 
-Edit `packages/create-nextion-app/src/templates/README.md.tmpl`. After the existing "Multilingual foundation" section, append:
+Edit `packages/create-notionx-app/src/templates/README.md.tmpl`. After the existing "Multilingual foundation" section, append:
 
 ````markdown
 ## Custom content models
@@ -480,8 +480,8 @@ Prints the current supported locales plus the status of each built-in translatio
 - [ ] **Step 3: Commit**
 
 ```bash
-git add packages/create-nextion-app/src/templates/lib/locale-contract/index.ts.tmpl \
-        packages/create-nextion-app/src/templates/README.md.tmpl
+git add packages/create-notionx-app/src/templates/lib/locale-contract/index.ts.tmpl \
+        packages/create-notionx-app/src/templates/README.md.tmpl
 git commit -m "feat(create-nextion-app): surface defineLocaleContract and locale list in the scaffold"
 ```
 

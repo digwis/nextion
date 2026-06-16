@@ -16,59 +16,59 @@
 
 ## File Map
 
-- Create: `packages/nextion/src/locale-contract/index.ts`
+- Create: `packages/notionx/src/locale-contract/index.ts`
   Purpose: Public surface for the built-in four-model locale contract.
-- Create: `packages/nextion/src/locale-contract/contract.ts`
+- Create: `packages/notionx/src/locale-contract/contract.ts`
   Purpose: Type-level definitions for `LocaleContract`, `BaseFieldMap`, `TranslationFieldMap`, model identifiers, and locale-related helpers.
-- Create: `packages/nextion/src/locale-contract/built-in.ts`
+- Create: `packages/notionx/src/locale-contract/built-in.ts`
   Purpose: Concrete default field shapes for `blog`, `pages`, `blocks`, and `site-settings` (base + translation sides).
-- Create: `packages/nextion/src/locale-contract/define.ts`
+- Create: `packages/notionx/src/locale-contract/define.ts`
   Purpose: `defineLocalizedContentSource` that registers a `base + translations` source with a contract id, similar to `defineContentSource`.
-- Create: `packages/nextion/src/locale-contract/lookup.ts`
+- Create: `packages/notionx/src/locale-contract/lookup.ts`
   Purpose: Pure helpers for picking the right translation for a locale with explicit fallback semantics.
-- Create: `packages/nextion/src/locale-contract/paths.ts`
+- Create: `packages/notionx/src/locale-contract/paths.ts`
   Purpose: Model-aware localized list/detail path helpers that compose with the existing i18n `localizedPath` / `localizedDetailPath`.
-- Create: `packages/nextion/src/locale-contract/locale-switcher.ts`
+- Create: `packages/notionx/src/locale-contract/locale-switcher.ts`
   Purpose: Pure helper that produces alternate URLs across a model's translations with the fallback rule (list if detail missing).
-- Modify: `packages/nextion/src/index.ts`
+- Modify: `packages/notionx/src/index.ts`
   Purpose: Re-export the new `locale-contract` module from the top-level entry.
-- Modify: `packages/nextion/src/i18n/index.ts`
+- Modify: `packages/notionx/src/i18n/index.ts`
   Purpose: Re-export `defineI18nConfig` from the i18n module so locale-contract callers have a single import.
-- Create: `packages/nextion/tests/locale-contract/built-in.test.ts`
+- Create: `packages/notionx/tests/locale-contract/built-in.test.ts`
   Purpose: Lock the canonical field maps for the four built-in models.
-- Create: `packages/nextion/tests/locale-contract/define.test.ts`
+- Create: `packages/notionx/tests/locale-contract/define.test.ts`
   Purpose: Verify `defineLocalizedContentSource` registers and deduplicates entries.
-- Create: `packages/nextion/tests/locale-contract/lookup.test.ts`
+- Create: `packages/notionx/tests/locale-contract/lookup.test.ts`
   Purpose: Verify the strict / fallback / hidden lookup semantics for all four models.
-- Create: `packages/nextion/tests/locale-contract/paths.test.ts`
+- Create: `packages/notionx/tests/locale-contract/paths.test.ts`
   Purpose: Verify default-locale routes stay unprefixed and non-default locales get a prefix.
-- Create: `packages/nextion/tests/locale-contract/locale-switcher.test.ts`
+- Create: `packages/notionx/tests/locale-contract/locale-switcher.test.ts`
   Purpose: Verify the LocaleSwitcher fallback to the localized list when a detail translation is missing.
-- Modify: `packages/create-nextion-app/src/templates/lib/i18n/config.ts.tmpl`
+- Modify: `packages/create-notionx-app/src/templates/lib/i18n/config.ts.tmpl`
   Purpose: Generate a project-level i18n config that exposes `defineI18nConfig` with the supported locales.
-- Create: `packages/create-nextion-app/src/templates/lib/i18n/index.ts.tmpl`
+- Create: `packages/create-notionx-app/src/templates/lib/i18n/index.ts.tmpl`
   Purpose: Re-export the project i18n config so app routes and lib code share the same locale constants.
-- Create: `packages/create-nextion-app/src/templates/lib/locale-contract/built-in.ts.tmpl`
+- Create: `packages/create-notionx-app/src/templates/lib/locale-contract/built-in.ts.tmpl`
   Purpose: Re-export the four built-in contracts from `@notionx/core` so the generated project has a single import path.
-- Create: `packages/create-nextion-app/src/templates/lib/locale-contract/index.ts.tmpl`
+- Create: `packages/create-notionx-app/src/templates/lib/locale-contract/index.ts.tmpl`
   Purpose: Project-level barrel re-exporting the locale-contract helpers and built-ins.
-- Create: `packages/create-nextion-app/src/templates/lib/locale-contract/paths.ts.tmpl`
+- Create: `packages/create-notionx-app/src/templates/lib/locale-contract/paths.ts.tmpl`
   Purpose: A thin wrapper that bakes the project's list paths and the default locale into the helpers, so route code does not import the runtime config in every call.
-- Create: `packages/create-nextion-app/src/templates/components/site/locale-switcher.tsx.tmpl`
+- Create: `packages/create-notionx-app/src/templates/components/site/locale-switcher.tsx.tmpl`
   Purpose: Default `LocaleSwitcher` UI that links to the same model in the chosen locale with the list-fallback rule.
-- Modify: `packages/create-nextion-app/src/templates/components/site/site-header.tsx.tmpl`
+- Modify: `packages/create-notionx-app/src/templates/components/site/site-header.tsx.tmpl`
   Purpose: Render the `LocaleSwitcher` inside the header when more than one locale is configured.
-- Modify: `packages/create-nextion-app/src/templates/components/site/site-footer.tsx.tmpl`
+- Modify: `packages/create-notionx-app/src/templates/components/site/site-footer.tsx.tmpl`
   Purpose: Render a minimal locale marker (locale code) in the footer.
-- Create: `packages/create-nextion-app/src/templates/lib/pages/translations.ts.tmpl`
+- Create: `packages/create-notionx-app/src/templates/lib/pages/translations.ts.tmpl`
   Purpose: Localized page lookup helpers built on top of the locale-contract primitives.
-- Create: `packages/create-nextion-app/src/templates/lib/blog/translations.ts.tmpl`
+- Create: `packages/create-notionx-app/src/templates/lib/blog/translations.ts.tmpl`
   Purpose: Localized blog post lookup helpers built on top of the locale-contract primitives.
-- Create: `packages/create-nextion-app/src/templates/lib/blocks/translations.ts.tmpl`
+- Create: `packages/create-notionx-app/src/templates/lib/blocks/translations.ts.tmpl`
   Purpose: Localized block lookup helpers with default-locale fallback for missing translations.
-- Create: `packages/create-nextion-app/src/templates/lib/site/translations.ts.tmpl`
+- Create: `packages/create-notionx-app/src/templates/lib/site/translations.ts.tmpl`
   Purpose: Localized site-settings translation merge with default-locale fallback.
-- Modify: `packages/create-nextion-app/src/templates/README.md.tmpl`
+- Modify: `packages/create-notionx-app/src/templates/README.md.tmpl`
   Purpose: Document the multilingual foundation shape, the four built-in models, and the LocaleSwitcher.
 
 ---
@@ -76,11 +76,11 @@
 ### Task 1: Define The Locale Contract Types
 
 **Files:**
-- Create: `packages/nextion/src/locale-contract/contract.ts`
+- Create: `packages/notionx/src/locale-contract/contract.ts`
 
 - [ ] **Step 1: Write the failing tests**
 
-Create `packages/nextion/tests/locale-contract/built-in.test.ts` (the import resolution step will fail until the file exists):
+Create `packages/notionx/tests/locale-contract/built-in.test.ts` (the import resolution step will fail until the file exists):
 
 ```ts
 import { describe, expect, it } from "vitest";
@@ -122,10 +122,10 @@ Expected: FAIL with "Cannot find module '../../src/locale-contract/built-in'"
 
 - [ ] **Step 3: Create the contract types module**
 
-Create `packages/nextion/src/locale-contract/contract.ts`:
+Create `packages/notionx/src/locale-contract/contract.ts`:
 
 ```ts
-// packages/nextion/src/locale-contract/contract.ts
+// packages/notionx/src/locale-contract/contract.ts
 //
 // Canonical types for the multilingual foundation. A `LocaleContract`
 // pins the Notion data-source name, the base field map, the translation
@@ -181,14 +181,14 @@ Expected: FAIL with "Cannot find module '../../src/locale-contract/built-in'"
 ### Task 2: Ship The Built-In Contract Defaults
 
 **Files:**
-- Create: `packages/nextion/src/locale-contract/built-in.ts`
+- Create: `packages/notionx/src/locale-contract/built-in.ts`
 
 - [ ] **Step 1: Implement the built-in defaults**
 
-Create `packages/nextion/src/locale-contract/built-in.ts`:
+Create `packages/notionx/src/locale-contract/built-in.ts`:
 
 ```ts
-// packages/nextion/src/locale-contract/built-in.ts
+// packages/notionx/src/locale-contract/built-in.ts
 //
 // Default field maps for the four built-in starter models. These names
 // are what the scaffolder will provision in Notion and what the
@@ -354,9 +354,9 @@ Expected: PASS
 - [ ] **Step 3: Commit**
 
 ```bash
-git add packages/nextion/src/locale-contract/contract.ts \
-        packages/nextion/src/locale-contract/built-in.ts \
-        packages/nextion/tests/locale-contract/built-in.test.ts
+git add packages/notionx/src/locale-contract/contract.ts \
+        packages/notionx/src/locale-contract/built-in.ts \
+        packages/notionx/tests/locale-contract/built-in.test.ts
 git commit -m "feat(nextion): add built-in locale contracts for the four starter models"
 ```
 
@@ -365,13 +365,13 @@ git commit -m "feat(nextion): add built-in locale contracts for the four starter
 ### Task 3: Add `defineLocalizedContentSource` Registration
 
 **Files:**
-- Create: `packages/nextion/src/locale-contract/define.ts`
-- Create: `packages/nextion/src/locale-contract/index.ts`
-- Create: `packages/nextion/tests/locale-contract/define.test.ts`
+- Create: `packages/notionx/src/locale-contract/define.ts`
+- Create: `packages/notionx/src/locale-contract/index.ts`
+- Create: `packages/notionx/tests/locale-contract/define.test.ts`
 
 - [ ] **Step 1: Write the failing test**
 
-Create `packages/nextion/tests/locale-contract/define.test.ts`:
+Create `packages/notionx/tests/locale-contract/define.test.ts`:
 
 ```ts
 import { describe, expect, it } from "vitest";
@@ -412,10 +412,10 @@ Expected: FAIL with "Cannot find module '../../src/locale-contract/define'"
 
 - [ ] **Step 3: Implement the registry**
 
-Create `packages/nextion/src/locale-contract/define.ts`:
+Create `packages/notionx/src/locale-contract/define.ts`:
 
 ```ts
-// packages/nextion/src/locale-contract/define.ts
+// packages/notionx/src/locale-contract/define.ts
 //
 // Registry for locale-aware content sources. Mirrors the shape of
 // `defineContentSource` in `content/models.ts` so call sites use the
@@ -450,10 +450,10 @@ export function clearLocalizedRegistryForTests(): void {
 }
 ```
 
-Create `packages/nextion/src/locale-contract/index.ts`:
+Create `packages/notionx/src/locale-contract/index.ts`:
 
 ```ts
-// packages/nextion/src/locale-contract/index.ts
+// packages/notionx/src/locale-contract/index.ts
 //
 // Public surface for the multilingual foundation. Re-exports the
 // built-in contracts, the registry helpers, and the pure lookup /
@@ -477,12 +477,12 @@ Expected: FAIL because `lookup`, `paths`, `locale-switcher` are not yet exported
 ### Task 4: Implement Lookup Helpers With Fallback Semantics
 
 **Files:**
-- Create: `packages/nextion/src/locale-contract/lookup.ts`
-- Create: `packages/nextion/tests/locale-contract/lookup.test.ts`
+- Create: `packages/notionx/src/locale-contract/lookup.ts`
+- Create: `packages/notionx/tests/locale-contract/lookup.test.ts`
 
 - [ ] **Step 1: Write the failing test**
 
-Create `packages/nextion/tests/locale-contract/lookup.test.ts`:
+Create `packages/notionx/tests/locale-contract/lookup.test.ts`:
 
 ```ts
 import { describe, expect, it } from "vitest";
@@ -532,10 +532,10 @@ Expected: FAIL with "Cannot find module '../../src/locale-contract/lookup'"
 
 - [ ] **Step 3: Implement the lookup helpers**
 
-Create `packages/nextion/src/locale-contract/lookup.ts`:
+Create `packages/notionx/src/locale-contract/lookup.ts`:
 
 ```ts
-// packages/nextion/src/locale-contract/lookup.ts
+// packages/notionx/src/locale-contract/lookup.ts
 //
 // Pure translation lookup helpers. They never touch Notion — pass the
 // already-loaded translation rows in. The three functions below cover
@@ -591,11 +591,11 @@ Expected: PASS
 - [ ] **Step 5: Commit**
 
 ```bash
-git add packages/nextion/src/locale-contract/define.ts \
-        packages/nextion/src/locale-contract/lookup.ts \
-        packages/nextion/src/locale-contract/index.ts \
-        packages/nextion/tests/locale-contract/define.test.ts \
-        packages/nextion/tests/locale-contract/lookup.test.ts
+git add packages/notionx/src/locale-contract/define.ts \
+        packages/notionx/src/locale-contract/lookup.ts \
+        packages/notionx/src/locale-contract/index.ts \
+        packages/notionx/tests/locale-contract/define.test.ts \
+        packages/notionx/tests/locale-contract/lookup.test.ts
 git commit -m "feat(nextion): add locale-contract registry and fallback-aware lookup helpers"
 ```
 
@@ -604,14 +604,14 @@ git commit -m "feat(nextion): add locale-contract registry and fallback-aware lo
 ### Task 5: Add Locale-Aware Path And Switcher Helpers
 
 **Files:**
-- Create: `packages/nextion/src/locale-contract/paths.ts`
-- Create: `packages/nextion/src/locale-contract/locale-switcher.ts`
-- Create: `packages/nextion/tests/locale-contract/paths.test.ts`
-- Create: `packages/nextion/tests/locale-contract/locale-switcher.test.ts`
+- Create: `packages/notionx/src/locale-contract/paths.ts`
+- Create: `packages/notionx/src/locale-contract/locale-switcher.ts`
+- Create: `packages/notionx/tests/locale-contract/paths.test.ts`
+- Create: `packages/notionx/tests/locale-contract/locale-switcher.test.ts`
 
 - [ ] **Step 1: Write the failing test for paths**
 
-Create `packages/nextion/tests/locale-contract/paths.test.ts`:
+Create `packages/notionx/tests/locale-contract/paths.test.ts`:
 
 ```ts
 import { describe, expect, it } from "vitest";
@@ -664,10 +664,10 @@ Expected: FAIL with "Cannot find module '../../src/locale-contract/paths'"
 
 - [ ] **Step 3: Implement the path helpers**
 
-Create `packages/nextion/src/locale-contract/paths.ts`:
+Create `packages/notionx/src/locale-contract/paths.ts`:
 
 ```ts
-// packages/nextion/src/locale-contract/paths.ts
+// packages/notionx/src/locale-contract/paths.ts
 //
 // Locale-aware list / detail / strip helpers. Default-locale routes
 // stay unprefixed (`/blog`); non-default locales get a prefix
@@ -712,7 +712,7 @@ function joinPath(left: string, right: string) {
 
 - [ ] **Step 4: Write the failing test for the locale switcher**
 
-Create `packages/nextion/tests/locale-contract/locale-switcher.test.ts`:
+Create `packages/notionx/tests/locale-contract/locale-switcher.test.ts`:
 
 ```ts
 import { describe, expect, it } from "vitest";
@@ -764,10 +764,10 @@ Expected: FAIL with "Cannot find module '../../src/locale-contract/locale-switch
 
 - [ ] **Step 6: Implement the locale switcher**
 
-Create `packages/nextion/src/locale-contract/locale-switcher.ts`:
+Create `packages/notionx/src/locale-contract/locale-switcher.ts`:
 
 ```ts
-// packages/nextion/src/locale-contract/locale-switcher.ts
+// packages/notionx/src/locale-contract/locale-switcher.ts
 //
 // Pure helper that produces the `LocaleSwitcher` link list. The rule
 // is documented in the design:
@@ -838,10 +838,10 @@ Expected: PASS for all four files
 - [ ] **Step 8: Commit**
 
 ```bash
-git add packages/nextion/src/locale-contract/paths.ts \
-        packages/nextion/src/locale-contract/locale-switcher.ts \
-        packages/nextion/tests/locale-contract/paths.test.ts \
-        packages/nextion/tests/locale-contract/locale-switcher.test.ts
+git add packages/notionx/src/locale-contract/paths.ts \
+        packages/notionx/src/locale-contract/locale-switcher.ts \
+        packages/notionx/tests/locale-contract/paths.test.ts \
+        packages/notionx/tests/locale-contract/locale-switcher.test.ts
 git commit -m "feat(nextion): add locale-aware path helpers and locale switcher"
 ```
 
@@ -850,12 +850,12 @@ git commit -m "feat(nextion): add locale-aware path helpers and locale switcher"
 ### Task 6: Re-Expose The Locale Contract From The Top-Level Entry
 
 **Files:**
-- Modify: `packages/nextion/src/index.ts`
-- Modify: `packages/nextion/src/i18n/index.ts`
+- Modify: `packages/notionx/src/index.ts`
+- Modify: `packages/notionx/src/i18n/index.ts`
 
 - [ ] **Step 1: Add the top-level re-export**
 
-Edit `packages/nextion/src/index.ts` so the new module is reachable from the package root. Replace the existing top-level exports with:
+Edit `packages/notionx/src/index.ts` so the new module is reachable from the package root. Replace the existing top-level exports with:
 
 ```ts
 // Public top-level entry. Subpath exports carry the bulk of the API.
@@ -916,7 +916,7 @@ export {
 
 - [ ] **Step 2: Re-export `defineI18nConfig` from the i18n barrel**
 
-Edit `packages/nextion/src/i18n/index.ts`:
+Edit `packages/notionx/src/i18n/index.ts`:
 
 ```ts
 export * from "./config";
@@ -932,7 +932,7 @@ Expected: exit code `0`
 - [ ] **Step 4: Commit**
 
 ```bash
-git add packages/nextion/src/index.ts packages/nextion/src/i18n/index.ts
+git add packages/notionx/src/index.ts packages/notionx/src/i18n/index.ts
 git commit -m "feat(nextion): expose locale-contract primitives from the public entry"
 ```
 
@@ -941,12 +941,12 @@ git commit -m "feat(nextion): expose locale-contract primitives from the public 
 ### Task 7: Generate Project i18n Config In The Scaffold
 
 **Files:**
-- Create: `packages/create-nextion-app/src/templates/lib/i18n/config.ts.tmpl`
-- Create: `packages/create-nextion-app/src/templates/lib/i18n/index.ts.tmpl`
+- Create: `packages/create-notionx-app/src/templates/lib/i18n/config.ts.tmpl`
+- Create: `packages/create-notionx-app/src/templates/lib/i18n/index.ts.tmpl`
 
 - [ ] **Step 1: Create the project i18n config template**
 
-Create `packages/create-nextion-app/src/templates/lib/i18n/config.ts.tmpl`:
+Create `packages/create-notionx-app/src/templates/lib/i18n/config.ts.tmpl`:
 
 ```ts
 // Project-level i18n config. Re-exports the runtime helpers from
@@ -971,7 +971,7 @@ export function isAppLocale(value: string): value is AppLocale {
 
 - [ ] **Step 2: Create the i18n barrel template**
 
-Create `packages/create-nextion-app/src/templates/lib/i18n/index.ts.tmpl`:
+Create `packages/create-notionx-app/src/templates/lib/i18n/index.ts.tmpl`:
 
 ```ts
 export * from "./config";
@@ -980,8 +980,8 @@ export * from "./config";
 - [ ] **Step 3: Commit**
 
 ```bash
-git add packages/create-nextion-app/src/templates/lib/i18n/config.ts.tmpl \
-        packages/create-nextion-app/src/templates/lib/i18n/index.ts.tmpl
+git add packages/create-notionx-app/src/templates/lib/i18n/config.ts.tmpl \
+        packages/create-notionx-app/src/templates/lib/i18n/index.ts.tmpl
 git commit -m "feat(create-nextion-app): ship project i18n config in the scaffold"
 ```
 
@@ -990,13 +990,13 @@ git commit -m "feat(create-nextion-app): ship project i18n config in the scaffol
 ### Task 8: Generate Project Locale-Contract Module
 
 **Files:**
-- Create: `packages/create-nextion-app/src/templates/lib/locale-contract/built-in.ts.tmpl`
-- Create: `packages/create-nextion-app/src/templates/lib/locale-contract/paths.ts.tmpl`
-- Create: `packages/create-nextion-app/src/templates/lib/locale-contract/index.ts.tmpl`
+- Create: `packages/create-notionx-app/src/templates/lib/locale-contract/built-in.ts.tmpl`
+- Create: `packages/create-notionx-app/src/templates/lib/locale-contract/paths.ts.tmpl`
+- Create: `packages/create-notionx-app/src/templates/lib/locale-contract/index.ts.tmpl`
 
 - [ ] **Step 1: Create the built-in re-export template**
 
-Create `packages/create-nextion-app/src/templates/lib/locale-contract/built-in.ts.tmpl`:
+Create `packages/create-notionx-app/src/templates/lib/locale-contract/built-in.ts.tmpl`:
 
 ```ts
 // Built-in locale contracts re-exported under a project-friendly
@@ -1022,7 +1022,7 @@ export const siteSettingsContract = coreSiteSettingsContract;
 
 - [ ] **Step 2: Create the project path helper template**
 
-Create `packages/create-nextion-app/src/templates/lib/locale-contract/paths.ts.tmpl`:
+Create `packages/create-notionx-app/src/templates/lib/locale-contract/paths.ts.tmpl`:
 
 ```ts
 // Thin wrappers around the core path helpers that bake the project's
@@ -1058,7 +1058,7 @@ export function stripBlogLocale(path: string, locale: string) {
 
 - [ ] **Step 3: Create the locale-contract barrel template**
 
-Create `packages/create-nextion-app/src/templates/lib/locale-contract/index.ts.tmpl`:
+Create `packages/create-notionx-app/src/templates/lib/locale-contract/index.ts.tmpl`:
 
 ```ts
 export * from "./built-in";
@@ -1068,7 +1068,7 @@ export * from "./paths";
 - [ ] **Step 4: Commit**
 
 ```bash
-git add packages/create-nextion-app/src/templates/lib/locale-contract/
+git add packages/create-notionx-app/src/templates/lib/locale-contract/
 git commit -m "feat(create-nextion-app): ship locale-contract module in the scaffold"
 ```
 
@@ -1077,14 +1077,14 @@ git commit -m "feat(create-nextion-app): ship locale-contract module in the scaf
 ### Task 9: Generate Per-Model Translation Lookup Helpers
 
 **Files:**
-- Create: `packages/create-nextion-app/src/templates/lib/blog/translations.ts.tmpl`
-- Create: `packages/create-nextion-app/src/templates/lib/pages/translations.ts.tmpl`
-- Create: `packages/create-nextion-app/src/templates/lib/blocks/translations.ts.tmpl`
-- Create: `packages/create-nextion-app/src/templates/lib/site/translations.ts.tmpl`
+- Create: `packages/create-notionx-app/src/templates/lib/blog/translations.ts.tmpl`
+- Create: `packages/create-notionx-app/src/templates/lib/pages/translations.ts.tmpl`
+- Create: `packages/create-notionx-app/src/templates/lib/blocks/translations.ts.tmpl`
+- Create: `packages/create-notionx-app/src/templates/lib/site/translations.ts.tmpl`
 
 - [ ] **Step 1: Create the blog translations template**
 
-Create `packages/create-nextion-app/src/templates/lib/blog/translations.ts.tmpl`:
+Create `packages/create-notionx-app/src/templates/lib/blog/translations.ts.tmpl`:
 
 ```ts
 // Locale-aware blog lookup. Falls back to the default-locale
@@ -1116,7 +1116,7 @@ export function blogListForLocale(
 
 - [ ] **Step 2: Create the page translations template**
 
-Create `packages/create-nextion-app/src/templates/lib/pages/translations.ts.tmpl`:
+Create `packages/create-notionx-app/src/templates/lib/pages/translations.ts.tmpl`:
 
 ```ts
 // Locale-aware page lookup. Uses the strict-missing rule: if a
@@ -1157,7 +1157,7 @@ export function getDefaultLocalePage(
 
 - [ ] **Step 3: Create the blocks translations template**
 
-Create `packages/create-nextion-app/src/templates/lib/blocks/translations.ts.tmpl`:
+Create `packages/create-notionx-app/src/templates/lib/blocks/translations.ts.tmpl`:
 
 ```ts
 // Locale-aware block lookup. Uses the default-locale fallback rule:
@@ -1208,7 +1208,7 @@ export function pickBlockTranslation(
 
 - [ ] **Step 4: Create the site-settings translations template**
 
-Create `packages/create-nextion-app/src/templates/lib/site/translations.ts.tmpl`:
+Create `packages/create-notionx-app/src/templates/lib/site/translations.ts.tmpl`:
 
 ```ts
 // Locale-aware site settings merge. The `site-settings` Notion row
@@ -1246,10 +1246,10 @@ export function pickSiteSettingsTranslation(
 - [ ] **Step 5: Commit**
 
 ```bash
-git add packages/create-nextion-app/src/templates/lib/blog/translations.ts.tmpl \
-        packages/create-nextion-app/src/templates/lib/pages/translations.ts.tmpl \
-        packages/create-nextion-app/src/templates/lib/blocks/translations.ts.tmpl \
-        packages/create-nextion-app/src/templates/lib/site/translations.ts.tmpl
+git add packages/create-notionx-app/src/templates/lib/blog/translations.ts.tmpl \
+        packages/create-notionx-app/src/templates/lib/pages/translations.ts.tmpl \
+        packages/create-notionx-app/src/templates/lib/blocks/translations.ts.tmpl \
+        packages/create-notionx-app/src/templates/lib/site/translations.ts.tmpl
 git commit -m "feat(create-nextion-app): ship per-model locale lookup helpers in the scaffold"
 ```
 
@@ -1258,13 +1258,13 @@ git commit -m "feat(create-nextion-app): ship per-model locale lookup helpers in
 ### Task 10: Add The LocaleSwitcher Component And Wire The Header
 
 **Files:**
-- Create: `packages/create-nextion-app/src/templates/components/site/locale-switcher.tsx.tmpl`
-- Modify: `packages/create-nextion-app/src/templates/components/site/site-header.tsx.tmpl`
-- Modify: `packages/create-nextion-app/src/templates/components/site/site-footer.tsx.tmpl`
+- Create: `packages/create-notionx-app/src/templates/components/site/locale-switcher.tsx.tmpl`
+- Modify: `packages/create-notionx-app/src/templates/components/site/site-header.tsx.tmpl`
+- Modify: `packages/create-notionx-app/src/templates/components/site/site-footer.tsx.tmpl`
 
 - [ ] **Step 1: Create the LocaleSwitcher template**
 
-Create `packages/create-nextion-app/src/templates/components/site/locale-switcher.tsx.tmpl`:
+Create `packages/create-notionx-app/src/templates/components/site/locale-switcher.tsx.tmpl`:
 
 ```tsx
 // Default `LocaleSwitcher` for the four built-in starter models. Renders
@@ -1326,7 +1326,7 @@ export function LocaleSwitcher({ currentLocale, currentSlug, translations = [] }
 
 - [ ] **Step 2: Wire the LocaleSwitcher into the header**
 
-Read `packages/create-nextion-app/src/templates/components/site/site-header.tsx.tmpl` and add an import + render of `<LocaleSwitcher />` next to the existing nav links. Wrap the render in a conditional so single-locale projects do not show a switcher. The exact insertion point is inside the header `<div>` after the existing nav `<nav>` element:
+Read `packages/create-notionx-app/src/templates/components/site/site-header.tsx.tmpl` and add an import + render of `<LocaleSwitcher />` next to the existing nav links. Wrap the render in a conditional so single-locale projects do not show a switcher. The exact insertion point is inside the header `<div>` after the existing nav `<nav>` element:
 
 ```tsx
 import { LocaleSwitcher } from "./locale-switcher";
@@ -1341,7 +1341,7 @@ Make sure the file imports `i18n` from `@/lib/i18n` (add the import if it is not
 
 - [ ] **Step 3: Add a locale marker to the footer**
 
-Read `packages/create-nextion-app/src/templates/components/site/site-footer.tsx.tmpl` and, inside the footer root, render a small text marker that shows the current locale. If the existing footer has a tagline `<p>`, append the locale after a separator:
+Read `packages/create-notionx-app/src/templates/components/site/site-footer.tsx.tmpl` and, inside the footer root, render a small text marker that shows the current locale. If the existing footer has a tagline `<p>`, append the locale after a separator:
 
 ```tsx
 import { i18n } from "@/lib/i18n";
@@ -1358,9 +1358,9 @@ Expected: exit code `0` (template render tests should still pass)
 - [ ] **Step 5: Commit**
 
 ```bash
-git add packages/create-nextion-app/src/templates/components/site/locale-switcher.tsx.tmpl \
-        packages/create-nextion-app/src/templates/components/site/site-header.tsx.tmpl \
-        packages/create-nextion-app/src/templates/components/site/site-footer.tsx.tmpl
+git add packages/create-notionx-app/src/templates/components/site/locale-switcher.tsx.tmpl \
+        packages/create-notionx-app/src/templates/components/site/site-header.tsx.tmpl \
+        packages/create-notionx-app/src/templates/components/site/site-footer.tsx.tmpl
 git commit -m "feat(create-nextion-app): ship LocaleSwitcher in the starter header"
 ```
 
@@ -1369,11 +1369,11 @@ git commit -m "feat(create-nextion-app): ship LocaleSwitcher in the starter head
 ### Task 11: Document The Multilingual Foundation In The Generated README
 
 **Files:**
-- Modify: `packages/create-nextion-app/src/templates/README.md.tmpl`
+- Modify: `packages/create-notionx-app/src/templates/README.md.tmpl`
 
 - [ ] **Step 1: Add a Multilingual section**
 
-Read `packages/create-nextion-app/src/templates/README.md.tmpl` and, after the existing "Project layout" section, append a new section that explains the four built-in models, the locale contract, and the LocaleSwitcher. Use the existing README style (lowercase headings, prose, code blocks). Insert the following content after the layout section:
+Read `packages/create-notionx-app/src/templates/README.md.tmpl` and, after the existing "Project layout" section, append a new section that explains the four built-in models, the locale contract, and the LocaleSwitcher. Use the existing README style (lowercase headings, prose, code blocks). Insert the following content after the layout section:
 
 ````markdown
 ## Multilingual foundation
@@ -1405,7 +1405,7 @@ Expected: exit code `0`
 - [ ] **Step 3: Commit**
 
 ```bash
-git add packages/create-nextion-app/src/templates/README.md.tmpl
+git add packages/create-notionx-app/src/templates/README.md.tmpl
 git commit -m "docs(create-nextion-app): document the multilingual foundation"
 ```
 

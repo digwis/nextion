@@ -431,10 +431,10 @@ Forbidden imports (enforced by ESLint `import/no-restricted-paths`):
 
 Enforcement:
 
-- `packages/nextion/eslint.config.mjs` configures
+- `packages/notionx/eslint.config.mjs` configures
   `import/no-restricted-paths` with a `zone` per tier. Running
   `pnpm --filter @notionx/core lint` fails on any violation.
-- `packages/nextion/package.json` `exports` field exposes only the
+- `packages/notionx/package.json` `exports` field exposes only the
   documented subpaths. Internal modules are placed under `src/internal/`
   and excluded from `exports`. The `apps/starter` cannot import them
   even if it tries.
@@ -446,10 +446,10 @@ Enforcement:
 The package is published to **GitHub Packages** under the
 `@notionx/core` scope.
 
-- Versioning: changesets. Each PR affecting `packages/nextion/**`
+- Versioning: changesets. Each PR affecting `packages/notionx/**`
   includes a changeset file describing the change and a semver bump type.
 - Release workflow (`.github/workflows/release.yml`): on push to `main`,
-  if `packages/nextion/**` changed, run `pnpm changeset version`,
+  if `packages/notionx/**` changed, run `pnpm changeset version`,
   `pnpm --filter @notionx/core build`, `pnpm changeset publish`
   using a `GITHUB_TOKEN` with `packages: write` permission.
 - Consumer upgrade: each consumer project has a `.github/dependabot.yml`
@@ -506,18 +506,18 @@ starter must remain runnable at the end of every phase.
 ### Phase 0: Skeleton
 
 - Initialize pnpm workspace at the repo root.
-- Create `packages/nextion/` with empty `package.json`, `tsconfig.json`,
+- Create `packages/notionx/` with empty `package.json`, `tsconfig.json`,
   and `tsup.config.ts`.
 - Move all current root files into `apps/starter/`.
 - Update root `package.json` to be a workspace root with `pnpm -r` scripts.
 - Add `pnpm-workspace.yaml` and `.npmrc` for pnpm.
-- Add a minimal `packages/nextion/src/index.ts` placeholder so the
+- Add a minimal `packages/notionx/src/index.ts` placeholder so the
   package compiles.
-- Configure `packages/nextion/eslint.config.mjs` with
+- Configure `packages/notionx/eslint.config.mjs` with
   `import/no-restricted-paths` zones matching the tier rules in
   "Dependency Direction Rules". `pnpm --filter @notionx/core lint`
   must pass on the empty package.
-- Configure `packages/nextion/package.json` `exports` field with the
+- Configure `packages/notionx/package.json` `exports` field with the
   documented public subpaths; reserve `src/internal/` for modules that
   must not be importable from outside the package.
 - Wire a pre-commit hook (Husky or simple git hook) that runs
@@ -527,7 +527,7 @@ starter must remain runnable at the end of every phase.
 
 ### Phase 1: Leaf modules
 
-Move into `packages/nextion/src/`:
+Move into `packages/notionx/src/`:
 
 - `lib/platform/runtime.ts`, `cloudflare-runtime.ts`, `capabilities.ts`,
   `current.ts`, `selection.ts`
@@ -542,7 +542,7 @@ Re-export from `apps/starter/lib/...` so existing imports keep working.
 
 ### Phase 2: Notion base
 
-Move into `packages/nextion/src/notion/`:
+Move into `packages/notionx/src/notion/`:
 
 - `client.ts`, `config.ts`, `blocks.ts`, `block-text.ts`,
   `content-cache.ts`, `media.ts`, `generic-source.ts`,
@@ -561,7 +561,7 @@ moved modules. Drop the re-exports at the end of this phase.
 
 ### Phase 3: Auth
 
-Move into `packages/nextion/src/auth/`:
+Move into `packages/notionx/src/auth/`:
 
 - `auth.ts`, `session.ts`, `passwords.ts`, `users.ts`,
   `auth-rate-limit.ts`, `turnstile.ts`
@@ -578,7 +578,7 @@ Wire it through the new `createAuth({ ...authConfig })` factory.
 
 ### Phase 4: Admin framework
 
-Move into `packages/nextion/src/admin/`:
+Move into `packages/notionx/src/admin/`:
 
 - `app/admin/layout.tsx` (becomes `AdminShell`)
 - `app/admin/users/`, `app/admin/settings/`, `app/admin/account/`,
@@ -586,7 +586,7 @@ Move into `packages/nextion/src/admin/`:
 - `app/admin/DeleteButton.tsx`, `DeleteButtonLazy.tsx`, `loading.tsx`,
   the dashboard `page.tsx`
 
-Introduce `createAdminNav()` in `packages/nextion/src/admin/nav.ts`.
+Introduce `createAdminNav()` in `packages/notionx/src/admin/nav.ts`.
 `apps/starter/lib/admin/nav.ts` exports a list including the starter's
 project-specific entries (review queue, etc.).
 
@@ -629,7 +629,7 @@ export default createNextionWorker({
 
 ### Phase 6: Content abstraction
 
-Move into `packages/nextion/src/content/`:
+Move into `packages/notionx/src/content/`:
 
 - `lib/content/model.ts`, `models.ts`, `revalidate.ts`, `prewarm.ts`,
   `search.ts`, `search-index.ts`, `admin-summary.ts`
@@ -649,14 +649,14 @@ the source object so it can be passed into
 
 ### Phase 7: Scaffolder and publishing
 
-- Build a `create-nextion-app` CLI under `packages/create-nextion-app/` in the
+- Build a `create-nextion-app` CLI under `packages/create-notionx-app/` in the
   monorepo (a new private workspace). It prompts for project name, default
   locale, and first content source. It generates a fresh project skeleton
   with `wrangler.jsonc`, `migrations/`, `app/page.tsx`, an example
   `lib/content/models.ts`, and `lib/auth.config.ts` already wired up.
 - Configure changesets in the repo root.
 - Add `.github/workflows/release.yml` that:
-  1. Triggers on push to `main` when `packages/nextion/**` changes.
+  1. Triggers on push to `main` when `packages/notionx/**` changes.
   2. Runs `pnpm install` and `pnpm --filter @notionx/core build`.
   3. Runs `pnpm changeset version` and commits the version bump.
   4. Runs `pnpm changeset publish` with a `GITHUB_TOKEN` having
@@ -715,7 +715,7 @@ npm run dev:vinext
 | Tests need to run across packages | Vitest workspace config in Phase 0; shared fixtures live in the package as exported helpers. |
 | shadcn primitives are coupled to the starter | Do not import `components/ui/*` from the package; the package only depends on Radix/lucide. |
 | Consumers cannot customize admin internals easily | Expose `registerAdminExtension` with a documented `extraShellComponents` slot. |
-| Changeset bot noise on the monorepo | Only changesets touching `packages/nextion/**` are required; use the `private-package` config to skip other workspaces. |
+| Changeset bot noise on the monorepo | Only changesets touching `packages/notionx/**` are required; use the `private-package` config to skip other workspaces. |
 | Publishing a broken build to GitHub Packages | CI runs `pnpm --filter @notionx/core build` and the consumer's tests against the candidate before publish. |
 | Existing project migration friction | Phase 0–1 keep every import re-exported. Drop the re-exports only at the end of Phase 2. |
 

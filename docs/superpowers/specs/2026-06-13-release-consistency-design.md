@@ -8,7 +8,7 @@ of truth for every npm publish.
 Today, the workflow can publish to npm before the matching version commit is
 successfully pushed back to GitHub. That failure mode explains the current
 state: npm has newer package versions than the repository's `main` branch, and
-`packages/nextion-skill` is not yet visible on GitHub `main`.
+`packages/notionx-skill` is not yet visible on GitHub `main`.
 
 The design keeps Changesets and automatic npm publishing, but changes the
 release sequence to:
@@ -51,7 +51,7 @@ That ordering is risky:
 
 The current configuration also has several support issues:
 
-- `packages/nextion-skill/**` is not included in the release workflow trigger
+- `packages/notionx-skill/**` is not included in the release workflow trigger
 - some changeset files still reference old package names
 - the root workspace does not explicitly provide `@changesets/cli`
 - the workflow only builds two packages explicitly, leaving the skill package
@@ -63,7 +63,7 @@ The observed mismatch is:
 
 - GitHub `main` still shows older package versions for
   `@notionx/core` and `@notionx/create-nextion-app`
-- GitHub `main` does not yet contain `packages/nextion-skill`
+- GitHub `main` does not yet contain `packages/notionx-skill`
 - npm already exposes:
   - `@notionx/core@0.1.3`
   - `@notionx/create-nextion-app@0.4.10`
@@ -95,9 +95,9 @@ cleanup step after publish.
 
 The release workflow trigger should include:
 
-- `packages/nextion/**`
-- `packages/create-nextion-app/**`
-- `packages/nextion-skill/**`
+- `packages/notionx/**`
+- `packages/create-notionx-app/**`
+- `packages/notionx-skill/**`
 - `.changeset/**`
 - `.github/workflows/release.yml`
 
@@ -176,14 +176,14 @@ The design intentionally prefers "GitHub ahead of npm for a short time" over
 The implementation should be verified with these checks:
 
 - confirm the workflow syntax remains valid
-- confirm the trigger includes `packages/nextion-skill/**`
+- confirm the trigger includes `packages/notionx-skill/**`
 - confirm all pending changeset files use canonical package names
 - confirm `pnpm changeset version` is available from the root workspace
 - dry-run the logic mentally against the failure case:
   - push failure must block publish
 - after the next real release:
   - GitHub `main` package versions match npm `latest`
-  - GitHub `main` contains `packages/nextion-skill`
+  - GitHub `main` contains `packages/notionx-skill`
 
 ## Risks
 
