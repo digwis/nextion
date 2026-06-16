@@ -31,6 +31,7 @@ import {
   hasNotionModelConfig,
   listGenericNotionContent,
 } from "@notionx/core/notion";
+import { listGenericNotionContentForLocale } from "@notionx/core";
 import { siteSettingsSource } from "../content/models";
 import { fallbackSiteConfig, type SiteConfig } from "./config";
 
@@ -141,14 +142,14 @@ export function getStaticSiteSettings(): SiteConfig {
  * `site-settings:v1` for 5 minutes per process. Bump the cache key
  * suffix to invalidate globally after a breaking schema change.
  */
-export async function getSiteSettings(): Promise<SiteConfig> {
+export async function getSiteSettings(locale?: string): Promise<SiteConfig> {
   const kv = readKv();
   if (kv) {
     const cached = await kv.get<SiteConfig>(CACHE_KEY, "json");
     if (cached) return cached;
   }
 
-  const merged = await loadFromNotion();
+  const merged = await loadFromNotion(locale);
 
   if (kv) {
     // Best-effort write. KV failure shouldn't break the page.
@@ -160,7 +161,7 @@ export async function getSiteSettings(): Promise<SiteConfig> {
   return merged;
 }
 
-async function loadFromNotion(): Promise<SiteConfig> {
+async function loadFromNotion(locale?: string): Promise<SiteConfig> {
   // `hasNotionModelConfig` reads the env from the active request
   // context. If Notion isn't configured we return the fallback
   // untouched — never throw, so the home page can't 500 because of
@@ -179,7 +180,9 @@ async function loadFromNotion(): Promise<SiteConfig> {
     ReturnType<typeof listGenericNotionContent<typeof siteSettingsSource.source.fields>>
   >;
   try {
-    items = await listGenericNotionContent(siteSettingsSource);
+    items = locale
+      ? await listGenericNotionContentForLocale(siteSettingsSource, locale)
+      : await listGenericNotionContent(siteSettingsSource);
   } catch {
     return fallbackSiteConfig;
   }
