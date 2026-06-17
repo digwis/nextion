@@ -27,6 +27,14 @@ export interface WireInputs {
   notionBlocksDataSourceId?: string;
   /** Optional site-settings data source id (NOTION_SITE_SETTINGS_DATA_SOURCE_ID). */
   notionSiteSettingsDataSourceId?: string;
+  /** Optional blog translations data source id (NOTION_BLOG_TRANSLATIONS_DATA_SOURCE_ID). */
+  notionBlogTranslationsDataSourceId?: string;
+  /** Optional pages translations data source id (NOTION_PAGES_TRANSLATIONS_DATA_SOURCE_ID). */
+  notionPagesTranslationsDataSourceId?: string;
+  /** Optional blocks translations data source id (NOTION_BLOCKS_TRANSLATIONS_DATA_SOURCE_ID). */
+  notionBlocksTranslationsDataSourceId?: string;
+  /** Optional site-settings translations data source id (NOTION_SITE_SETTINGS_TRANSLATIONS_DATA_SOURCE_ID). */
+  notionSiteSettingsTranslationsDataSourceId?: string;
   /** Optional Resend values. */
   resendApiKey?: string;
   resendFrom?: string;
@@ -56,6 +64,30 @@ export async function patchWranglerJsonc(
     patched = patched.replace(
       /REPLACE_WITH_NOTION_BLOCKS_DATA_SOURCE_ID/g,
       inputs.notionBlocksDataSourceId
+    );
+  }
+  if (inputs.notionBlogTranslationsDataSourceId) {
+    patched = patched.replace(
+      /REPLACE_WITH_NOTION_BLOG_TRANSLATIONS_DATA_SOURCE_ID/g,
+      inputs.notionBlogTranslationsDataSourceId
+    );
+  }
+  if (inputs.notionPagesTranslationsDataSourceId) {
+    patched = patched.replace(
+      /REPLACE_WITH_NOTION_PAGES_TRANSLATIONS_DATA_SOURCE_ID/g,
+      inputs.notionPagesTranslationsDataSourceId
+    );
+  }
+  if (inputs.notionBlocksTranslationsDataSourceId) {
+    patched = patched.replace(
+      /REPLACE_WITH_NOTION_BLOCKS_TRANSLATIONS_DATA_SOURCE_ID/g,
+      inputs.notionBlocksTranslationsDataSourceId
+    );
+  }
+  if (inputs.notionSiteSettingsTranslationsDataSourceId) {
+    patched = patched.replace(
+      /REPLACE_WITH_NOTION_SITE_SETTINGS_TRANSLATIONS_DATA_SOURCE_ID/g,
+      inputs.notionSiteSettingsTranslationsDataSourceId
     );
   }
   await fs.writeFile(file, patched, "utf8");
@@ -98,6 +130,14 @@ export async function writeDevVars(
     NOTION_BLOCKS_DATA_SOURCE_ID: inputs.notionBlocksDataSourceId ?? "",
     NOTION_SITE_SETTINGS_DATA_SOURCE_ID:
       inputs.notionSiteSettingsDataSourceId ?? "",
+    NOTION_BLOG_TRANSLATIONS_DATA_SOURCE_ID:
+      inputs.notionBlogTranslationsDataSourceId ?? "",
+    NOTION_PAGES_TRANSLATIONS_DATA_SOURCE_ID:
+      inputs.notionPagesTranslationsDataSourceId ?? "",
+    NOTION_BLOCKS_TRANSLATIONS_DATA_SOURCE_ID:
+      inputs.notionBlocksTranslationsDataSourceId ?? "",
+    NOTION_SITE_SETTINGS_TRANSLATIONS_DATA_SOURCE_ID:
+      inputs.notionSiteSettingsTranslationsDataSourceId ?? "",
     RESEND_API_KEY: inputs.resendApiKey ?? "",
     RESEND_FROM: inputs.resendFrom ?? "",
     GOOGLE_CLIENT_ID: inputs.googleClientId ?? "",

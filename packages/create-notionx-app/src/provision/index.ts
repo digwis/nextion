@@ -36,6 +36,7 @@ import {
   ensurePagesDatabase,
   ensureBlocksDatabase,
   ensureSiteSettingsDatabase,
+  ensureTranslationDatabase,
 } from "./notion.js";
 import { promptNotion } from "./prompts.js";
 import {
@@ -51,6 +52,7 @@ import {
   describeNtnSource,
   type NtnCredential,
 } from "./ntn-credentials.js";
+import type { ScaffoldMetadata, TranslationSourceRef } from "../metadata.js";
 
 export interface ProvisionResult {
   d1: { ok: boolean; id?: string; message?: string; created?: boolean };
@@ -97,12 +99,30 @@ export interface ProvisionResult {
     skipped?: boolean;
   };
   admin: { ok: boolean; email: string; message?: string };
+  /**
+   * Translation data source refs created when bilingual mode is
+   * enabled (`supportedLocales.length > 1`). Keyed by translation
+   * model id (`blog-translations`, `page-translations`,
+   * `block-translations`, `site-settings-translations`). Empty when
+   * bilingual mode is off or all four sources failed to create.
+   */
+  translationSources?: Record<string, TranslationSourceRef>;
   // Internal carriers for the wire step — never printed in the
   // status card.
   _turnstileSecret?: string;
   _notionToken?: string;
   _siteSettingsDataSourceId?: string;
   _blocksDataSourceId?: string;
+}
+
+/**
+ * Returns true when the scaffold answers indicate bilingual mode
+ * (more than one supported locale).
+ */
+export function shouldCreateTranslationSources(
+  answers: Pick<Answers, "supportedLocales">
+): boolean {
+  return answers.supportedLocales.length > 1;
 }
 
 export async function provision(
@@ -371,6 +391,20 @@ export async function provision(
             `Notion site settings: ${settings.reused ? "reused" : "created"} (${settings.dataSourceId.slice(0, 8)}…), seeded ${settings.seeded} page.`
           );
         }
+
+        // Translation data sources: created when bilingual mode is
+        // enabled. Each of the four sources gets its own Notion
+        // database with a full property schema.
+        if (shouldCreateTranslationSources(answers)) {
+          const translationRefs = await provisionTranslationSources({
+            apiToken: notionInputs.apiToken,
+            parentPageId: notionInputs.parentPageId,
+          });
+          if (Object.keys(translationRefs).length > 0) {
+            result.translationSources = translationRefs;
+            await persistTranslationSourcesToMetadata(projectDir, translationRefs);
+          }
+        }
       } else {
         result.notion = {
           ok: false,
@@ -409,6 +443,20 @@ export async function provision(
         );
         result._notionToken = notion.apiToken;
         result._blocksDataSourceId = blocks.dataSourceId;
+
+        // Translation data sources: created when bilingual mode is
+        // enabled. Each of the four sources gets its own Notion
+        // database with a full property schema.
+        if (shouldCreateTranslationSources(answers)) {
+          const translationRefs = await provisionTranslationSources({
+            apiToken: notion.apiToken,
+            parentPageId: notion.parentPageId,
+          });
+          if (Object.keys(translationRefs).length > 0) {
+            result.translationSources = translationRefs;
+            await persistTranslationSourcesToMetadata(projectDir, translationRefs);
+          }
+        }
       } else {
         result.notion = {
           ok: false,
@@ -450,6 +498,14 @@ export async function provision(
       notionPagesDataSourceId: result.notion.pagesDataSourceId,
       notionSiteSettingsDataSourceId: result._siteSettingsDataSourceId,
       notionBlocksDataSourceId: result._blocksDataSourceId,
+      notionBlogTranslationsDataSourceId:
+        result.translationSources?.["blog-translations"]?.dataSourceId,
+      notionPagesTranslationsDataSourceId:
+        result.translationSources?.["page-translations"]?.dataSourceId,
+      notionBlocksTranslationsDataSourceId:
+        result.translationSources?.["block-translations"]?.dataSourceId,
+      notionSiteSettingsTranslationsDataSourceId:
+        result.translationSources?.["site-settings-translations"]?.dataSourceId,
     };
     wireInputs = currentWireInputs;
     try {
@@ -785,6 +841,89 @@ async function provisionNotionContentAndPages({
       };
 
   return { content, pages, blocks };
+}
+
+/**
+ * Create the four translation data sources when bilingual mode is
+ * enabled. Each source gets its own Notion database with a full
+ * property schema. Returns a map keyed by translation model id with
+ * `{ dataSourceId, envVar }` entries; entries are omitted on
+ * failure so the caller can still wire whatever succeeded.
+ */
+async function provisionTranslationSources(input: {
+  apiToken: string;
+  parentPageId: string;
+}): Promise<Record<string, TranslationSourceRef>> {
+  const refs: Record<string, TranslationSourceRef> = {};
+  const translationModels: Array<{
+    modelId:
+      | "blog-translations"
+      | "page-translations"
+      | "block-translations"
+      | "site-settings-translations";
+    envVar: string;
+  }> = [
+    {
+      modelId: "blog-translations",
+      envVar: "NOTION_BLOG_TRANSLATIONS_DATA_SOURCE_ID",
+    },
+    {
+      modelId: "page-translations",
+      envVar: "NOTION_PAGES_TRANSLATIONS_DATA_SOURCE_ID",
+    },
+    {
+      modelId: "block-translations",
+      envVar: "NOTION_BLOCKS_TRANSLATIONS_DATA_SOURCE_ID",
+    },
+    {
+      modelId: "site-settings-translations",
+      envVar: "NOTION_SITE_SETTINGS_TRANSLATIONS_DATA_SOURCE_ID",
+    },
+  ];
+  for (const { modelId, envVar } of translationModels) {
+    try {
+      const trans = await ensureTranslationDatabase({
+        apiToken: input.apiToken,
+        parentPageId: input.parentPageId,
+        modelId,
+      });
+      refs[modelId] = {
+        dataSourceId: trans.dataSourceId,
+        envVar,
+      };
+      p.log.success(
+        `Notion ${modelId}: created (${trans.dataSourceId.slice(0, 8)}…).`
+      );
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      p.log.warn(`Notion ${modelId}: failed (${message}).`);
+    }
+  }
+  return refs;
+}
+
+/**
+ * Persist translation source refs into `.notionx/scaffold.json` so
+ * `notionx locale add` can reuse them and the doctor can verify them.
+ * Best-effort: the metadata file may not exist yet (e.g. when the
+ * scaffolder is run in a non-standard layout), in which case we
+ * silently skip.
+ */
+async function persistTranslationSourcesToMetadata(
+  projectDir: string,
+  translationRefs: Record<string, TranslationSourceRef>
+): Promise<void> {
+  try {
+    const fs = await import("node:fs/promises");
+    const path = await import("node:path");
+    const metaPath = path.join(projectDir, ".notionx", "scaffold.json");
+    const raw = await fs.readFile(metaPath, "utf8");
+    const meta = JSON.parse(raw) as ScaffoldMetadata;
+    meta.translationSources = translationRefs;
+    await fs.writeFile(metaPath, JSON.stringify(meta, null, 2) + "\n", "utf8");
+  } catch {
+    // Best-effort: the metadata file may not exist yet.
+  }
 }
 
 async function setProvisionedWorkerSecrets({
