@@ -11,6 +11,8 @@
 // - All shapes are JSON-serializable. The `registry.json` file is
 //   written verbatim from a `RegistryManifest`.
 
+import type { TranslationSourceRef } from "../metadata.js";
+
 /**
  * Schema URL baked into `registry.json` so future readers can detect
  * "this manifest uses an older or newer protocol version".
@@ -266,6 +268,12 @@ export interface RegistryManifest {
     bridge: string[];
     user: string[];
   };
+  /**
+   * Translation data source refs, keyed by model id
+   * (`blog-translations`, `page-translations`, etc.). Populated by
+   * the scaffolder (bilingual mode) or `notionx locale add`.
+   */
+  translationSources?: Record<string, TranslationSourceRef>;
   /**
    * Optional project-specific hints, never written or rewritten by
    * notionx itself. Survives `update` / `add` / `remove` runs.
