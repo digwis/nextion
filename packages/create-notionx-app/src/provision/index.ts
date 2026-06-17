@@ -370,6 +370,7 @@ export async function provision(
         // Created alongside the main content source — same parent
         // page, same Notion token, separate `NOTION_SITE_SETTINGS_…`
         // env var. Disable with `--no-site-settings`.
+        let siteSettingsDatabaseId: string | undefined;
         if (answers.enableSiteSettings) {
           const settings = await ensureSiteSettingsDatabase({
             apiToken: notionInputs.apiToken,
@@ -387,6 +388,7 @@ export async function provision(
             reused: settings.reused,
           };
           result._siteSettingsDataSourceId = settings.dataSourceId;
+          siteSettingsDatabaseId = settings.databaseId;
           p.log.success(
             `Notion site settings: ${settings.reused ? "reused" : "created"} (${settings.dataSourceId.slice(0, 8)}…), seeded ${settings.seeded} page.`
           );
@@ -399,6 +401,14 @@ export async function provision(
           const translationRefs = await provisionTranslationSources({
             apiToken: notionInputs.apiToken,
             parentPageId: notionInputs.parentPageId,
+            baseDatabaseIds: {
+              "blog-translations": content.databaseId,
+              "page-translations":
+                "databaseId" in pages ? pages.databaseId : undefined,
+              "block-translations":
+                "databaseId" in blocks ? blocks.databaseId : undefined,
+              "site-settings-translations": siteSettingsDatabaseId,
+            },
           });
           if (Object.keys(translationRefs).length > 0) {
             result.translationSources = translationRefs;
@@ -451,6 +461,14 @@ export async function provision(
           const translationRefs = await provisionTranslationSources({
             apiToken: notion.apiToken,
             parentPageId: notion.parentPageId,
+            baseDatabaseIds: {
+              "blog-translations": content.databaseId,
+              "page-translations":
+                "databaseId" in pages ? pages.databaseId : undefined,
+              "block-translations":
+                "databaseId" in blocks ? blocks.databaseId : undefined,
+              "site-settings-translations": undefined,
+            },
           });
           if (Object.keys(translationRefs).length > 0) {
             result.translationSources = translationRefs;
@@ -853,6 +871,12 @@ async function provisionNotionContentAndPages({
 async function provisionTranslationSources(input: {
   apiToken: string;
   parentPageId: string;
+  baseDatabaseIds?: {
+    "blog-translations"?: string;
+    "page-translations"?: string;
+    "block-translations"?: string;
+    "site-settings-translations"?: string;
+  };
 }): Promise<Record<string, TranslationSourceRef>> {
   const refs: Record<string, TranslationSourceRef> = {};
   const translationModels: Array<{
@@ -886,6 +910,7 @@ async function provisionTranslationSources(input: {
         apiToken: input.apiToken,
         parentPageId: input.parentPageId,
         modelId,
+        baseDatabaseId: input.baseDatabaseIds?.[modelId],
       });
       refs[modelId] = {
         dataSourceId: trans.dataSourceId,

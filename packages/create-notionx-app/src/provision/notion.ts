@@ -2499,10 +2499,14 @@ export async function ensureSiteSettingsDatabase(
  * `Source` is a relation to the base blog data source so each
  * translation row points at its base post.
  */
-export function buildBlogTranslationProperties(): NotionPropertyMap {
+export function buildBlogTranslationProperties(
+  baseDatabaseId?: string
+): NotionPropertyMap {
   return {
     Title: { title: {} },
-    Source: { relation: { database_property: {} } },
+    Source: baseDatabaseId
+      ? { relation: { single_property: { database_id: baseDatabaseId } } }
+      : { relation: { database_property: {} } },
     Locale: { select: {} },
     Slug: { rich_text: {} },
     Description: { rich_text: {} },
@@ -2513,10 +2517,14 @@ export function buildBlogTranslationProperties(): NotionPropertyMap {
   };
 }
 
-export function buildPageTranslationProperties(): NotionPropertyMap {
+export function buildPageTranslationProperties(
+  baseDatabaseId?: string
+): NotionPropertyMap {
   return {
     Title: { title: {} },
-    Source: { relation: { database_property: {} } },
+    Source: baseDatabaseId
+      ? { relation: { single_property: { database_id: baseDatabaseId } } }
+      : { relation: { database_property: {} } },
     Locale: { select: {} },
     Slug: { rich_text: {} },
     Description: { rich_text: {} },
@@ -2529,10 +2537,14 @@ export function buildPageTranslationProperties(): NotionPropertyMap {
   };
 }
 
-export function buildBlockTranslationProperties(): NotionPropertyMap {
+export function buildBlockTranslationProperties(
+  baseDatabaseId?: string
+): NotionPropertyMap {
   return {
     Title: { title: {} },
-    Source: { relation: { database_property: {} } },
+    Source: baseDatabaseId
+      ? { relation: { single_property: { database_id: baseDatabaseId } } }
+      : { relation: { database_property: {} } },
     Locale: { select: {} },
     Description: { rich_text: {} },
     Eyebrow: { rich_text: {} },
@@ -2549,10 +2561,14 @@ export function buildBlockTranslationProperties(): NotionPropertyMap {
   };
 }
 
-export function buildSiteSettingsTranslationProperties(): NotionPropertyMap {
+export function buildSiteSettingsTranslationProperties(
+  baseDatabaseId?: string
+): NotionPropertyMap {
   return {
     Title: { title: {} },
-    Source: { relation: { database_property: {} } },
+    Source: baseDatabaseId
+      ? { relation: { single_property: { database_id: baseDatabaseId } } }
+      : { relation: { database_property: {} } },
     Locale: { select: {} },
     Tagline: { rich_text: {} },
     Description: { rich_text: {} },
@@ -2575,6 +2591,7 @@ export async function ensureTranslationDatabase(input: {
   apiToken: string;
   parentPageId: string;
   modelId: TranslationModelId;
+  baseDatabaseId?: string;
 }): Promise<{
   databaseId: string;
   dataSourceId: string;
@@ -2582,7 +2599,10 @@ export async function ensureTranslationDatabase(input: {
   reused: boolean;
 }> {
   const title = titleForTranslationModel(input.modelId);
-  const properties = propertiesForTranslationModel(input.modelId);
+  const properties = propertiesForTranslationModel(
+    input.modelId,
+    input.baseDatabaseId
+  );
   const result = await createDatabaseWithProperties({
     apiToken: input.apiToken,
     parentPageId: input.parentPageId,
@@ -2608,16 +2628,17 @@ function titleForTranslationModel(modelId: TranslationModelId): string {
 }
 
 function propertiesForTranslationModel(
-  modelId: TranslationModelId
+  modelId: TranslationModelId,
+  baseDatabaseId?: string
 ): NotionPropertyMap {
   switch (modelId) {
     case "blog-translations":
-      return buildBlogTranslationProperties();
+      return buildBlogTranslationProperties(baseDatabaseId);
     case "page-translations":
-      return buildPageTranslationProperties();
+      return buildPageTranslationProperties(baseDatabaseId);
     case "block-translations":
-      return buildBlockTranslationProperties();
+      return buildBlockTranslationProperties(baseDatabaseId);
     case "site-settings-translations":
-      return buildSiteSettingsTranslationProperties();
+      return buildSiteSettingsTranslationProperties(baseDatabaseId);
   }
 }
