@@ -1673,8 +1673,8 @@ function buildPageProperties(blocksDataSourceId?: string): NotionPropertyMap {
     // relation array order (set by drag-and-drop in Notion) is
     // the native sort order for page blocks.
     Blocks: blocksDataSourceId
-      ? { relation: { single_property: { data_source_id: blocksDataSourceId } } }
-      : { relation: { database_property: {} } },
+      ? { relation: { data_source_id: blocksDataSourceId } }
+      : { relation: {} },
     Cover: { files: {} },
   };
 }
@@ -2487,8 +2487,8 @@ export function buildBlogTranslationProperties(
   return {
     Title: { title: {} },
     Source: baseDataSourceId
-      ? { relation: { single_property: { data_source_id: baseDataSourceId } } }
-      : { relation: { database_property: {} } },
+      ? { relation: { data_source_id: baseDataSourceId } }
+      : { relation: {} },
     Locale: { select: {} },
     Slug: { rich_text: {} },
     Description: { rich_text: {} },
@@ -2506,8 +2506,8 @@ export function buildPageTranslationProperties(
   return {
     Title: { title: {} },
     Source: baseDataSourceId
-      ? { relation: { single_property: { data_source_id: baseDataSourceId } } }
-      : { relation: { database_property: {} } },
+      ? { relation: { data_source_id: baseDataSourceId } }
+      : { relation: {} },
     Locale: { select: {} },
     Slug: { rich_text: {} },
     Description: { rich_text: {} },
@@ -2527,8 +2527,8 @@ export function buildBlockTranslationProperties(
   return {
     Title: { title: {} },
     Source: baseDataSourceId
-      ? { relation: { single_property: { data_source_id: baseDataSourceId } } }
-      : { relation: { database_property: {} } },
+      ? { relation: { data_source_id: baseDataSourceId } }
+      : { relation: {} },
     Locale: { select: {} },
     // Body content lives in the translation page's children blocks,
     // not a rich_text field — removes the 2000-char limit.
@@ -2542,8 +2542,8 @@ export function buildSiteSettingsTranslationProperties(
   return {
     Title: { title: {} },
     Source: baseDataSourceId
-      ? { relation: { single_property: { data_source_id: baseDataSourceId } } }
-      : { relation: { database_property: {} } },
+      ? { relation: { data_source_id: baseDataSourceId } }
+      : { relation: {} },
     Locale: { select: {} },
     Value: { rich_text: {} },
     Published: { checkbox: {} },

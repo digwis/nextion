@@ -10,7 +10,7 @@ import {
 describe("translation property builders", () => {
   it("buildBlogTranslationProperties includes Source relation, Locale select, Title, Slug (no Body field)", () => {
     const props = buildBlogTranslationProperties();
-    expect(props.Source).toEqual({ relation: { database_property: {} } });
+    expect(props.Source).toEqual({ relation: {} });
     expect(props.Locale).toEqual({ select: {} });
     expect(props.Title).toEqual({ title: {} });
     expect(props.Slug).toEqual({ rich_text: {} });
@@ -66,37 +66,37 @@ describe("build*TranslationProperties with baseDataSourceId", () => {
   it("buildBlogTranslationProperties links Source to base data source", () => {
     const props = buildBlogTranslationProperties(baseDsId);
     expect(props.Source).toEqual({
-      relation: { single_property: { data_source_id: baseDsId } },
+      relation: { data_source_id: baseDsId },
     });
   });
 
   it("buildPageTranslationProperties links Source to base data source", () => {
     const props = buildPageTranslationProperties(baseDsId);
     expect(props.Source).toEqual({
-      relation: { single_property: { data_source_id: baseDsId } },
+      relation: { data_source_id: baseDsId },
     });
   });
 
   it("buildBlockTranslationProperties links Source to base data source", () => {
     const props = buildBlockTranslationProperties(baseDsId);
     expect(props.Source).toEqual({
-      relation: { single_property: { data_source_id: baseDsId } },
+      relation: { data_source_id: baseDsId },
     });
   });
 
   it("buildSiteSettingsTranslationProperties links Source to base data source", () => {
     const props = buildSiteSettingsTranslationProperties(baseDsId);
     expect(props.Source).toEqual({
-      relation: { single_property: { data_source_id: baseDsId } },
+      relation: { data_source_id: baseDsId },
     });
   });
 
-  it("falls back to database_property when baseDataSourceId is undefined", () => {
+  it("falls back to empty relation when baseDataSourceId is undefined", () => {
     expect(buildBlogTranslationProperties().Source).toEqual({
-      relation: { database_property: {} },
+      relation: {},
     });
     expect(buildBlogTranslationProperties(undefined).Source).toEqual({
-      relation: { database_property: {} },
+      relation: {},
     });
   });
 });
