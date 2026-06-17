@@ -370,7 +370,7 @@ export async function provision(
         // Created alongside the main content source — same parent
         // page, same Notion token, separate `NOTION_SITE_SETTINGS_…`
         // env var. Disable with `--no-site-settings`.
-        let siteSettingsDatabaseId: string | undefined;
+        let siteSettingsDataSourceId: string | undefined;
         if (answers.enableSiteSettings) {
           const settings = await ensureSiteSettingsDatabase({
             apiToken: notionInputs.apiToken,
@@ -388,20 +388,21 @@ export async function provision(
             reused: settings.reused,
           };
           result._siteSettingsDataSourceId = settings.dataSourceId;
-          siteSettingsDatabaseId = settings.databaseId;
+          siteSettingsDataSourceId = settings.dataSourceId;
           p.log.success(
             `Notion site settings: ${settings.reused ? "reused" : "created"} (${settings.dataSourceId.slice(0, 8)}…), seeded ${settings.seeded} page.`
           );
         }
 
-        // Persist the base database ids (database_id, not
-        // data_source_id) into registry.json so `notionx locale add`
-        // can read them when creating translation Source relations.
+        // Persist the base data source ids into registry.json so
+        // `notionx locale add` can read them when creating translation
+        // Source relations. Notion's relation API requires
+        // `data_source_id` (not the legacy `database_id`).
         await persistBaseDatabaseIdsToRegistry(projectDir, {
-          content: content.databaseId,
-          pages: "databaseId" in pages ? pages.databaseId : undefined,
-          blocks: "databaseId" in blocks ? blocks.databaseId : undefined,
-          siteSettings: siteSettingsDatabaseId,
+          content: content.dataSourceId,
+          pages: "databaseId" in pages ? pages.dataSourceId : undefined,
+          blocks: "databaseId" in blocks ? blocks.dataSourceId : undefined,
+          siteSettings: siteSettingsDataSourceId,
         });
 
         // Translation data sources: created when bilingual mode is
@@ -411,13 +412,13 @@ export async function provision(
           const translationRefs = await provisionTranslationSources({
             apiToken: notionInputs.apiToken,
             parentPageId: notionInputs.parentPageId,
-            baseDatabaseIds: {
-              "blog-translations": content.databaseId,
+            baseDataSourceIds: {
+              "blog-translations": content.dataSourceId,
               "page-translations":
-                "databaseId" in pages ? pages.databaseId : undefined,
+                "databaseId" in pages ? pages.dataSourceId : undefined,
               "block-translations":
-                "databaseId" in blocks ? blocks.databaseId : undefined,
-              "site-settings-translations": siteSettingsDatabaseId,
+                "databaseId" in blocks ? blocks.dataSourceId : undefined,
+              "site-settings-translations": siteSettingsDataSourceId,
             },
           });
           if (Object.keys(translationRefs).length > 0) {
@@ -464,13 +465,14 @@ export async function provision(
         result._notionToken = notion.apiToken;
         result._blocksDataSourceId = blocks.dataSourceId;
 
-        // Persist the base database ids (database_id, not
-        // data_source_id) into registry.json so `notionx locale add`
-        // can read them when creating translation Source relations.
+        // Persist the base data source ids into registry.json so
+        // `notionx locale add` can read them when creating translation
+        // Source relations. Notion's relation API requires
+        // `data_source_id` (not the legacy `database_id`).
         await persistBaseDatabaseIdsToRegistry(projectDir, {
-          content: content.databaseId,
-          pages: "databaseId" in pages ? pages.databaseId : undefined,
-          blocks: "databaseId" in blocks ? blocks.databaseId : undefined,
+          content: content.dataSourceId,
+          pages: "databaseId" in pages ? pages.dataSourceId : undefined,
+          blocks: "databaseId" in blocks ? blocks.dataSourceId : undefined,
           siteSettings: undefined,
         });
 
@@ -481,12 +483,12 @@ export async function provision(
           const translationRefs = await provisionTranslationSources({
             apiToken: notion.apiToken,
             parentPageId: notion.parentPageId,
-            baseDatabaseIds: {
-              "blog-translations": content.databaseId,
+            baseDataSourceIds: {
+              "blog-translations": content.dataSourceId,
               "page-translations":
-                "databaseId" in pages ? pages.databaseId : undefined,
+                "databaseId" in pages ? pages.dataSourceId : undefined,
               "block-translations":
-                "databaseId" in blocks ? blocks.databaseId : undefined,
+                "databaseId" in blocks ? blocks.dataSourceId : undefined,
               "site-settings-translations": undefined,
             },
           });
@@ -866,8 +868,8 @@ async function provisionNotionContentAndPages({
   // Pages data source is optional — skip provisioning entirely
   // when `--no-pages` is set. The fallback `app/page.tsx` doesn't
   // read from Notion, so no data source is needed.
-  const blocksDatabaseId =
-    "databaseId" in blocks ? blocks.databaseId : undefined;
+  const blocksDataSourceId =
+    "databaseId" in blocks ? blocks.dataSourceId : undefined;
   const blockPageIdsBySlug =
     "seededPageIdsBySlug" in blocks
       ? blocks.seededPageIdsBySlug
@@ -881,7 +883,7 @@ async function provisionNotionContentAndPages({
         contentSourceTitle: answers.contentSource.title,
         contentSourceListPath: `/${answers.contentSource.id}`,
         locale: answers.defaultLocale,
-        blocksDatabaseId,
+        blocksDataSourceId,
         blockPageIdsBySlug,
       })
     : {
@@ -904,7 +906,7 @@ async function provisionNotionContentAndPages({
 async function provisionTranslationSources(input: {
   apiToken: string;
   parentPageId: string;
-  baseDatabaseIds?: {
+  baseDataSourceIds?: {
     "blog-translations"?: string;
     "page-translations"?: string;
     "block-translations"?: string;
@@ -943,7 +945,7 @@ async function provisionTranslationSources(input: {
         apiToken: input.apiToken,
         parentPageId: input.parentPageId,
         modelId,
-        baseDatabaseId: input.baseDatabaseIds?.[modelId],
+        baseDataSourceId: input.baseDataSourceIds?.[modelId],
       });
       refs[modelId] = {
         dataSourceId: trans.dataSourceId,
@@ -985,10 +987,11 @@ async function persistTranslationSourcesToMetadata(
 }
 
 /**
- * Persist the base (non-translation) Notion database ids into
- * `.notionx/registry.json` so `notionx locale add` can read the real
- * `database_id` (not the `data_source_id` stored in env vars) when
- * creating translation `Source` relation properties.
+ * Persist the base (non-translation) Notion data source ids into
+ * `.notionx/registry.json` so `notionx locale add` can read them when
+ * creating translation `Source` relation properties. Notion's relation
+ * API requires `data_source_id` (not the legacy `database_id`), so the
+ * values stored here are data source ids.
  *
  * Best-effort: the registry manifest may not exist yet (e.g. when
  * provisioning runs outside the normal scaffold flow), in which case

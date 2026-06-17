@@ -55,10 +55,13 @@ export interface TranslationSourceRef {
   envVar: string;
   /**
    * Optional Notion database id (the `database_id`, not the
-   * `data_source_id`). Needed when creating relation properties
-   * that point at this database — Notion's relation API expects the
-   * raw database id, which differs from the data source id exposed
-   * via env vars.
+   * `data_source_id`). Historically needed when creating relation
+   * properties that point at this database — Notion's relation API
+   * used to require the raw database id. As of the 2025-09-03 schema,
+   * Notion's relation API requires `data_source_id` instead, so
+   * callers should prefer `dataSourceId` for relation properties.
+   * This field is retained for backward compatibility with older
+   * registry/scaffold metadata files.
    */
   databaseId?: string;
 }

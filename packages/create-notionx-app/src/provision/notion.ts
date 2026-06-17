@@ -46,8 +46,8 @@ export interface PagesProvisionInput {
   contentSourceTitle: string;
   contentSourceListPath: string;
   locale?: string;
-  /** Blocks database ID, for the Page → Block Notion relation. */
-  blocksDatabaseId?: string;
+  /** Blocks data source id, for the Page → Block Notion relation. */
+  blocksDataSourceId?: string;
   /** Block page IDs by slug, for seeding the Blocks relation on pages. */
   blockPageIdsBySlug?: Record<string, string>;
 }
@@ -1649,7 +1649,7 @@ function buildSamplePage(input: SamplePageInput) {
   };
 }
 
-function buildPageProperties(blocksDatabaseId?: string): NotionPropertyMap {
+function buildPageProperties(blocksDataSourceId?: string): NotionPropertyMap {
   return {
     Name: { title: {} },
     Key: { rich_text: {} },
@@ -1672,8 +1672,8 @@ function buildPageProperties(blocksDatabaseId?: string): NotionPropertyMap {
     // Blocks is a Notion relation to the Blocks database. The
     // relation array order (set by drag-and-drop in Notion) is
     // the native sort order for page blocks.
-    Blocks: blocksDatabaseId
-      ? { relation: { single_property: { database_id: blocksDatabaseId } } }
+    Blocks: blocksDataSourceId
+      ? { relation: { single_property: { data_source_id: blocksDataSourceId } } }
       : { relation: { database_property: {} } },
     Cover: { files: {} },
   };
@@ -1939,7 +1939,7 @@ export async function ensurePagesDatabase(
 ): Promise<NotionProvisionResult> {
   const title = `${input.projectName} Pages`;
   const stableKey = "pages:default";
-  const properties = buildPageProperties(input.blocksDatabaseId);
+  const properties = buildPageProperties(input.blocksDataSourceId);
   const existingByStableKey = await findExistingDatabaseByStableKey({
     apiToken: input.apiToken,
     parentPageId: input.parentPageId,
@@ -2482,12 +2482,12 @@ export async function ensureSiteSettingsDatabase(
  * translation row points at its base post.
  */
 export function buildBlogTranslationProperties(
-  baseDatabaseId?: string
+  baseDataSourceId?: string
 ): NotionPropertyMap {
   return {
     Title: { title: {} },
-    Source: baseDatabaseId
-      ? { relation: { single_property: { database_id: baseDatabaseId } } }
+    Source: baseDataSourceId
+      ? { relation: { single_property: { data_source_id: baseDataSourceId } } }
       : { relation: { database_property: {} } },
     Locale: { select: {} },
     Slug: { rich_text: {} },
@@ -2501,12 +2501,12 @@ export function buildBlogTranslationProperties(
 }
 
 export function buildPageTranslationProperties(
-  baseDatabaseId?: string
+  baseDataSourceId?: string
 ): NotionPropertyMap {
   return {
     Title: { title: {} },
-    Source: baseDatabaseId
-      ? { relation: { single_property: { database_id: baseDatabaseId } } }
+    Source: baseDataSourceId
+      ? { relation: { single_property: { data_source_id: baseDataSourceId } } }
       : { relation: { database_property: {} } },
     Locale: { select: {} },
     Slug: { rich_text: {} },
@@ -2522,12 +2522,12 @@ export function buildPageTranslationProperties(
 }
 
 export function buildBlockTranslationProperties(
-  baseDatabaseId?: string
+  baseDataSourceId?: string
 ): NotionPropertyMap {
   return {
     Title: { title: {} },
-    Source: baseDatabaseId
-      ? { relation: { single_property: { database_id: baseDatabaseId } } }
+    Source: baseDataSourceId
+      ? { relation: { single_property: { data_source_id: baseDataSourceId } } }
       : { relation: { database_property: {} } },
     Locale: { select: {} },
     // Body content lives in the translation page's children blocks,
@@ -2537,12 +2537,12 @@ export function buildBlockTranslationProperties(
 }
 
 export function buildSiteSettingsTranslationProperties(
-  baseDatabaseId?: string
+  baseDataSourceId?: string
 ): NotionPropertyMap {
   return {
     Title: { title: {} },
-    Source: baseDatabaseId
-      ? { relation: { single_property: { database_id: baseDatabaseId } } }
+    Source: baseDataSourceId
+      ? { relation: { single_property: { data_source_id: baseDataSourceId } } }
       : { relation: { database_property: {} } },
     Locale: { select: {} },
     Value: { rich_text: {} },
@@ -2560,7 +2560,7 @@ export async function ensureTranslationDatabase(input: {
   apiToken: string;
   parentPageId: string;
   modelId: TranslationModelId;
-  baseDatabaseId?: string;
+  baseDataSourceId?: string;
 }): Promise<{
   databaseId: string;
   dataSourceId: string;
@@ -2570,7 +2570,7 @@ export async function ensureTranslationDatabase(input: {
   const title = titleForTranslationModel(input.modelId);
   const properties = propertiesForTranslationModel(
     input.modelId,
-    input.baseDatabaseId
+    input.baseDataSourceId
   );
   const result = await createDatabaseWithProperties({
     apiToken: input.apiToken,
@@ -2598,16 +2598,16 @@ function titleForTranslationModel(modelId: TranslationModelId): string {
 
 function propertiesForTranslationModel(
   modelId: TranslationModelId,
-  baseDatabaseId?: string
+  baseDataSourceId?: string
 ): NotionPropertyMap {
   switch (modelId) {
     case "blog-translations":
-      return buildBlogTranslationProperties(baseDatabaseId);
+      return buildBlogTranslationProperties(baseDataSourceId);
     case "page-translations":
-      return buildPageTranslationProperties(baseDatabaseId);
+      return buildPageTranslationProperties(baseDataSourceId);
     case "block-translations":
-      return buildBlockTranslationProperties(baseDatabaseId);
+      return buildBlockTranslationProperties(baseDataSourceId);
     case "site-settings-translations":
-      return buildSiteSettingsTranslationProperties(baseDatabaseId);
+      return buildSiteSettingsTranslationProperties(baseDataSourceId);
   }
 }

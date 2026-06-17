@@ -232,7 +232,7 @@ export async function buildLocaleAddPlan(
   // dry-run summary.
   if (input.withNotion) {
     const existingSources = input.metadata.translationSources ?? {};
-    const baseDatabaseIds = await readBaseDatabaseIds(input.projectDir);
+    const baseDataSourceIds = await readBaseDataSourceIds(input.projectDir);
     const plans =
       input.notionApiToken && input.notionParentPageId
         ? planNotionTranslationSources({
@@ -241,7 +241,7 @@ export async function buildLocaleAddPlan(
             apiToken: input.notionApiToken,
             copyFrom: input.copyFrom,
             existingTranslationSources: existingSources,
-            baseDatabaseIds,
+            baseDataSourceIds,
           })
         : [];
 
@@ -327,25 +327,24 @@ function sourceNameToEnvVar(
 }
 
 /**
- * Read the base (non-translation) Notion database ids for each
+ * Read the base (non-translation) Notion data source ids for each
  * built-in translation model.
  *
  * Resolution order:
  *   1. `registry.json`'s `baseDatabaseIds` block — populated by the
- *      scaffolder during provisioning. This stores the real Notion
- *      `database_id` (the id Notion's relation API expects), which is
- *      distinct from the `data_source_id` exposed via env vars.
+ *      scaffolder during provisioning. Despite the legacy field name,
+ *      the values stored here are `data_source_id`s (the id Notion's
+ *      relation API expects), which match the `data_source_id`
+ *      exposed via env vars.
  *   2. Fallback: env vars in `.dev.vars` / `wrangler.jsonc`. These
- *      store `data_source_id`, not `database_id` — Notion currently
- *      accepts it for relation creation in most workspaces, but it is
- *      not the officially correct id. Used only when the registry
+ *      store `data_source_id` directly. Used when the registry
  *      manifest is missing or predates the `baseDatabaseIds` field.
  *
  * Returns an empty object when neither source is available — the
  * planner treats missing base ids as "create relation without
  * explicit target", which is the existing behaviour.
  */
-async function readBaseDatabaseIds(
+async function readBaseDataSourceIds(
   projectDir: string
 ): Promise<{
   "blog-translations"?: string;
@@ -353,8 +352,8 @@ async function readBaseDatabaseIds(
   "block-translations"?: string;
   "site-settings-translations"?: string;
 }> {
-  // 1. Try registry.json's baseDatabaseIds first — these are the
-  // real Notion database ids, not data_source_ids.
+  // 1. Try registry.json's baseDatabaseIds first — these hold the
+  // Notion data source ids used for relation properties.
   const manifest = await readRegistryManifest(projectDir);
   if (manifest?.baseDatabaseIds) {
     const ids = manifest.baseDatabaseIds;
@@ -366,8 +365,7 @@ async function readBaseDatabaseIds(
     };
   }
 
-  // 2. Fallback: read from env vars (data_source_id, not ideal but
-  // best-effort for projects scaffolded before baseDatabaseIds existed).
+  // 2. Fallback: read from env vars (data_source_id).
   const fs = await import("node:fs/promises");
   const path = await import("node:path");
 
@@ -410,7 +408,7 @@ async function readBaseDatabaseIds(
   // The env var names for the base (non-translation) data sources.
   // These are the ids the scaffolder writes when it first provisions
   // the blog / pages / blocks / site-settings databases.
-  // NOTE: These store data_source_id, not database_id.
+  // NOTE: These store data_source_id.
   return {
     "blog-translations": readVar("NOTION_DATA_SOURCE_ID"),
     "page-translations": readVar("NOTION_PAGES_DATA_SOURCE_ID"),

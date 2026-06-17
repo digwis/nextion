@@ -60,38 +60,38 @@ describe("translation property builders", () => {
   });
 });
 
-describe("build*TranslationProperties with baseDatabaseId", () => {
-  const baseDbId = "abc123-base-db-id";
+describe("build*TranslationProperties with baseDataSourceId", () => {
+  const baseDsId = "abc123-base-ds-id";
 
-  it("buildBlogTranslationProperties links Source to base database", () => {
-    const props = buildBlogTranslationProperties(baseDbId);
+  it("buildBlogTranslationProperties links Source to base data source", () => {
+    const props = buildBlogTranslationProperties(baseDsId);
     expect(props.Source).toEqual({
-      relation: { single_property: { database_id: baseDbId } },
+      relation: { single_property: { data_source_id: baseDsId } },
     });
   });
 
-  it("buildPageTranslationProperties links Source to base database", () => {
-    const props = buildPageTranslationProperties(baseDbId);
+  it("buildPageTranslationProperties links Source to base data source", () => {
+    const props = buildPageTranslationProperties(baseDsId);
     expect(props.Source).toEqual({
-      relation: { single_property: { database_id: baseDbId } },
+      relation: { single_property: { data_source_id: baseDsId } },
     });
   });
 
-  it("buildBlockTranslationProperties links Source to base database", () => {
-    const props = buildBlockTranslationProperties(baseDbId);
+  it("buildBlockTranslationProperties links Source to base data source", () => {
+    const props = buildBlockTranslationProperties(baseDsId);
     expect(props.Source).toEqual({
-      relation: { single_property: { database_id: baseDbId } },
+      relation: { single_property: { data_source_id: baseDsId } },
     });
   });
 
-  it("buildSiteSettingsTranslationProperties links Source to base database", () => {
-    const props = buildSiteSettingsTranslationProperties(baseDbId);
+  it("buildSiteSettingsTranslationProperties links Source to base data source", () => {
+    const props = buildSiteSettingsTranslationProperties(baseDsId);
     expect(props.Source).toEqual({
-      relation: { single_property: { database_id: baseDbId } },
+      relation: { single_property: { data_source_id: baseDsId } },
     });
   });
 
-  it("falls back to database_property when baseDatabaseId is undefined", () => {
+  it("falls back to database_property when baseDataSourceId is undefined", () => {
     expect(buildBlogTranslationProperties().Source).toEqual({
       relation: { database_property: {} },
     });

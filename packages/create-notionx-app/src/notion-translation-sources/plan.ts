@@ -28,11 +28,11 @@ export type NotionTranslationSourcePlan = {
   action: "create" | "reuse";
   properties: NotionPropertyMap;
   /**
-   * Notion database id of the base (non-translation) data source
+   * Notion data source id of the base (non-translation) data source
    * this translation source's `Source` relation should link to.
    * When absent, the relation is created without an explicit target.
    */
-  baseDatabaseId?: string;
+  baseDataSourceId?: string;
 };
 
 const MODEL_ID_TO_ENV: Record<
@@ -56,24 +56,24 @@ const ALL_MODEL_IDS: NotionTranslationSourcePlan["modelId"][] = [
 /**
  * Build the Notion `properties` map for a given translation model.
  *
- * `baseDatabaseId` is forwarded to the per-model property builder so
+ * `baseDataSourceId` is forwarded to the per-model property builder so
  * the `Source` relation property can point at the right base
- * database. When omitted, the relation is created without an
+ * data source. When omitted, the relation is created without an
  * explicit target database (Notion will leave it un-configured).
  */
 function propertiesForModel(
   modelId: NotionTranslationSourcePlan["modelId"],
-  baseDatabaseId?: string
+  baseDataSourceId?: string
 ): NotionPropertyMap {
   switch (modelId) {
     case "blog-translations":
-      return buildBlogTranslationProperties(baseDatabaseId);
+      return buildBlogTranslationProperties(baseDataSourceId);
     case "page-translations":
-      return buildPageTranslationProperties(baseDatabaseId);
+      return buildPageTranslationProperties(baseDataSourceId);
     case "block-translations":
-      return buildBlockTranslationProperties(baseDatabaseId);
+      return buildBlockTranslationProperties(baseDataSourceId);
     case "site-settings-translations":
-      return buildSiteSettingsTranslationProperties(baseDatabaseId);
+      return buildSiteSettingsTranslationProperties(baseDataSourceId);
   }
 }
 
@@ -84,12 +84,12 @@ export type PlanNotionTranslationSourcesInput = {
   copyFrom?: string;
   existingTranslationSources: Record<string, TranslationSourceRef | undefined>;
   /**
-   * Maps each built-in translation model id to the Notion database
+   * Maps each built-in translation model id to the Notion data source
    * id of its base (non-translation) data source. When provided, the
    * `Source` relation property of the created translation database
-   * will link to the corresponding base database.
+   * will link to the corresponding base data source.
    */
-  baseDatabaseIds?: {
+  baseDataSourceIds?: {
     "blog-translations"?: string;
     "page-translations"?: string;
     "block-translations"?: string;
@@ -103,7 +103,7 @@ export function planNotionTranslationSources(
   return ALL_MODEL_IDS.map((modelId) => {
     const envVar = MODEL_ID_TO_ENV[modelId];
     const existing = input.existingTranslationSources[modelId];
-    const baseDatabaseId = input.baseDatabaseIds?.[modelId];
+    const baseDataSourceId = input.baseDataSourceIds?.[modelId];
     return {
       modelId,
       envVar,
@@ -112,8 +112,8 @@ export function planNotionTranslationSources(
       copyFrom: input.copyFrom,
       existingDataSourceId: existing?.dataSourceId,
       action: existing ? "reuse" : "create",
-      properties: propertiesForModel(modelId, baseDatabaseId),
-      baseDatabaseId,
+      properties: propertiesForModel(modelId, baseDataSourceId),
+      baseDataSourceId,
     };
   });
 }

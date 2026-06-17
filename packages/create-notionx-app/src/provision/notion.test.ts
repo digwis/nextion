@@ -144,7 +144,7 @@ describe("sample page builders", () => {
     expect(properties.Name).toEqual({ title: {} });
     expect(properties.Key).toEqual({ rich_text: {} });
     // Blocks is a Notion relation to the Blocks database (unlinked
-    // when no blocksDatabaseId is provided).
+    // when no blocksDataSourceId is provided).
     expect(properties.Blocks).toEqual({ relation: { database_property: {} } });
     expect(properties["Show in Nav"]).toEqual({ checkbox: {} });
     expect(properties["Nav Order"]).toEqual({ number: {} });

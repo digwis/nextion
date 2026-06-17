@@ -275,9 +275,11 @@ export interface RegistryManifest {
    */
   translationSources?: Record<string, TranslationSourceRef>;
   /**
-   * Base database ids (Notion database_id, not data_source_id) for
-   * content/pages/blocks/site-settings. Used by `locale add` to
-   * auto-link translation Source relations.
+   * Base data source ids (Notion `data_source_id`, not the legacy
+   * `database_id`) for content/pages/blocks/site-settings. Used by
+   * `locale add` to auto-link translation Source relations. The field
+   * name retains the legacy `baseDatabaseIds` spelling for backward
+   * compatibility with existing `registry.json` files on disk.
    */
   baseDatabaseIds?: {
     content?: string;

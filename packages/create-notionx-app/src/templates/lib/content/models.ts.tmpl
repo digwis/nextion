@@ -45,10 +45,6 @@ import {
 // additionally includes any internal singleton sources
 // (`blocksSource`, `siteSettingsSource`) so the worker registers
 // them with `@notionx/core`'s `createNotionxWorker({ sources })`.
-//
-// `{{contentSourceSourcesVarNames}}` is a comma-joined list of
-// `*Source` variable names for every installed content source.
-// `{{internalSourceVarNames}}` is the same for internal sources.
 export const contentSources = [
 {{contentSourceSourcesVarNames}},
 ] as const;
